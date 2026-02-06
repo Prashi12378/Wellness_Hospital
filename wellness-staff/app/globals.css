@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #0077B6;
+    --color-primary-dark: #005f91;
+
+    --radius-2xl: 1rem;
+    --radius-xl: 0.75rem;
+}
+
+:root {
+    --primary: #0077B6;
+}

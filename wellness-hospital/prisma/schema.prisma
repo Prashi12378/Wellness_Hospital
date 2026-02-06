@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  profile       Profile?
+  sessions      Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Profile {
+  id                    String         @id @default(cuid())
+  userId                String         @unique
+  email                 String         @unique
+  firstName             String?
+  lastName              String?
+  phone                 String?
+  role                  UserRole       @default(patient)
+  uhid                  String?        @unique
+  dob                   String?
+  gender                String?
+  specialization        String?
+  qualifications        String?
+  experience            Int?
+  consultationFee       Decimal?
+  bio                   String?
+  availableTimings      Json?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
+  prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
+  prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id              String        @id @default(uuid())
+  patientId       String
+  doctorId        String?
+  patientName     String?
+  patientPhone    String?
+  patientEmail    String?
+  appointmentDate DateTime
+  appointmentTime String
+  status          String        @default("scheduled")
+  reason          String?
+  department      String?
+  type            String?       @default("General")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  doctor          Profile?      @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient         Profile       @relation("PatientAppointments", fields: [patientId], references: [id])
+  prescription    Prescription?
+}
+
+model Prescription {
+  id              String      @id @default(uuid())
+  appointmentId   String      @unique
+  doctorId        String
+  patientId       String
+  doctorName      String
+  medicines       Json
+  additionalNotes String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  appointment     Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  doctor          Profile     @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  patient         Profile     @relation("PatientPrescriptions", fields: [patientId], references: [id])
+}
+
+model HealthPackage {
+  id            String            @id @default(uuid())
+  name          String
+  description   String?
+  price         Decimal
+  originalPrice Decimal
+  includes      Json
+  icon          String            @default("Stethoscope")
+  popular       Boolean           @default(false)
+  type          HealthPackageType @default(GENERAL)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+enum HealthPackageType {
+  GENERAL
+  BLOOD_COLLECTION
+}
+
+enum UserRole {
+  admin
+  doctor
+  staff
+  patient
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PharmacyInventory {
+  id          String   @id @default(uuid())
+  name        String
+  batch_no    String?
+  expiry_date DateTime?
+  price       Decimal
+  stock       Int
+  location    String?
+  
+  autoReorderPoint Int? @default(10)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

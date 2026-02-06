@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-primary: #0077B6;
+  --color-primary-foreground: #FFFFFF;
+
+  /* Neutrals */
+  --color-background: #F8FAFC;
+  --color-foreground: #1E293B;
+
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1E293B;
+
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+
+  --color-border: #E2E8F0;
+
+  /* Accents */
+  --color-secondary: #E0F2FE;
+  --color-secondary-foreground: #0077B6;
+
+  --color-accent: #10B981;
+  --color-accent-foreground: #FFFFFF;
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Radius overrides */
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+}
+
+:root {
+  --primary: #0077B6;
+  --background: #F8FAFC;
+  --foreground: #1E293B;
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global Compactness for Mobile (PC-Style) */
+@media (max-width: 768px) {
+  html {
+    font-size: 11px;
+    /* Further shrink base font size for PC-style density */
+  }
+
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  h3 {
+    font-size: 1.1rem !important;
+  }
+
+  /* Reduce global utility paddings and gaps */
+  .p-4 {
+    padding: 0.75rem !important;
+  }
+
+  .p-6 {
+    padding: 1rem !important;
+  }
+
+  .gap-4 {
+    gap: 0.75rem !important;
+  }
+
+  .gap-8 {
+    gap: 1rem !important;
+  }
+
+  .space-y-6> :not([hidden])~ :not([hidden]) {
+    margin-top: 1rem !important;
+  }
+}
