@@ -162,3 +162,14 @@ model PharmacyInventory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model AmbulanceRequest {
+  id          String   @id @default(cuid())
+  patientName String
+  phone       String
+  location    String
+  serviceType String
+  status      String   @default("pending") // pending, dispatched, completed, cancelled
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
