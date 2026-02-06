@@ -161,7 +161,7 @@ export async function getConsultationHistory() {
             appointments: appointments.map(apt => ({
                 id: apt.id,
                 patientName: apt.patientName || (apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Unknown'),
-                patientAge: apt.patient?.age,
+                patientAge: apt.patient?.dob,
                 patientGender: apt.patient?.gender,
                 date: apt.appointmentDate,
                 reason: apt.reason

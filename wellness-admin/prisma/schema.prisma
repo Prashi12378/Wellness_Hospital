@@ -43,6 +43,7 @@ model User {
   accounts      Account[]
   profile       Profile?
   sessions      Session[]
+  transactions  Ledger[]
 }
 
 model VerificationToken {
@@ -159,4 +160,18 @@ enum UserRole {
   doctor
   staff
   patient
+}
+
+model Ledger {
+  id              String   @id @default(cuid())
+  transactionType String
+  category        String
+  description     String
+  amount          Decimal
+  paymentMethod   String
+  transactionDate DateTime
+  recordedBy      String
+  user            User     @relation(fields: [recordedBy], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

@@ -143,7 +143,7 @@ model Otp {
 }
 
 model PharmacyInventory {
-  id               String    @id
+  id               String    @id @default(uuid())
   name             String
   batch_no         String?
   expiry_date      DateTime?
@@ -152,7 +152,7 @@ model PharmacyInventory {
   location         String?
   autoReorderPoint Int?      @default(10)
   createdAt        DateTime  @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime  @updatedAt
 }
 
 enum UserRole {

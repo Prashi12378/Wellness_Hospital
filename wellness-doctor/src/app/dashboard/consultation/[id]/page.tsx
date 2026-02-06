@@ -8,10 +8,8 @@ import Link from 'next/link';
 import { getConsultationDetails, savePrescription } from '@/app/actions/consultation';
 import dynamic from 'next/dynamic';
 
-const PDFDownloadLink = dynamic(
-    () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
-    { ssr: false, loading: () => <span>Loading PDF...</span> }
-);
+// React PDF import removed as it was unused and causing build errors
+// If needed later, use a separate component to wrap PDFDownloadLink with ssr: false
 
 // Types
 interface Medicine {
