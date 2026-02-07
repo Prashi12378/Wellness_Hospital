@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { getDoctorAppointments } from '@/app/actions/appointments';
 
 export default function AppointmentsPage() {
-    // const supabase = createClient(); // Use Server Action instead
     const [appointments, setAppointments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
