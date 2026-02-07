@@ -4,19 +4,17 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/client';
 import { Calendar, Users, LogOut, Menu, X, Stethoscope, Pill } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const supabase = createClient();
     const router = useRouter();
     const pathname = usePathname();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
-        router.push('/');
+        await signOut({ callbackUrl: '/login' });
     };
 
     const navItems = [
