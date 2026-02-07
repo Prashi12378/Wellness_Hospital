@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
       {/* Hero Section */}
-      <section className="w-full bg-gradient-to-b from-secondary/30 to-background py-0 md:py-20 px-2 md:px-16 overflow-hidden">
+      <section className="w-full bg-gradient-to-b from-secondary/30 to-background py-8 md:py-20 px-4 md:px-16 overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-row items-center gap-2 md:gap-12">
           <div className="flex-1 space-y-2 md:space-y-6">
             <h1 className="text-sm sm:text-lg md:text-5xl lg:text-6xl font-bold tracking-tight text-primary leading-tight">
@@ -19,13 +19,13 @@ export default function Home() {
             <div className="flex flex-row gap-1.5 md:gap-4 pt-1 md:pt-4">
               <Link
                 href="/appointments"
-                className="inline-flex items-center justify-center h-6 md:h-12 px-2 md:px-6 rounded-md md:rounded-xl bg-primary text-primary-foreground text-[7px] md:text-base font-semibold shadow-sm hover:bg-primary/90 transition-colors whitespace-nowrap"
+                className="inline-flex items-center justify-center h-9 md:h-12 px-4 md:px-6 rounded-lg md:rounded-xl bg-primary text-primary-foreground text-xs md:text-base font-semibold shadow-sm hover:bg-primary/90 transition-colors whitespace-nowrap"
               >
                 Book Appointment
               </Link>
               <Link
                 href="/services"
-                className="inline-flex items-center justify-center h-6 md:h-12 px-2 md:px-6 rounded-md md:rounded-xl border border-border bg-card text-foreground text-[7px] md:text-base font-medium shadow-sm hover:bg-muted transition-colors whitespace-nowrap"
+                className="inline-flex items-center justify-center h-9 md:h-12 px-4 md:px-6 rounded-lg md:rounded-xl border border-border bg-card text-foreground text-xs md:text-base font-medium shadow-sm hover:bg-muted transition-colors whitespace-nowrap"
               >
                 Explore Services
               </Link>
@@ -75,7 +75,7 @@ export default function Home() {
       </section>
 
       {/* Services Preview Grid */}
-      <section className="w-full py-0 md:py-20 px-2 md:px-16 bg-background">
+      <section className="w-full py-8 md:py-20 px-4 md:px-16 bg-background">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-12">
           <div className="text-center space-y-1 md:space-y-4">
             <h2 className="text-sm md:text-3xl font-bold text-foreground">Expert Care for Every Member</h2>
