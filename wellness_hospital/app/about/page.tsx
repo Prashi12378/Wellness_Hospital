@@ -10,8 +10,8 @@ const values = [
 
 const stats = [
     { value: "10+", label: "Years of Experience" },
-    { value: "25+", label: "Expert Doctors" },
-    { value: "2,500+", label: "Patients Treated" },
+    { value: "State-of-the-Art", label: "Equipment" },
+    { value: "Modern", label: "Facilities" },
     { value: "24/7", label: "Emergency Care" },
 ];
 
