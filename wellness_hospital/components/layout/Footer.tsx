@@ -73,7 +73,7 @@ export function Footer() {
                 <div className="flex gap-2 md:gap-6">
                     <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
                     <Link href="/terms" className="hover:text-foreground">Terms</Link>
-                    <a href="http://localhost:3004" className="hover:text-foreground opacity-50 hover:opacity-100 transition-opacity">Staff Access</a>
+                    <a href="https://staff.wellness-hospital.health" className="hover:text-foreground opacity-50 hover:opacity-100 transition-opacity">Staff Access</a>
                 </div>
             </div>
         </footer>
