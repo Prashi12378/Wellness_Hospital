@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// import { createClient } from '@/lib/supabase/client'; // Removed
 import { Calendar, Clock, User, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
