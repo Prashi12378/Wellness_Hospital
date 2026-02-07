@@ -47,28 +47,28 @@ export default function Home() {
       </section>
 
       {/* Quick Services Banner */}
-      <section className="w-full py-2 md:py-8 bg-primary text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-1 md:px-8">
-          <div className="grid grid-cols-5 gap-0.5 md:gap-4 text-center">
-            <Link href="/emergency" className="flex flex-col items-center gap-0.5 p-1 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
-              <Phone className="w-3 h-3 md:w-6 md:h-6" />
-              <span className="text-[6px] md:text-sm font-medium">Emergency</span>
+      <section className="w-full py-4 md:py-8 bg-primary text-primary-foreground">
+        <div className="max-w-7xl mx-auto px-2 md:px-8">
+          <div className="grid grid-cols-5 gap-1 md:gap-4 text-center">
+            <Link href="/emergency" className="flex flex-col items-center gap-1 p-2 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
+              <Phone className="w-4 h-4 md:w-6 md:h-6" />
+              <span className="text-[10px] md:text-sm font-medium">Emergency</span>
             </Link>
-            <Link href="/ambulance" className="flex flex-col items-center gap-0.5 p-1 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
-              <Phone className="w-3 h-3 md:w-6 md:h-6" />
-              <span className="text-[6px] md:text-sm font-medium">Ambulance</span>
+            <Link href="/ambulance" className="flex flex-col items-center gap-1 p-2 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
+              <Phone className="w-4 h-4 md:w-6 md:h-6" />
+              <span className="text-[10px] md:text-sm font-medium">Ambulance</span>
             </Link>
-            <Link href="/doctors" className="flex flex-col items-center gap-0.5 p-1 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
-              <Stethoscope className="w-3 h-3 md:w-6 md:h-6" />
-              <span className="text-[6px] md:text-sm font-medium">Find Doctors</span>
+            <Link href="/doctors" className="flex flex-col items-center gap-1 p-2 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
+              <Stethoscope className="w-4 h-4 md:w-6 md:h-6" />
+              <span className="text-[10px] md:text-sm font-medium">Find Doctors</span>
             </Link>
-            <Link href="/blood-collection" className="flex flex-col items-center gap-0.5 p-1 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
-              <TestTube className="w-3 h-3 md:w-6 md:h-6" />
-              <span className="text-[6px] md:text-sm font-medium">Lab@Home</span>
+            <Link href="/blood-collection" className="flex flex-col items-center gap-1 p-2 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
+              <TestTube className="w-4 h-4 md:w-6 md:h-6" />
+              <span className="text-[10px] md:text-sm font-medium">Lab@Home</span>
             </Link>
-            <Link href="/health-packages" className="flex flex-col items-center gap-0.5 p-1 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
-              <Heart className="w-3 h-3 md:w-6 md:h-6" />
-              <span className="text-[6px] md:text-sm font-medium">Health Packs</span>
+            <Link href="/health-packages" className="flex flex-col items-center gap-1 p-2 md:p-3 rounded-lg hover:bg-white/10 transition-colors">
+              <Heart className="w-4 h-4 md:w-6 md:h-6" />
+              <span className="text-[10px] md:text-sm font-medium">Health Packs</span>
             </Link>
           </div>
         </div>
