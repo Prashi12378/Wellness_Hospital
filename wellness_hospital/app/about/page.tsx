@@ -9,7 +9,7 @@ const values = [
 ];
 
 const stats = [
-    { value: "25+", label: "Years of Service" },
+    { value: "10+", label: "Years of Experience" },
     { value: "150+", label: "Expert Doctors" },
     { value: "50,000+", label: "Patients Treated" },
     { value: "24/7", label: "Emergency Care" },
@@ -24,10 +24,10 @@ export default function AboutPage() {
                     <div className="max-w-3xl">
                         <p className="text-primary font-medium mb-4">About Wellness Hospital</p>
                         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
-                            Caring for Your Health Since 2001
+                            Caring for Your Health with Experienced Professionals
                         </h1>
                         <p className="text-lg text-muted-foreground leading-relaxed">
-                            Since our doors first opened, Wellness Hospital has been dedicated to one thing: you. We combine warm, personal care with advanced medical practices to make sure every patient feels seen, heard, and cared for.
+                            Founded in 2026, Wellness Hospital brings together a team of highly experienced medical professionals with over a decade of expertise. We combine warm, personal care with advanced medical practices to make sure every patient feels seen, heard, and cared for.
                         </p>
                     </div>
                 </div>
@@ -78,7 +78,7 @@ export default function AboutPage() {
                         <div className="space-y-6">
                             <h2 className="text-3xl font-bold text-foreground">Why Choose Wellness Hospital?</h2>
                             <p className="text-muted-foreground leading-relaxed">
-                                We&apos;ve spent the last two decades building a healthcare institution that doesn&apos;t just treat patients, but cares for people. Our facility is equipped with the latest medical technology, but it&apos;s our compassionate approach that truly sets us apart.
+                                We've assembled a team of healthcare professionals with over 10 years of experience to build a modern healthcare institution that doesn't just treat patients, but cares for people. Our facility is equipped with the latest medical technology, but it's our compassionate approach that truly sets us apart.
                             </p>
                             <ul className="space-y-4">
                                 {[
