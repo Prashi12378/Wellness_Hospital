@@ -8,8 +8,8 @@ import Link from 'next/link';
 import { getConsultationDetails, savePrescription } from '@/app/actions/consultation';
 import dynamic from 'next/dynamic';
 
-// React PDF import removed as it was unused and causing build errors
-// If needed later, use a separate component to wrap PDFDownloadLink with ssr: false
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import PrescriptionPDF from '@/components/PrescriptionPDF';
 
 // Types
 interface Medicine {
@@ -133,6 +133,13 @@ function AutocompleteInput({ value, onChange, options, placeholder, className, c
         </div>
     );
 }
+
+
+// Dynamic import for PDF Button to avoid SSR issues
+const PrescriptionPDFButton = dynamic(() => import('@/components/PrescriptionPDFButton'), {
+    ssr: false,
+    loading: () => <button className="px-4 py-2 bg-slate-100 rounded-lg text-slate-400 text-sm">Loading PDF...</button>
+});
 
 // ----------------------------------------------------------------------
 // MAIN PAGE COMPONENT
@@ -360,11 +367,30 @@ export default function ConsultationPage({ params }: PageProps) {
                     >
                         <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save'}
                     </button>
+
+                    {/* PDF Download Button */}
+                    <PrescriptionPDFButton
+                        appointment={appointment}
+                        existingPrescription={existingPrescription}
+                        medicines={medicines}
+                        vitals={vitals}
+                        notes={notes}
+                        diagnosis={diagnosis}
+                        investigations={investigations}
+                        advice={adviceLines.join('\n')}
+                        patientAddress={appointment?.profiles?.city || ''}
+                        qualification={qualification}
+                        speciality={speciality}
+                        regNo={existingPrescription?.doctor_reg_no || ''}
+                        followUp={followUp}
+                        fileName={`${patientName.replace(/\s+/g, '_')}_Prescription.pdf`}
+                    />
+
                     <button
                         onClick={handlePrint}
                         className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 shadow-sm transition-all"
                     >
-                        <Printer className="w-4 h-4" /> Print / PDF
+                        <Printer className="w-4 h-4" /> Print
                     </button>
                 </div>
             </div>
