@@ -13,8 +13,9 @@ export async function GET(req: Request) {
         }
         console.log("Session retrieved for user:", session.user.id);
 
+        // Add timeout to prevent hanging
         console.time("db_query");
-        const appointments = await prisma.appointment.findMany({
+        const queryPromise = prisma.appointment.findMany({
             where: {
                 patient: {
                     userId: session.user.id
@@ -31,8 +32,22 @@ export async function GET(req: Request) {
                 appointmentDate: 'desc'
             }
         });
-        console.timeEnd("db_query");
-        console.log("DB Query Completed, found:", appointments.length);
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Database query timeout')), 5000)
+        );
+
+        let appointments;
+        try {
+            appointments = await Promise.race([queryPromise, timeoutPromise]);
+            console.timeEnd("db_query");
+            console.log("DB Query Completed, found:", appointments.length);
+        } catch (error) {
+            console.error("DB Query failed or timed out:", error);
+            console.timeEnd("db_query");
+            // Return empty array on timeout instead of 500 error
+            return NextResponse.json([]);
+        }
 
         // Map to frontend expectation
         const formatted = appointments.map(a => ({
