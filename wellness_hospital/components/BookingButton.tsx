@@ -36,49 +36,51 @@ export default function BookingButton({ className, text = "Book Appointment" }: 
             </button>
 
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 border border-border">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100">
 
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-border">
-                            <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
+                            <h3 className="font-bold text-lg flex items-center gap-2 text-slate-800">
                                 <Calendar className="w-5 h-5 text-primary" />
-                                Book Your Appointment
+                                Book Appointment
                             </h3>
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="p-1 rounded-full hover:bg-muted transition-colors"
+                                className="p-2 rounded-full hover:bg-slate-100 transition-colors bg-slate-50"
                             >
-                                <X className="w-5 h-5 text-muted-foreground" />
+                                <X className="w-4 h-4 text-slate-500" />
                             </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-8 flex flex-col items-center text-center space-y-6">
-                            <div className="w-20 h-20 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center animate-pulse">
-                                <Phone className="w-10 h-10 text-green-600 dark:text-green-400" />
+                        <div className="p-8 flex flex-col items-center text-center space-y-6 bg-white">
+                            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center animate-pulse">
+                                <Phone className="w-9 h-9 text-primary" />
                             </div>
 
-                            <div className="space-y-2">
-                                <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">For Enquiries & Appointments</p>
+                            <div className="space-y-3">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Call for Booking</p>
                                 <a
                                     href="tel:+916366662245"
-                                    className="block text-3xl font-bold text-foreground hover:text-primary transition-colors"
+                                    className="block text-3xl font-extrabold text-slate-900 hover:text-primary transition-colors tracking-tight"
                                 >
                                     +91 63666 62245
                                 </a>
                             </div>
 
-                            <p className="text-sm text-muted-foreground max-w-xs">
-                                Our team is available 24/7 to assist you with booking appointments for all departments.
-                            </p>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-sm text-slate-600 leading-relaxed">
+                                    Our support team is available <span className="font-semibold text-slate-900">24/7</span> to assist you with appointments.
+                                </p>
+                            </div>
                         </div>
 
                         {/* Footer */}
-                        <div className="p-4 bg-muted/30 border-t border-border flex justify-center">
+                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-center">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
                             >
                                 Close
                             </button>
