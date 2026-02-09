@@ -2,23 +2,29 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
+    const searchParams = useSearchParams();
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [redirecting, setRedirecting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const callbackUrl = searchParams.get('callbackUrl') || '/portal';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        console.log("Attempting login with:", email);
 
         try {
             const res = await signIn('credentials', {
@@ -27,14 +33,19 @@ export default function LoginPage() {
                 redirect: false
             });
 
+            console.log("Login response:", res);
+
             if (res?.error) {
-                setError("Invalid credentials");
+                setError("Invalid credentials. Please check your email and password.");
                 setLoading(false);
             } else {
-                router.push('/portal');
-                router.refresh();
+                setRedirecting(true); // Show redirecting state
+                console.log("Redirecting to:", callbackUrl);
+                router.push(callbackUrl);
+                // router.refresh(); // Removed to prevent potential double-fetch hangs
             }
         } catch (error) {
+            console.error("Login error:", error);
             setError("Something went wrong. Please try again.");
             setLoading(false);
         }
@@ -148,7 +159,10 @@ export default function LoginPage() {
                             className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-lg shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>{redirecting ? "Redirecting..." : "Signing in..."}</span>
+                                </div>
                             ) : (
                                 <>
                                     Sign in
