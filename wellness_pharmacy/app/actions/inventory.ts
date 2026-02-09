@@ -15,7 +15,8 @@ export async function getInventory() {
         // Convert Decimal to number for serialization
         const serializedMedicines = medicines.map(m => ({
             ...m,
-            price: Number(m.price)
+            price: Number(m.price),
+            gst_rate: Number(m.gst_rate)
         }));
 
         return { data: serializedMedicines };
@@ -32,8 +33,10 @@ export async function addMedicine(formData: any) {
             data: {
                 name: formData.name,
                 batch_no: formData.batch_no,
+                hsn_code: formData.hsn_code,
                 expiry_date: formData.expiry_date ? new Date(formData.expiry_date) : null,
                 price: parseFloat(formData.price),
+                gst_rate: parseFloat(formData.gst_rate || 5),
                 stock: stock,
                 location: formData.location,
             },

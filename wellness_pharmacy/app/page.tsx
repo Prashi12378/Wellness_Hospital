@@ -52,8 +52,8 @@ export default function LoginPage() {
                         />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Pharmacy Portal</h1>
-                        <p className="text-sm text-slate-500">Wellness Hospital</p>
+                        <h1 className="text-2xl font-bold text-slate-900">Wellness Pharmacy</h1>
+                        <p className="text-sm text-slate-500">Authorized Staff Portal</p>
                     </div>
                 </div>
 

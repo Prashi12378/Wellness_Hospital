@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { signOut } from 'next-auth/react';
-import { Scan, FileText, History, LogOut, Menu, X, Package, Receipt, Pill, Bell, Check } from 'lucide-react';
+import { Menu, X, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '@/app/actions/notifications';
 import { format } from 'date-fns';
@@ -47,11 +47,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     const navItems = [
-        { name: 'Dashboard', href: '/dashboard', icon: Scan },
-        { name: 'Inventory', href: '/dashboard/inventory', icon: Package },
-        { name: 'Billing', href: '/dashboard/billing', icon: Receipt },
-        { name: 'Prescriptions', href: '/dashboard/prescriptions', icon: FileText },
-        { name: 'Customer History', href: '/dashboard/history', icon: History },
+        { name: 'Dashboard', href: '/dashboard' },
+        { name: 'Inventory', href: '/dashboard/inventory' },
+        { name: 'Billing', href: '/dashboard/billing' },
+        { name: 'Prescriptions', href: '/dashboard/prescriptions' },
+        { name: 'Customer History', href: '/dashboard/history' },
     ];
 
     return (
@@ -69,18 +69,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             priority
                         />
                     </div>
-                    <span className="font-bold text-lg tracking-tight">Wellness</span>
+                    <span className="font-bold text-lg tracking-tight">Wellness Pharmacy</span>
                 </div>
                 <nav className="py-6 px-4 space-y-1.5 flex-1">
                     {navItems.map((item) => {
-                        const Icon = item.icon;
                         const isActive = pathname === item.href;
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative",
+                                    "flex items-center px-4 py-3 rounded-lg transition-all duration-200 group relative",
                                     isActive
                                         ? "text-white bg-white/5 font-semibold"
                                         : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -89,10 +88,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 {isActive && (
                                     <div className="absolute left-0 w-1 h-6 bg-primary-light rounded-r-full" />
                                 )}
-                                <Icon className={cn(
-                                    "w-5 h-5 transition-colors",
-                                    isActive ? "text-primary-light" : "group-hover:text-white"
-                                )} />
                                 <span className="text-[14px]">{item.name}</span>
                             </Link>
                         );
@@ -101,9 +96,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="p-4 border-t border-slate-800/50">
                     <button
                         onClick={handleSignOut}
-                        className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 hover:text-red-400 hover:bg-red-400/5 rounded-lg transition-all group"
+                        className="flex items-center px-4 py-3 w-full text-slate-400 hover:text-red-400 hover:bg-red-400/5 rounded-lg transition-all group"
                     >
-                        <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         <span className="text-[14px]">Sign Out</span>
                     </button>
                 </div>
@@ -124,7 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-3">
                             <Image src="/logo.png" alt="Logo" width={28} height={28} className="object-contain" />
-                            <span className="font-bold text-lg">Wellness</span>
+                            <span className="font-bold text-lg">Wellness Pharmacy</span>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="p-2 text-slate-400 hover:text-white">
                             <X className="w-6 h-6" />
@@ -133,7 +127,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <nav className="space-y-2 flex-1">
                         {navItems.map((item) => {
-                            const Icon = item.icon;
                             const isActive = pathname === item.href;
                             return (
                                 <Link
@@ -141,11 +134,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     href={item.href}
                                     onClick={() => setSidebarOpen(false)}
                                     className={cn(
-                                        "flex items-center gap-4 px-4 py-4 rounded-xl transition-all",
+                                        "flex items-center px-4 py-4 rounded-xl transition-all",
                                         isActive ? "bg-primary-light text-white font-bold" : "text-slate-400 hover:bg-white/5 hover:text-white"
                                     )}
                                 >
-                                    <Icon className="w-6 h-6" />
                                     <span className="text-base">{item.name}</span>
                                 </Link>
                             );
@@ -153,8 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </nav>
 
                     <div className="mt-auto pt-6 border-t border-slate-800/50">
-                        <button onClick={handleSignOut} className="flex items-center gap-4 px-4 py-4 w-full text-red-400 bg-red-400/5 rounded-xl">
-                            <LogOut className="w-6 h-6" />
+                        <button onClick={handleSignOut} className="flex items-center px-4 py-4 w-full text-red-400 bg-red-400/5 rounded-xl">
                             <span className="text-base font-bold">Sign Out</span>
                         </button>
                     </div>
@@ -181,11 +172,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <div className="relative">
                             <button
                                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                                className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-all relative group"
+                                className="px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-all flex items-center gap-2 group"
                             >
-                                <Bell className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                <Bell className="w-4 h-4" />
+                                <span className="text-xs font-bold uppercase tracking-wider">Alerts</span>
                                 {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-in fade-in scale-in duration-300">
+                                    <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-in fade-in scale-in duration-300">
                                         {unreadCount}
                                     </span>
                                 )}
@@ -209,7 +201,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         <div className="max-h-[450px] overflow-y-auto">
                                             {notifications.length === 0 ? (
                                                 <div className="p-8 text-center text-slate-400">
-                                                    <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
                                                     <p className="text-sm">No new messages</p>
                                                 </div>
                                             ) : (

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getInventory, addMedicine, deleteMedicine } from '@/app/actions/inventory';
 import { getUnreadCount } from '@/app/actions/notifications';
-import { Plus, Search, Filter, AlertTriangle, Package, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Search, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -30,8 +30,10 @@ export default function InventoryPage() {
     const [formData, setFormData] = useState({
         name: '',
         batch_no: '',
+        hsn_code: '',
         expiry_date: '',
         price: '',
+        gst_rate: '5',
         stock: '',
         location: ''
     });
@@ -63,7 +65,7 @@ export default function InventoryPage() {
             if (result.error) throw new Error(result.error);
 
             setIsModalOpen(false);
-            setFormData({ name: '', batch_no: '', expiry_date: '', price: '', stock: '', location: '' });
+            setFormData({ name: '', batch_no: '', hsn_code: '', expiry_date: '', price: '', gst_rate: '5', stock: '', location: '' });
             fetchInventory();
             showAlert('Success', 'Medicine added successfully to inventory.', 'success');
         } catch (error: any) {
@@ -112,9 +114,8 @@ export default function InventoryPage() {
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="mb-4">
                         <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Items</p>
-                        <Package className="w-5 h-5 text-blue-600" />
                     </div>
                     <h3 className="text-3xl font-bold text-slate-900 tracking-tight">{medicines.length}</h3>
                     <p className="text-xs text-slate-400 mt-1">Active inventory listing</p>
@@ -124,9 +125,8 @@ export default function InventoryPage() {
                     "bg-white p-6 rounded-2xl border shadow-sm transition-all hover:shadow-md",
                     unreadAlerts > 0 ? "border-amber-100 bg-amber-50/10" : "border-slate-100"
                 )}>
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="mb-4">
                         <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Low Stock Alerts</p>
-                        <AlertTriangle className={cn("w-5 h-5", unreadAlerts > 0 ? "text-amber-600" : "text-slate-400")} />
                     </div>
                     <h3 className={cn(
                         "text-3xl font-bold tracking-tight",
@@ -157,9 +157,9 @@ export default function InventoryPage() {
                         <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100 uppercase tracking-tighter text-[11px]">
                             <tr>
                                 <th className="px-8 py-5">Medicine Name</th>
-                                <th className="px-6 py-5">Batch No</th>
+                                <th className="px-6 py-5">Batch / HSN</th>
                                 <th className="px-6 py-5">Expiry</th>
-                                <th className="px-6 py-5">Price</th>
+                                <th className="px-6 py-5">Price (GST%)</th>
                                 <th className="px-6 py-5">Stock</th>
                                 <th className="px-6 py-5">Location</th>
                                 <th className="px-8 py-5 text-right">Actions</th>
@@ -173,27 +173,35 @@ export default function InventoryPage() {
                             ) : (
                                 filteredMedicines.map((item) => (
                                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-900">{item.name}</td>
-                                        <td className="px-6 py-4 text-slate-500">{item.batch_no || '-'}</td>
+                                        <td className="px-8 py-4">
+                                            <p className="font-bold text-slate-900">{item.name}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <p className="text-slate-700 font-medium">{item.batch_no || '-'}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase">{item.hsn_code || '-'}</p>
+                                        </td>
                                         <td className="px-6 py-4 text-slate-500">
                                             {item.expiry_date ? format(new Date(item.expiry_date), 'MMM yyyy') : '-'}
                                         </td>
-                                        <td className="px-6 py-4 font-medium">₹{item.price}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.stock < 10
-                                                ? 'bg-red-100 text-red-700'
+                                            <p className="font-black text-slate-900">₹{item.price}</p>
+                                            <p className="text-[10px] text-emerald-600 font-bold">GST: {item.gst_rate}%</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.stock < 10
+                                                ? 'bg-red-50 text-red-600 border border-red-100'
                                                 : item.stock < 50
-                                                    ? 'bg-amber-100 text-amber-700'
-                                                    : 'bg-emerald-100 text-emerald-700'
+                                                    ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                                                    : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                                 }`}>
                                                 {item.stock} Units
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500">{item.location || '-'}</td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-slate-500 font-medium">{item.location || '-'}</td>
+                                        <td className="px-8 py-4 text-right">
                                             <button
                                                 onClick={() => confirmDelete(item.id, item.name)}
-                                                className="p-1 text-slate-400 hover:text-red-600 transition-colors"
+                                                className="p-1 text-slate-300 hover:text-red-500 transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -208,76 +216,103 @@ export default function InventoryPage() {
 
             {/* Add Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-slate-800">Add New Medicine</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Add New Medicine</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-lg border border-slate-200 shadow-sm transition-all">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Medicine Name</label>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Medicine Name</label>
                                 <input
                                     required
                                     type="text"
-                                    className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-primary-light outline-none"
+                                    className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light focus:ring-4 focus:ring-primary-light/10 outline-none transition-all"
+                                    placeholder="Medicine brand name..."
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Batch No</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Batch No</label>
                                     <input
                                         type="text"
-                                        className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-primary-light outline-none"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                        placeholder="e.g. 25E31G83"
                                         value={formData.batch_no}
                                         onChange={e => setFormData({ ...formData, batch_no: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Expiry Date</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">HSN Code</label>
                                     <input
-                                        type="date"
-                                        className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-primary-light outline-none"
-                                        value={formData.expiry_date}
-                                        onChange={e => setFormData({ ...formData, expiry_date: e.target.value })}
+                                        type="text"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                        placeholder="3004xxxx"
+                                        value={formData.hsn_code}
+                                        onChange={e => setFormData({ ...formData, hsn_code: e.target.value })}
                                     />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Price (₹)</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
                                     <input
                                         required
                                         type="number"
                                         min="0"
                                         step="0.01"
-                                        className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-primary-light outline-none"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all font-bold"
                                         value={formData.price}
                                         onChange={e => setFormData({ ...formData, price: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Stock Quantity</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">GST Rate (%)</label>
+                                    <select
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all font-bold"
+                                        value={formData.gst_rate}
+                                        onChange={e => setFormData({ ...formData, gst_rate: e.target.value })}
+                                    >
+                                        <option value="0">0% (Exempt)</option>
+                                        <option value="5">5% (Common)</option>
+                                        <option value="12">12% (Standard)</option>
+                                        <option value="18">18% (Luxury)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Stock Quantity</label>
                                     <input
                                         required
                                         type="number"
                                         min="0"
-                                        className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-primary-light outline-none"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
                                         value={formData.stock}
                                         onChange={e => setFormData({ ...formData, stock: e.target.value })}
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Expiry Date</label>
+                                    <input
+                                        type="date"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                        value={formData.expiry_date}
+                                        onChange={e => setFormData({ ...formData, expiry_date: e.target.value })}
+                                    />
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Location / Rack</label>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Location / Rack</label>
                                 <input
                                     type="text"
                                     placeholder="e.g. Rack A-12"
-                                    className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-primary-light outline-none"
+                                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
                                     value={formData.location}
                                     onChange={e => setFormData({ ...formData, location: e.target.value })}
                                 />
@@ -340,13 +375,10 @@ export default function InventoryPage() {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="p-8 text-center">
                             <div className={cn(
-                                "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
-                                alertConfig.type === 'success' ? "bg-emerald-50 text-emerald-600" :
-                                    alertConfig.type === 'error' ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
-                            )}>
-                                {alertConfig.type === 'success' ? <Package className="w-8 h-8" /> :
-                                    alertConfig.type === 'error' ? <X className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
-                            </div>
+                                "w-2 h-16 rounded-full mx-auto mb-6",
+                                alertConfig.type === 'success' ? "bg-emerald-500" :
+                                    alertConfig.type === 'error' ? "bg-red-500" : "bg-blue-500"
+                            )} />
                             <h2 className="text-xl font-bold text-slate-900 mb-2">{alertConfig.title}</h2>
                             <p className="text-slate-500 mb-8 leading-relaxed">
                                 {alertConfig.message}
