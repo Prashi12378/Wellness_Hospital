@@ -11,7 +11,14 @@ export async function getInventory() {
                 name: 'asc',
             },
         });
-        return { data: medicines };
+
+        // Convert Decimal to number for serialization
+        const serializedMedicines = medicines.map(m => ({
+            ...m,
+            price: Number(m.price)
+        }));
+
+        return { data: serializedMedicines };
     } catch (error) {
         console.error('Error fetching inventory:', error);
         return { error: 'Failed to fetch inventory' };

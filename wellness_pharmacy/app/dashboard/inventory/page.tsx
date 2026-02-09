@@ -2,14 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import { getInventory, addMedicine, deleteMedicine } from '@/app/actions/inventory';
+import { getUnreadCount } from '@/app/actions/notifications';
 import { Plus, Search, Filter, AlertTriangle, Package, Edit, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function InventoryPage() {
     const [medicines, setMedicines] = useState<any[]>([]);
+    const [unreadAlerts, setUnreadAlerts] = useState(0);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Custom Modal States
+    const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
+        isOpen: false,
+        id: '',
+        name: ''
+    });
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info' }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info'
+    });
+
     const [formData, setFormData] = useState({
         name: '',
         batch_no: '',
@@ -26,10 +43,16 @@ export default function InventoryPage() {
     const fetchInventory = async () => {
         setLoading(true);
         const { data, error } = await getInventory();
+        const { count } = await getUnreadCount();
 
         if (data) setMedicines(data);
-        if (error) alert(error);
+        if (count !== undefined) setUnreadAlerts(count);
+        if (error) showAlert('Error', error, 'error');
         setLoading(false);
+    };
+
+    const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+        setAlertConfig({ isOpen: true, title, message, type });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -42,16 +65,27 @@ export default function InventoryPage() {
             setIsModalOpen(false);
             setFormData({ name: '', batch_no: '', expiry_date: '', price: '', stock: '', location: '' });
             fetchInventory();
+            showAlert('Success', 'Medicine added successfully to inventory.', 'success');
         } catch (error: any) {
-            alert('Error adding medicine: ' + error.message);
+            showAlert('Add Failed', error.message, 'error');
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this medicine?')) return;
+    const confirmDelete = (id: string, name: string) => {
+        setDeleteConfirm({ isOpen: true, id, name });
+    };
+
+    const handleDelete = async () => {
+        const { id } = deleteConfirm;
+        setDeleteConfirm({ ...deleteConfirm, isOpen: false });
+
         const result = await deleteMedicine(id);
-        if (result.success) fetchInventory();
-        else alert(result.error);
+        if (result.success) {
+            fetchInventory();
+            showAlert('Deleted', 'Medicine record removed successfully.', 'success');
+        } else {
+            showAlert('Delete Failed', result.error || 'Could not delete medicine.', 'error');
+        }
     };
 
     const filteredMedicines = medicines.filter(m =>
@@ -93,7 +127,7 @@ export default function InventoryPage() {
                     <div>
                         <p className="text-sm text-slate-500 font-medium">Low Stock Alerts</p>
                         <h3 className="text-2xl font-bold text-slate-800">
-                            {medicines.filter(m => m.stock < 10).length}
+                            {unreadAlerts}
                         </h3>
                     </div>
                 </div>
@@ -153,7 +187,7 @@ export default function InventoryPage() {
                                         <td className="px-6 py-4 text-slate-500">{item.location || '-'}</td>
                                         <td className="px-6 py-4 text-right">
                                             <button
-                                                onClick={() => handleDelete(item.id)}
+                                                onClick={() => confirmDelete(item.id, item.name)}
                                                 className="p-1 text-slate-400 hover:text-red-600 transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -169,7 +203,7 @@ export default function InventoryPage() {
 
             {/* Add Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-slate-800">Add New Medicine</h2>
@@ -259,6 +293,70 @@ export default function InventoryPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Delete Confirmation Modal */}
+            {deleteConfirm.isOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-8 text-center">
+                            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Trash2 className="w-8 h-8" />
+                            </div>
+                            <h2 className="text-xl font-bold text-slate-900 mb-2">Are you sure?</h2>
+                            <p className="text-slate-500 mb-8 leading-relaxed">
+                                You are about to delete <span className="font-bold text-slate-900">"{deleteConfirm.name}"</span>.
+                                This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteConfirm({ ...deleteConfirm, isOpen: false })}
+                                    className="flex-1 h-11 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-all active:scale-95"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    className="flex-1 h-11 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95"
+                                >
+                                    Yes, Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Branded Alert Modal */}
+            {alertConfig.isOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-8 text-center">
+                            <div className={cn(
+                                "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
+                                alertConfig.type === 'success' ? "bg-emerald-50 text-emerald-600" :
+                                    alertConfig.type === 'error' ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+                            )}>
+                                {alertConfig.type === 'success' ? <Package className="w-8 h-8" /> :
+                                    alertConfig.type === 'error' ? <X className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
+                            </div>
+                            <h2 className="text-xl font-bold text-slate-900 mb-2">{alertConfig.title}</h2>
+                            <p className="text-slate-500 mb-8 leading-relaxed">
+                                {alertConfig.message}
+                            </p>
+                            <button
+                                onClick={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                                className={cn(
+                                    "w-full h-11 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg",
+                                    alertConfig.type === 'success' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200" :
+                                        alertConfig.type === 'error' ? "bg-red-600 hover:bg-red-700 shadow-red-200" : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+                                )}
+                            >
+                                OK
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
