@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Siren, Ambulance, FlaskConical, HeartPulse, UserRoundSearch, ChevronRight, Activity, Heart, Stethoscope, User } from "lucide-react";
+import { ArrowRight, Siren, Ambulance, FlaskConical, HeartPulse, UserRoundSearch, ChevronRight, Activity, Heart, Stethoscope, User, CalendarCheck } from "lucide-react";
 import BookingButton from "@/components/BookingButton";
 
 export default function Home() {
@@ -52,16 +52,8 @@ export default function Home() {
           <div className="bg-white rounded-2xl shadow-xl p-4 md:shadow-none md:p-0 md:bg-transparent border border-slate-100/50 md:border-none">
 
             {/* Mobile: Horizontal Scrollable List */}
-            <div className="flex md:grid md:grid-cols-5 overflow-x-auto hide-scrollbar gap-4 md:gap-6 snap-x snap-mandatory pb-2 md:pb-0 justify-center">
-
-              {/* Book Appointment (Mobile Only Primary Action) */}
-              <Link href="/appointments" className="min-w-[85px] snap-center flex flex-col items-center gap-2 group md:hidden">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-blue-200 group-active:scale-95 transition-transform">
-                  <ArrowRight className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-[11px] font-bold text-slate-700 text-center leading-tight">Book Now</span>
-              </Link>
-
+            <div className="flex md:grid md:grid-cols-6 overflow-x-auto hide-scrollbar gap-4 md:gap-6 snap-x snap-mandatory pb-2 md:pb-0 justify-center">
+              <QuickAction icon={CalendarCheck} label="Book Now" href="/appointments" color="text-blue-600" bg="bg-blue-50" />
               <QuickAction icon={Siren} label="Emergency" href="/emergency" color="text-red-500" bg="bg-red-50" />
               <QuickAction icon={Ambulance} label="Ambulance" href="/ambulance" color="text-blue-500" bg="bg-blue-50" />
               <QuickAction icon={UserRoundSearch} label="Doctors" href="/doctors" color="text-teal-500" bg="bg-teal-50" />
