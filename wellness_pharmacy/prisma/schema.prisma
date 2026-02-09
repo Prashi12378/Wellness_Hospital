@@ -175,3 +175,13 @@ model Ledger {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String   // e.g., 'low_stock', 'expiry', 'system'
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

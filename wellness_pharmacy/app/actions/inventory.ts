@@ -2,6 +2,7 @@
 
 import { prisma as db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { createNotification } from './notifications';
 
 export async function getInventory() {
     try {
@@ -19,16 +20,27 @@ export async function getInventory() {
 
 export async function addMedicine(formData: any) {
     try {
-        await db.pharmacyInventory.create({
+        const stock = parseInt(formData.stock);
+        const medicine = await db.pharmacyInventory.create({
             data: {
                 name: formData.name,
                 batch_no: formData.batch_no,
                 expiry_date: formData.expiry_date ? new Date(formData.expiry_date) : null,
                 price: parseFloat(formData.price),
-                stock: parseInt(formData.stock),
+                stock: stock,
                 location: formData.location,
             },
         });
+
+        // Trigger alert if stock is low
+        if (stock < 10) {
+            await createNotification(
+                'Low Stock Alert',
+                `Medicine "${formData.name}" is low on stock (${stock} units).`,
+                'low_stock'
+            );
+        }
+
         revalidatePath('/dashboard/inventory');
         return { success: true };
     } catch (error) {
