@@ -57,7 +57,7 @@ function AppointmentForm() {
                     <div className="space-y-3">
                         <p className="text-sm text-muted-foreground font-medium uppercase tracking-wide">For Enquiries & Appointments</p>
                         <a
-                            href="tel:+916366662245"
+                            href="tel:+918105666338"
                             className="block text-3xl font-bold text-foreground hover:text-primary transition-colors"
                         >
                             +91 63666 62245

@@ -69,7 +69,7 @@ export default function BookingButton({ className, text = "Book Appointment" }: 
                             <div className="space-y-3">
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Call for Booking</p>
                                 <a
-                                    href="tel:+916366662245"
+                                    href="tel:+918105666338"
                                     className="block text-3xl font-extrabold text-slate-900 hover:text-primary transition-colors tracking-tight"
                                 >
                                     +91 63666 62245
