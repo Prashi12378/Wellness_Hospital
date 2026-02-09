@@ -136,7 +136,21 @@ export async function createInvoice(data: {
         revalidatePath('/dashboard/inventory');
         revalidatePath('/dashboard');
 
-        return { success: true, invoice };
+        return {
+            success: true,
+            invoice: {
+                ...invoice,
+                subTotal: Number(invoice.subTotal),
+                totalGst: Number(invoice.totalGst),
+                grandTotal: Number(invoice.grandTotal),
+                items: invoice.items.map(item => ({
+                    ...item,
+                    mrp: Number(item.mrp),
+                    gstRate: Number(item.gstRate),
+                    amount: Number(item.amount)
+                }))
+            }
+        };
     } catch (error: any) {
         console.error('Create invoice error full details:', error);
         return { error: 'Failed to create invoice: ' + (error.message || 'Unknown error') };

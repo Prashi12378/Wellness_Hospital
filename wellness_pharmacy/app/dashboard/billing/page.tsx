@@ -42,6 +42,36 @@ export default function BillingPage() {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
+    // Barcode Scanner Logic
+    useEffect(() => {
+        let buffer = '';
+        let lastKeyTime = Date.now();
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const currentTime = Date.now();
+            const char = e.key;
+
+            // If time between keys is long, reset buffer (it's manual typing, not a scanner)
+            if (currentTime - lastKeyTime > 100) {
+                buffer = '';
+            }
+            lastKeyTime = currentTime;
+
+            if (char === 'Enter') {
+                if (buffer.length > 2) {
+                    console.log('Scanned Barcode:', buffer); // Verify if scanner reads properly
+                    setSearchTerm(buffer); // Set search term to trigger the existing search effect
+                    buffer = '';
+                }
+            } else if (char.length === 1) {
+                buffer += char;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     const addToCart = (medicine: any) => {
         const existing = cart.find(item => item.id === medicine.id);
         if (existing) {
