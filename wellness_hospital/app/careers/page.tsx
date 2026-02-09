@@ -44,23 +44,23 @@ export default function CareersPage() {
                     </p>
 
                     <div className="flex flex-col md:flex-row items-center justify-center gap-6 pt-4">
-                        <a href="mailto:hr@wellness-hospital.health" className="flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-all group min-w-[200px]">
+                        <a href="mailto:wellnesshospital8383@gmail.com" className="flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-all group min-w-[200px]">
                             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                                 <Mail className="w-5 h-5 text-primary" />
                             </div>
                             <div className="text-left">
                                 <p className="text-xs text-muted-foreground font-medium">Email CV to</p>
-                                <p className="text-sm font-bold text-foreground">hr@wellness-hospital.health</p>
+                                <p className="text-sm font-bold text-foreground">wellnesshospital8383@gmail.com</p>
                             </div>
                         </a>
 
-                        <a href="tel:+1234567890" className="flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-all group min-w-[200px]">
+                        <a href="tel:+918197987901" className="flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-all group min-w-[200px]">
                             <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
                                 <Phone className="w-5 h-5 text-green-600" />
                             </div>
                             <div className="text-left">
                                 <p className="text-xs text-muted-foreground font-medium">Call HR Team</p>
-                                <p className="text-sm font-bold text-foreground">+1 (234) 567-890</p>
+                                <p className="text-sm font-bold text-foreground">+91 81979 87901</p>
                             </div>
                         </a>
                     </div>
