@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wellness Hospital | Pharmacy Portal",
+  title: "Wellness Pharmacy Portal",
   description: "Pharmacy Inventory and Management System",
   icons: {
     icon: "/favicon.ico",
