@@ -41,9 +41,9 @@ model User {
   image         String?
   password      String?
   accounts      Account[]
+  transactions  Ledger[]
   profile       Profile?
   sessions      Session[]
-  transactions  Ledger[]
 }
 
 model VerificationToken {
@@ -150,6 +150,20 @@ model PharmacyInventory {
   updatedAt        DateTime
 }
 
+model Ledger {
+  id              String   @id @default(cuid())
+  transactionType String
+  category        String
+  description     String
+  amount          Decimal
+  paymentMethod   String
+  transactionDate DateTime
+  recordedBy      String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [recordedBy], references: [id])
+}
+
 enum HealthPackageType {
   GENERAL
   BLOOD_COLLECTION
@@ -160,18 +174,4 @@ enum UserRole {
   doctor
   staff
   patient
-}
-
-model Ledger {
-  id              String   @id @default(cuid())
-  transactionType String
-  category        String
-  description     String
-  amount          Decimal
-  paymentMethod   String
-  transactionDate DateTime
-  recordedBy      String
-  user            User     @relation(fields: [recordedBy], references: [id])
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
 }

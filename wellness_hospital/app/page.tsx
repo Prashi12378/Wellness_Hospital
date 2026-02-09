@@ -1,9 +1,25 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Siren, Ambulance, FlaskConical, HeartPulse, UserRoundSearch, ChevronRight, Activity, Heart, Stethoscope, User, CalendarCheck } from "lucide-react";
+import { ArrowRight, Siren, Ambulance, FlaskConical, HeartPulse, UserRoundSearch, ChevronRight, Activity, User, CalendarCheck, TestTube, Stethoscope } from "lucide-react";
 import BookingButton from "@/components/BookingButton";
+import { prisma } from "@/lib/db";
 
-export default function Home() {
+export const revalidate = 0; // Ensure dynamic fetching from DB
+
+export default async function Home() {
+  // Fetch active health packages from the database
+  const packages = await prisma.healthPackage.findMany({
+    where: {
+      // You might want to filter by active/popular if you have that flag, 
+      // seeing as 'popular' exists in schema, let's prioritize them or show all.
+      // For now, let's just search all, maybe limit to 5.
+    },
+    orderBy: {
+      popular: 'desc' // Show popular ones first
+    },
+    take: 5
+  });
+
   return (
     <main className="flex min-h-screen flex-col bg-slate-50">
 
@@ -84,7 +100,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. EXCLUSIVE PACKAGES (New Content) */}
+      {/* 4. EXCLUSIVE PACKAGES (Dynamic from DB) */}
       <section className="w-full py-8 bg-slate-50 border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 space-y-4">
           <div className="flex items-center justify-between px-1">
@@ -95,27 +111,26 @@ export default function Home() {
           </div>
 
           <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2 -mx-4 px-4 snap-x snap-mandatory">
-            <PackageCard
-              title="Full Body Checkup"
-              price="₹2,999"
-              color="bg-white border-l-4 border-primary"
-              textColor="text-slate-800"
-              items={["Blood Test", "ECG", "X-Ray", "Consultation"]}
-            />
-            <PackageCard
-              title="Heart Health"
-              price="₹1,499"
-              color="bg-white border-l-4 border-sky-400"
-              textColor="text-slate-800"
-              items={["Lipid Profile", "TMT", "Echo", "Cardiologist"]}
-            />
-            <PackageCard
-              title="Diabetes Care"
-              price="₹999"
-              color="bg-white border-l-4 border-blue-300"
-              textColor="text-slate-800"
-              items={["HbA1c", "Sugar Fasting", "Diet Chart"]}
-            />
+            {packages.length > 0 ? (
+              packages.map((pkg) => (
+                <PackageCard
+                  key={pkg.id}
+                  title={pkg.name}
+                  price={`₹${pkg.price}`}
+                  // Dynamically assign simple colors based on index or type if needed, fallback to default
+                  color="bg-white border-l-4 border-primary"
+                  textColor="text-slate-800"
+                  items={Array.isArray(pkg.includes) ? pkg.includes as string[] : []}
+                />
+              ))
+            ) : (
+              // Fallback / Loading state or Empty state if no packages found
+              <p className="text-slate-500 text-sm italic pl-1">No active packages at the moment.</p>
+            )}
+
+            {/* Keeping one hardcoded 'featured' one just in case DB is empty for demo, 
+                or remove if strictly DB only. User said "connect", so rely on DB mainly. 
+                I will prioritize DB results. */}
           </div>
         </div>
       </section>
@@ -156,17 +171,19 @@ function ServiceCard({ title, desc, image, href, icon: Icon }: { title: string, 
 }
 
 function PackageCard({ title, price, color, textColor, items }: { title: string, price: string, color: string, textColor: string, items: string[] }) {
+  // FIXED: Removed extra spaces in Tailwind classes (min - w - [260px] -> min-w-[260px])
   return (
-    <div className={`min - w - [260px] snap - center rounded - 2xl p - 5 ${color} shadow - sm border border - slate - 100 relative overflow - hidden group hover: shadow - md transition - shadow`}>
+    <div className={`min-w-[260px] snap-center rounded-2xl p-5 ${color} shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow`}>
       {/* Background Icon (Decorative) */}
       <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
 
-      <h3 className={`text - lg font - bold mb - 1 ${textColor} `}>{title}</h3>
-      <div className={`text - 2xl font - bold mb - 3 text - primary`}>{price}</div>
+      <h3 className={`text-lg font-bold mb-1 ${textColor} `}>{title}</h3>
+      <div className={`text-2xl font-bold mb-3 text-primary`}>{price}</div>
       <div className="space-y-1">
-        {items.map((item, i) => (
+        {items.slice(0, 4).map((item, i) => (
           <div key={i} className="text-xs font-medium bg-slate-50 text-slate-600 w-fit px-2 py-0.5 rounded-md inline-block mr-1 mb-1 border border-slate-100">{item}</div>
         ))}
+        {items.length > 4 && <span className="text-xs text-slate-400">+{items.length - 4} more</span>}
       </div>
       <div className="mt-4 text-xs font-semibold text-primary flex items-center gap-1 opacity-90 group-hover:opacity-100">
         Book Now <ArrowRight className="w-3 h-3" />
