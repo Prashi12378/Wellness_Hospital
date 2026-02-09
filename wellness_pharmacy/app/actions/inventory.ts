@@ -71,3 +71,29 @@ export async function deleteMedicine(id: string) {
         return { error: 'Failed to delete medicine' };
     }
 }
+
+export async function updateStock(id: string, qty: number) {
+    try {
+        const medicine = await db.pharmacyInventory.update({
+            where: { id },
+            data: {
+                stock: { increment: qty }
+            }
+        });
+
+        // Trigger alert if stock is low
+        if (medicine.stock < (medicine.autoReorderPoint || 10)) {
+            await createNotification(
+                'Low Stock Alert',
+                `Medicine "${medicine.name}" is low on stock (${medicine.stock} units).`,
+                'low_stock'
+            );
+        }
+
+        revalidatePath('/dashboard/inventory');
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating stock:', error);
+        return { error: 'Failed to update stock' };
+    }
+}

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getInventory, addMedicine, deleteMedicine } from '@/app/actions/inventory';
+import { getInventory, addMedicine, deleteMedicine, updateStock } from '@/app/actions/inventory';
 import { getUnreadCount } from '@/app/actions/notifications';
-import { Plus, Search, Trash2, X } from 'lucide-react';
+import { Plus, Search, Trash2, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +27,15 @@ export default function InventoryPage() {
         type: 'info'
     });
 
+    // Stock Update Modal State
+    const [stockModal, setStockModal] = useState<{ isOpen: boolean; id: string; name: string; currentStock: number }>({
+        isOpen: false,
+        id: '',
+        name: '',
+        currentStock: 0
+    });
+    const [stockToAdd, setStockToAdd] = useState('');
+
     const [formData, setFormData] = useState({
         name: '',
         batch_no: '',
@@ -41,6 +50,58 @@ export default function InventoryPage() {
     useEffect(() => {
         fetchInventory();
     }, []);
+
+    // Barcode Listener
+    useEffect(() => {
+        let buffer = '';
+        let lastKeyTime = Date.now();
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if inside an input field
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+            const currentTime = Date.now();
+            const char = e.key;
+
+            if (currentTime - lastKeyTime > 100) {
+                buffer = '';
+            }
+            lastKeyTime = currentTime;
+
+            if (char === 'Enter') {
+                if (buffer.length > 2) {
+                    handleBarcodeScan(buffer);
+                    buffer = '';
+                }
+            } else if (char.length === 1) {
+                buffer += char;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [medicines]); // Dependency on medicines to check existence
+
+    const handleBarcodeScan = (code: string) => {
+        console.log('Scanned:', code);
+        // Find if medicine exists (by batch_no or name)
+        const existing = medicines.find(m =>
+            (m.batch_no && m.batch_no.toLowerCase() === code.toLowerCase()) ||
+            (m.name.toLowerCase() === code.toLowerCase())
+        );
+
+        if (existing) {
+            // Open Stock Update Modal
+            openStockModal(existing);
+            showAlert('Item Found', `Scanned "${existing.name}". Enter quantity to add.`, 'info');
+        } else {
+            // Open Add New Modal
+            setFormData(prev => ({ ...prev, batch_no: code }));
+            setIsModalOpen(true);
+            showAlert('New Item', `Item not found. Batch No "${code}" pre-filled. Not found`, 'info');
+        }
+    };
 
     const fetchInventory = async () => {
         setLoading(true);
@@ -90,6 +151,31 @@ export default function InventoryPage() {
         }
     };
 
+    const openStockModal = (item: any) => {
+        setStockModal({
+            isOpen: true,
+            id: item.id,
+            name: item.name,
+            currentStock: item.stock
+        });
+        setStockToAdd('');
+    };
+
+    const handleStockUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const qty = parseInt(stockToAdd);
+        if (!qty || qty <= 0) return;
+
+        const result = await updateStock(stockModal.id, qty);
+        if (result.success) {
+            setStockModal({ ...stockModal, isOpen: false });
+            fetchInventory();
+            showAlert('Stock Updated', `Added ${qty} units to ${stockModal.name}.`, 'success');
+        } else {
+            showAlert('Update Failed', result.error || 'Failed to update stock', 'error');
+        }
+    };
+
     const filteredMedicines = medicines.filter(m =>
         m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (m.batch_no && m.batch_no.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -102,13 +188,22 @@ export default function InventoryPage() {
                     <h1 className="text-2xl font-bold text-slate-900">Inventory Management</h1>
                     <p className="text-slate-500">Track stock levels, expiry dates, and medicine details.</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary-light hover:bg-primary text-white px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
-                >
-                    <Plus className="w-5 h-5" />
-                    Add Medicine
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={fetchInventory}
+                        className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+                        title="Refresh Inventory"
+                    >
+                        <RefreshCw className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 bg-primary-light hover:bg-primary text-white px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Add Medicine
+                    </button>
+                </div>
             </div>
 
             {/* Stats Overview */}
@@ -143,7 +238,7 @@ export default function InventoryPage() {
                 <Search className="w-5 h-5 text-slate-400" />
                 <input
                     type="text"
-                    placeholder="Search by medicine name or batch no..."
+                    placeholder="Search by medicine name or batch no... (or Scan Barcode)"
                     className="flex-1 outline-none text-sm"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
@@ -198,10 +293,18 @@ export default function InventoryPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-500 font-medium">{item.location || '-'}</td>
-                                        <td className="px-8 py-4 text-right">
+                                        <td className="px-8 py-4 text-right flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => openStockModal(item)}
+                                                className="p-1 text-slate-300 hover:text-blue-500 transition-colors"
+                                                title="Add Stock"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 onClick={() => confirmDelete(item.id, item.name)}
                                                 className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                                                title="Delete"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -213,6 +316,42 @@ export default function InventoryPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Add Stock Modal */}
+            {stockModal.isOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Add Stock</h2>
+                            <button onClick={() => setStockModal({ ...stockModal, isOpen: false })} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleStockUpdate} className="p-6 space-y-4">
+                            <div>
+                                <p className="text-sm text-slate-500 mb-2">Adding stock for <span className="font-bold text-slate-900">{stockModal.name}</span></p>
+                                <p className="text-xs text-slate-400 mb-4">Current Stock: {stockModal.currentStock}</p>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Quantity to Add</label>
+                                <input
+                                    autoFocus
+                                    required
+                                    type="number"
+                                    min="1"
+                                    className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light focus:ring-4 focus:ring-primary-light/10 outline-none transition-all font-bold text-lg"
+                                    value={stockToAdd}
+                                    onChange={e => setStockToAdd(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full h-11 bg-primary-light hover:bg-primary text-white font-medium rounded-lg shadow-lg shadow-primary-light/20 transition-colors"
+                            >
+                                Update Stock
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Add Modal */}
             {isModalOpen && (
@@ -400,5 +539,3 @@ export default function InventoryPage() {
         </div>
     );
 }
-
-
