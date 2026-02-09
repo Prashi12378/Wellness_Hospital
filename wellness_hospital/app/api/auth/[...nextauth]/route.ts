@@ -20,42 +20,53 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                // --- EMAIL/PASSWORD LOGIN PATH ---
-                if (!credentials?.email || !credentials?.password) {
-                    return null;
-                }
+                console.log("AUTH: authorize called with email:", credentials?.email);
 
-                const email = credentials.email.trim();
-                const password = credentials.password.trim();
+                try {
+                    // Wrap in timeout to prevent hanging
+                    const authPromise = (async () => {
+                        // --- EMAIL/PASSWORD LOGIN PATH ---
+                        if (!credentials?.email || !credentials?.password) {
+                            console.log("AUTH: Missing credentials");
+                            return null;
+                        }
 
-                // 1. Check if user exists
-                const user = await prisma.user.findUnique({
-                    where: { email },
-                    include: { profile: true }
-                });
+                        const email = credentials.email.trim();
+                        const password = credentials.password.trim();
 
-                if (!user || !user.password) {
-                    console.log("LOGIN DEBUG: User not found or has no password set.", email);
-                    return null;
-                }
+                        console.log("AUTH: Looking up user:", email);
 
-                // 2. Validate Password
-                const isValid = await bcrypt.compare(password, user.password);
-                console.log("LOGIN DEBUG: Password validation result:", isValid ? "SUCCESS" : "FAILED", "for user:", email);
+                        // 1. Check if user exists
+                        const user = await prisma.user.findUnique({
+                            where: { email },
+                            include: { profile: true }
+                        });
 
-                if (!isValid) {
-                    return null;
-                }
+                        if (!user || !user.password) {
+                            console.log("AUTH: User not found or has no password set:", email);
+                            return null;
+                        }
 
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    image: user.image,
-                    role: user.profile?.role || "patient",
-                    uhid: user.profile?.uhid
-                };
-            }
+                        console.log("AUTH: User found, validating password");
+
+                        // 2. Validate Password
+                        const isValid = await bcrypt.compare(password, user.password);
+                        console.log("AUTH: Password validation result:", isValid ? "SUCCESS" : "FAILED");
+
+                        if (!isValid) {
+                            return null;
+                        }
+
+                        console.log("AUTH: Returning user object");
+                        return {
+                            id: user.id,
+                            email: user.email,
+                            name: user.name,
+                            image: user.image,
+                            role: user.profile?.role || "patient",
+                            uhid: user.profile?.uhid
+                        };
+                    }
         })
     ],
     callbacks: {
