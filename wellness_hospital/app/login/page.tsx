@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { sendOtp } from '@/app/actions/auth-otp';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -14,21 +15,39 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [loginMode, setLoginMode] = useState<'password' | 'otp'>('password');
+    const [otp, setOtp] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setSuccessMessage(null);
+
+        if (loginMode === 'otp' && !otpSent) {
+            // SEND OTP
+            const res = await sendOtp(email, 'email');
+            if (res.success) {
+                setOtpSent(true);
+                setSuccessMessage("OTP sent to your email!");
+            } else {
+                setError(res.error || "Failed to send OTP");
+            }
+            setLoading(false);
+            return;
+        }
 
         try {
-            const res = await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
-            });
+            const signInOptions = loginMode === 'password'
+                ? { email, password, redirect: false }
+                : { email, code: otp, redirect: false };
+
+            const res = await signIn('credentials', signInOptions);
 
             if (res?.error) {
-                setError("Invalid email or password");
+                setError("Invalid credentials");
                 setLoading(false);
             } else {
                 router.push('/portal');
@@ -85,11 +104,35 @@ export default function LoginPage() {
                         <p className="text-muted-foreground mt-2">Please enter your details to sign in.</p>
                     </div>
 
+                    <div className="flex justify-center mb-6">
+                        <div className="bg-muted p-1 rounded-lg inline-flex">
+                            <button
+                                onClick={() => setLoginMode('password')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${loginMode === 'password' ? 'bg-white shadow text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                                Password
+                            </button>
+                            <button
+                                onClick={() => setLoginMode('otp')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${loginMode === 'otp' ? 'bg-white shadow text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                                OTP
+                            </button>
+                        </div>
+                    </div>
+
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
                             <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 text-sm">
                                 <AlertCircle className="w-5 h-5 shrink-0" />
                                 {error}
+                            </div>
+                        )}
+
+                        {successMessage && (
+                            <div className="p-4 bg-green-50 border border-green-100 rounded-xl flex items-center gap-3 text-green-600 text-sm">
+                                <AlertCircle className="w-5 h-5 shrink-0" />
+                                {successMessage}
                             </div>
                         )}
 
@@ -105,41 +148,62 @@ export default function LoginPage() {
                                         className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-input rounded-xl outline-none focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground"
                                         placeholder="Enter your email"
                                         required
+                                        disabled={otpSent}
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
-                                <div className="relative group">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+
+                            {loginMode === 'password' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
+                                    <div className="relative group">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="w-full pl-12 pr-12 py-3.5 bg-muted/50 border border-input rounded-xl outline-none focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground"
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {loginMode === 'otp' && otpSent && (
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">One-Time Password (OTP)</label>
                                     <input
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full pl-12 pr-12 py-3.5 bg-muted/50 border border-input rounded-xl outline-none focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground"
-                                        placeholder="••••••••"
+                                        type="text"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        className="w-full px-4 py-3.5 bg-muted/50 border border-input rounded-xl outline-none focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground text-center tracking-widest text-lg"
+                                        placeholder="123456"
                                         required
+                                        maxLength={6}
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                    </button>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
-                                <span className="text-sm text-muted-foreground">Remember me</span>
-                            </label>
-                            <a href="#" className="text-sm font-semibold text-primary hover:underline">
-                                Forgot password?
-                            </a>
-                        </div>
+                        {loginMode === 'password' && (
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                                    <span className="text-sm text-muted-foreground">Remember me</span>
+                                </label>
+                                <a href="#" className="text-sm font-semibold text-primary hover:underline">
+                                    Forgot password?
+                                </a>
+                            </div>
+                        )}
 
                         <button
                             type="submit"
@@ -149,7 +213,10 @@ export default function LoginPage() {
                             {loading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
-                                <>Sign in <ArrowRight className="w-5 h-5" /></>
+                                <>
+                                    {loginMode === 'password' ? 'Sign in' : (otpSent ? 'Verify & Login' : 'Send OTP')}
+                                    <ArrowRight className="w-5 h-5" />
+                                </>
                             )}
                         </button>
                     </form>
