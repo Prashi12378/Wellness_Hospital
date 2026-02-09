@@ -21,6 +21,16 @@ export default function SignUpPage() {
         e.preventDefault();
         setNotification(null);
 
+        // Password Complexity Validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            setNotification({
+                type: 'error',
+                message: "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character."
+            });
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setNotification({ type: 'error', message: "Passwords do not match" });
             return;
@@ -67,7 +77,7 @@ export default function SignUpPage() {
                 <div className={`fixed top-20 right-4 p-4 rounded-lg shadow-lg flex items-center gap-3 animate-in slide-in-from-top-5 duration-300 z-50 ${notification.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
                     }`}>
                     {notification.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                    <p className="font-medium">{notification.message}</p>
+                    <p className="font-medium text-sm max-w-xs">{notification.message}</p>
                 </div>
             )}
 
@@ -88,7 +98,9 @@ export default function SignUpPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Full Name</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            Full Name <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="text"
                             value={formData.name}
@@ -98,7 +110,9 @@ export default function SignUpPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            Email Address <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="email"
                             value={formData.email}
@@ -108,7 +122,9 @@ export default function SignUpPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Password</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            Password <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="password"
                             value={formData.password}
@@ -116,9 +132,14 @@ export default function SignUpPage() {
                             className="w-full px-4 py-2 rounded-lg border border-input focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-background text-foreground placeholder:text-muted-foreground"
                             required
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Must include uppercase, lowercase, number, and special char.
+                        </p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Confirm Password</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            Confirm Password <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="password"
                             value={formData.confirmPassword}

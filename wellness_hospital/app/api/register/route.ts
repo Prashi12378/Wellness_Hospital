@@ -7,10 +7,15 @@ export async function POST(req: Request) {
         const { name, email, password } = await req.json();
 
         if (!name || !email || !password) {
-            return NextResponse.json(
-                { message: "Missing required fields" },
-                { status: 400 }
-            );
+            return NextResponse.json({ message: "Name, email, and password are required" }, { status: 400 });
+        }
+
+        // Validate Password Complexity
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return NextResponse.json({
+                message: "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character."
+            }, { status: 400 });
         }
 
         // Check if user already exists

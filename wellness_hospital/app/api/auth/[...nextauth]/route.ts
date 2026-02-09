@@ -93,11 +93,13 @@ export const authOptions: NextAuthOptions = {
                 });
 
                 if (!user || !user.password) {
+                    console.log("LOGIN DEBUG: User not found or has no password set.", email);
                     return null;
                 }
 
                 // 2. Validate Password
                 const isValid = await bcrypt.compare(password, user.password);
+                console.log("LOGIN DEBUG: Password validation result:", isValid ? "SUCCESS" : "FAILED", "for user:", email);
 
                 if (!isValid) {
                     return null;
