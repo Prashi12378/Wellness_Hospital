@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Phone, Ambulance, TestTube, Heart, Stethoscope, ChevronRight } from "lucide-react";
+import { ArrowRight, Siren, Ambulance, FlaskConical, HeartPulse, UserRoundSearch, ChevronRight, Activity } from "lucide-react";
 import BookingButton from "@/components/BookingButton";
 
 export default function Home() {
@@ -62,11 +62,11 @@ export default function Home() {
                 <span className="text-[11px] font-bold text-slate-700 text-center leading-tight">Book Now</span>
               </Link>
 
-              <QuickAction icon={Phone} label="Emergency" href="/emergency" color="text-red-500" bg="bg-red-50" />
+              <QuickAction icon={Siren} label="Emergency" href="/emergency" color="text-red-500" bg="bg-red-50" />
               <QuickAction icon={Ambulance} label="Ambulance" href="/ambulance" color="text-blue-500" bg="bg-blue-50" />
-              <QuickAction icon={Stethoscope} label="Doctors" href="/doctors" color="text-teal-500" bg="bg-teal-50" />
-              <QuickAction icon={TestTube} label="Lab Tests" href="/blood-collection" color="text-purple-500" bg="bg-purple-50" />
-              <QuickAction icon={Heart} label="Packages" href="/health-packages" color="text-pink-500" bg="bg-pink-50" />
+              <QuickAction icon={UserRoundSearch} label="Doctors" href="/doctors" color="text-teal-500" bg="bg-teal-50" />
+              <QuickAction icon={FlaskConical} label="Lab Tests" href="/blood-collection" color="text-purple-500" bg="bg-purple-50" />
+              <QuickAction icon={HeartPulse} label="Packages" href="/health-packages" color="text-pink-500" bg="bg-pink-50" />
             </div>
           </div>
         </div>
