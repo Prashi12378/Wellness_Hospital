@@ -67,7 +67,7 @@ export function Footer() {
                     <div className="col-span-2 md:col-span-1 space-y-5 border-t border-slate-800 pt-6 md:pt-0 md:border-none">
                         <h3 className="text-sm font-bold text-white uppercase tracking-wider">Contact</h3>
                         <ul className="space-y-4 text-sm">
-                            <ContactItem Icon={MapPin} text={<>Beside friend function hall<br />Gowribidnur main road, Palanjoghalli<br />Doddaballapur - 561203<br />Karnataka, India</>} />
+                            <ContactItem Icon={MapPin} text={<>Beside friend function hall<br />Gowribidnur main road, Palanjoghalli<br />Doddaballapur - 561203<br />Karnataka, India</>} href="https://maps.app.goo.gl/fUbAw7S8i1tzBZqz8" />
                             <ContactItem Icon={Phone} text="8105666338" />
                             <ContactItem Icon={Mail} text="wellnesshospital8383@gmail.com" />
                         </ul>
@@ -98,11 +98,24 @@ function SocialIcon({ Icon, href }: { Icon: any, href: string }) { // eslint-dis
     )
 }
 
-function ContactItem({ Icon, text }: { Icon: any, text: React.ReactNode }) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    return (
-        <li className="flex items-start gap-3">
+function ContactItem({ Icon, text, href }: { Icon: any, text: React.ReactNode, href?: string }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const content = (
+        <>
             <Icon className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <span className="text-slate-400 leading-snug">{text}</span>
+        </>
+    );
+
+    return (
+        <li className="flex items-start gap-3">
+            {href ? (
+                <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 hover:text-white transition-colors group cursor-pointer">
+                    <Icon className="w-5 h-5 text-blue-500 shrink-0 mt-0.5 group-hover:text-blue-400 transition-colors" />
+                    <span className="text-slate-400 leading-snug group-hover:text-white transition-colors">{text}</span>
+                </a>
+            ) : (
+                content
+            )}
         </li>
     )
 }
