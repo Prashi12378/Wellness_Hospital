@@ -60,7 +60,7 @@ function AppointmentForm() {
                             href="tel:+918105666338"
                             className="block text-3xl font-bold text-foreground hover:text-primary transition-colors"
                         >
-                            +91 63666 62245
+                            +91 81056 66338
                         </a>
                         <p className="text-sm font-medium text-foreground/80">
                             (All Departments)

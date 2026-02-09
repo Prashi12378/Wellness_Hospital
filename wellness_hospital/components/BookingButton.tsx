@@ -72,7 +72,7 @@ export default function BookingButton({ className, text = "Book Appointment" }: 
                                     href="tel:+918105666338"
                                     className="block text-3xl font-extrabold text-slate-900 hover:text-primary transition-colors tracking-tight"
                                 >
-                                    +91 63666 62245
+                                    +91 81056 66338
                                 </a>
                             </div>
 
