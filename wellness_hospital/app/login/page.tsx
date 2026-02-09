@@ -23,12 +23,16 @@ function LoginContent() {
 
     // Redirect if already logged in
     useEffect(() => {
-        if (status === "authenticated" && session) {
+        // Only redirect if we're done loading AND user is authenticated
+        if (status === "loading") return; // Don't do anything while loading
+
+        if (status === "authenticated" && session && !redirecting) {
             console.log("User already logged in, redirecting to portal");
+            setRedirecting(true);
             // Use window.location for full page reload to ensure session is loaded
             window.location.href = callbackUrl;
         }
-    }, [status, session, callbackUrl]);
+    }, [status, session, callbackUrl, redirecting]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
