@@ -52,7 +52,7 @@ export default function Home() {
           <div className="bg-white rounded-2xl shadow-xl p-4 md:shadow-none md:p-0 md:bg-transparent border border-slate-100/50 md:border-none">
 
             {/* Mobile: Horizontal Scrollable List */}
-            <div className="flex md:grid md:grid-cols-5 overflow-x-auto hide-scrollbar gap-4 md:gap-6 snap-x snap-mandatory pb-2 md:pb-0">
+            <div className="flex md:grid md:grid-cols-5 overflow-x-auto hide-scrollbar gap-4 md:gap-6 snap-x snap-mandatory pb-2 md:pb-0 justify-center">
 
               {/* Book Appointment (Mobile Only Primary Action) */}
               <Link href="/appointments" className="min-w-[85px] snap-center flex flex-col items-center gap-2 group md:hidden">
@@ -139,8 +139,8 @@ export default function Home() {
 function QuickAction({ icon: Icon, label, href, color, bg }: { icon: any, label: string, href: string, color: string, bg: string }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   return (
     <Link href={href} className="min-w-[75px] md:w-auto snap-center flex flex-col items-center gap-2 group">
-      <div className={`w - 12 h - 12 md: w - 16 md: h - 16 rounded - 2xl ${bg} flex items - center justify - center group - hover: scale - 105 transition - transform duration - 300`}>
-        <Icon className={`w - 5 h - 5 md: w - 7 md: h - 7 ${color} `} />
+      <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl ${bg} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
+        <Icon className={`w-5 h-5 md:w-7 md:h-7 ${color}`} />
       </div>
       <span className="text-[10px] md:text-sm font-semibold text-slate-600 text-center leading-tight group-hover:text-primary transition-colors">{label}</span>
     </Link>
