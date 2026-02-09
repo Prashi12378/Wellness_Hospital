@@ -44,10 +44,10 @@ export function Footer() {
                         <h3 className="text-sm font-bold text-white uppercase tracking-wider">Services</h3>
                         <ul className="space-y-3 text-sm">
                             <FooterLink href="/emergency">Emergency 24/7</FooterLink>
-                            <FooterLink href="/cardiology">Heart Inst.</FooterLink>
-                            <FooterLink href="/orthopedics">Orthopedics</FooterLink>
-                            <FooterLink href="/pediatrics">Pediatrics</FooterLink>
-                            <FooterLink href="/neurology">Neurology</FooterLink>
+                            <FooterLink href="/services#cardiology">Heart Inst.</FooterLink>
+                            <FooterLink href="/services#orthopedics">Orthopedics</FooterLink>
+                            <FooterLink href="/services#pediatrics">Pediatrics</FooterLink>
+                            <FooterLink href="/services#neurology">Neurology</FooterLink>
                         </ul>
                     </div>
 
