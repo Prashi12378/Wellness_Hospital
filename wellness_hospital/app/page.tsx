@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Phone, Ambulance, TestTube, Heart, Stethoscope, ChevronRight } from "lucide-react";
+import BookingButton from "@/components/BookingButton";
 
 export default function Home() {
   return (
@@ -30,9 +31,7 @@ export default function Home() {
           </p>
 
           <div className="flex items-center justify-center md:justify-start gap-4">
-            <Link href="/book-appointment" className="bg-white text-primary px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2">
-              Book Appointment <ArrowRight className="w-4 h-4" />
-            </Link>
+            <BookingButton className="bg-white text-primary hover:bg-white/90 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95" />
             <Link href="/services" className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-6 py-3 rounded-full font-semibold text-sm hover:bg-white/20 transition-all">
               Our Services
             </Link>

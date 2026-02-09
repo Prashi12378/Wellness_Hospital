@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, Brain, Baby, Bone, Eye, Stethoscope, Microscope, Pill, ArrowRight, AlertTriangle, Shield, Activity, Droplet } from "lucide-react";
+import BookingButton from "@/components/BookingButton";
 
 const departments = [
     { icon: Heart, image: "/images/cardiology-v2.png", title: "Cardiology", description: "Comprehensive heart care with advanced diagnostics, non-invasive cardiology, and expert treatment for cardiovascular conditions." },
@@ -81,12 +82,10 @@ export default function ServicesPage() {
                         Experience compassionate care from the best medical professionals in the region.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link
-                            href="/appointments"
+                        <BookingButton
                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-14 px-10 rounded-xl bg-white text-primary font-bold hover:bg-white/95 transition-all shadow-lg active:scale-95"
-                        >
-                            Book Appointment <ArrowRight className="w-5 h-5" />
-                        </Link>
+                            text="Book Appointment"
+                        />
                         <Link
                             href="/contact"
                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-14 px-10 rounded-xl border-2 border-white/20 text-white font-bold hover:bg-white/10 transition-all active:scale-95"

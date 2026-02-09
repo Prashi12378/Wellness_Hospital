@@ -1,5 +1,6 @@
 
 import { Heart, Award, Users, Clock, Shield, Stethoscope, CheckCircle } from "lucide-react";
+import BookingButton from "@/components/BookingButton";
 
 const values = [
     { icon: Heart, title: "Compassionate Care", description: "We treat every patient with dignity, respect, and genuine concern for their well-being." },
@@ -146,12 +147,9 @@ export default function AboutPage() {
                     <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
                         Book an appointment today and let our expert team take care of your health needs.
                     </p>
-                    <a
-                        href="/appointments"
+                    <BookingButton
                         className="inline-flex h-12 px-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-medium shadow hover:bg-primary/90 transition-colors"
-                    >
-                        Book Appointment
-                    </a>
+                    />
                 </div>
             </section>
         </main>

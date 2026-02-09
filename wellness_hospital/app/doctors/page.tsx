@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 
 import { Star, Stethoscope, Activity, Heart, Brain, Baby, User, Loader2 } from "lucide-react";
+import BookingButton from "@/components/BookingButton";
 
 export default function DoctorsPage() {
 
@@ -114,11 +115,7 @@ export default function DoctorsPage() {
                                     )}
 
                                     <div className="pt-4 mt-auto">
-                                        <a href={`/appointments?doctorId=${doctor.id}`} className="block w-full">
-                                            <button className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all shadow-sm active:scale-[0.98]">
-                                                Book Appointment
-                                            </button>
-                                        </a>
+                                        <BookingButton className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all shadow-sm active:scale-[0.98]" />
                                     </div>
                                 </div>
                             </div>
