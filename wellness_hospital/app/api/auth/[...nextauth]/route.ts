@@ -65,46 +65,51 @@ export const authOptions: NextAuthOptions = {
                             image: user.image,
                             role: user.profile?.role || "patient",
                             uhid: user.profile?.uhid
-                        } as any;  // Type assertion for custom fields
-                    };
-                })();
+                        } as any;
+                    })();
 
-    const timeoutPromise = new Promise<null>((resolve) =>
-        setTimeout(() => {
-            console.log("AUTH: Timeout reached");
-            resolve(null);
-        }, 10000)
-    );
+                    const timeoutPromise = new Promise<null>((resolve) =>
+                        setTimeout(() => {
+                            console.log("AUTH: Timeout reached");
+                            resolve(null);
+                        }, 10000)
+                    );
 
-    const result = await Promise.race([authPromise, timeoutPromise]);
-    console.log("AUTH: authorize completed, result:", result ? "user found" : "null");
-    return result;
-} catch (error) {
-    console.error("AUTH: authorize exception:", error);
-    return null;
-}
+                    const result = await Promise.race([authPromise, timeoutPromise]);
+                    console.log("AUTH: authorize completed, result:", result ? "user found" : "null");
+                    return result;
+                } catch (error) {
+                    console.error("AUTH: authorize exception:", error);
+                    return null;
+                }
             }
         })
     ],
-callbacks: {
+    callbacks: {
         async jwt({ token, user }) {
-        if (user) {
-            // @ts-ignore - custom user fields
-            token.id = user.id;
-            token.role = user.role;
-            token.uhid = user.uhid;
-        }
-        return token;
-    },
+            if (user) {
+                // @ts-ignore - custom user fields
+                token.id = user.id;
+                // @ts-ignore
+                token.role = user.role;
+                // @ts-ignore
+                token.uhid = user.uhid;
+            }
+            return token;
+        },
         async session({ session, token }) {
-        if (session.user) {
-            session.user.id = token.id as string;
-            session.user.role = token.role as string;
-            session.user.uhid = token.uhid as string;
-        }
-        return session;
+            if (session.user) {
+                // @ts-ignore - custom session fields
+                session.user.id = token.id;
+                // @ts-ignore
+                session.user.role = token.role;
+                // @ts-ignore
+                session.user.uhid = token.uhid;
+            }
+            return session;
+        },
     },
-},
+    secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
