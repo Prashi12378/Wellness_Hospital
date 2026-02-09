@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getDashboardStats } from '@/app/actions/dashboard';
 import { Scan, AlertTriangle, FileText, TrendingUp, Package, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
