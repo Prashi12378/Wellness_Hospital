@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect, Suspense } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,6 +11,7 @@ import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle, Loader2, Eye, EyeOff } 
 function LoginContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { data: session, status } = useSession(); // Added useSession
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +20,15 @@ function LoginContent() {
     const [error, setError] = useState<string | null>(null);
 
     const callbackUrl = searchParams.get('callbackUrl') || '/portal';
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (status === "authenticated" && session) {
+            console.log("User already logged in, redirecting to portal");
+            // Use window.location for full page reload to ensure session is loaded
+            window.location.href = callbackUrl;
+        }
+    }, [status, session, callbackUrl]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
