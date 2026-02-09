@@ -1,10 +1,7 @@
-'use client';
-
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Clock, User, Stethoscope, Phone, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Calendar, Phone, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 const departments = [
