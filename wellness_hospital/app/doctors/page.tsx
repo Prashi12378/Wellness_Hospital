@@ -85,10 +85,13 @@ export default function DoctorsPage() {
                                     </div>
 
                                     <div className="space-y-2 pt-2 border-t border-border/50">
-                                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                            <span>Experience</span>
-                                            <span className="font-medium text-foreground">{doctor.experience_years ? `${doctor.experience_years}+ Years` : 'N/A'}</span>
-                                        </div>
+                                        {/* Only show experience if it exists */}
+                                        {doctor.experience_years && (
+                                            <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                                <span>Experience</span>
+                                                <span className="font-medium text-foreground">{doctor.experience_years}+ Years</span>
+                                            </div>
+                                        )}
                                         {/* Timings Display */}
                                         {doctor.available_timings && Array.isArray(doctor.available_timings) && doctor.available_timings.length > 0 && (
                                             <div className="pt-2">
