@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Pill, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -40,8 +41,15 @@ export default function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
             <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-slate-200">
                 <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className="p-3 bg-blue-100 rounded-xl">
-                        <Pill className="w-8 h-8 text-blue-600" />
+                    <div className="w-12 h-12 relative flex items-center justify-center">
+                        <Image
+                            src="/logo.png"
+                            alt="Logo"
+                            width={48}
+                            height={48}
+                            className="object-contain"
+                            priority
+                        />
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">Pharmacy Portal</h1>

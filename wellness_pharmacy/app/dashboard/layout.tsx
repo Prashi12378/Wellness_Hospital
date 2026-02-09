@@ -31,8 +31,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Sidebar Desktop */}
             <aside className="hidden lg:flex flex-col w-64 bg-slate-900 text-white fixed h-full z-10">
                 <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800 bg-slate-950">
-                    <div className="w-8 h-8 relative flex items-center justify-center bg-blue-100 rounded-lg">
-                        <Pill className="w-5 h-5 text-blue-600" />
+                    <div className="w-8 h-8 relative flex items-center justify-center">
+                        <Image
+                            src="/logo.png"
+                            alt="Logo"
+                            width={32}
+                            height={32}
+                            className="object-contain"
+                            priority
+                        />
                     </div>
                     <span className="font-bold text-lg">Pharmacy</span>
                 </div>
@@ -66,8 +73,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Mobile Header */}
             <header className="lg:hidden fixed top-0 inset-x-0 h-16 bg-slate-900 text-white flex items-center justify-between px-4 z-20">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 relative flex items-center justify-center bg-blue-100 rounded-lg">
-                        <Pill className="w-5 h-5 text-blue-600" />
+                    <div className="w-8 h-8 relative flex items-center justify-center">
+                        <Image
+                            src="/logo.png"
+                            alt="Logo"
+                            width={32}
+                            height={32}
+                            className="object-contain"
+                            priority
+                        />
                     </div>
                     <span className="font-bold">Pharmacy</span>
                 </div>
