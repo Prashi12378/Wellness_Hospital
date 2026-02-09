@@ -27,14 +27,14 @@ export default function Home() {
         <div className="absolute bottom-40 right-10 w-32 h-32 bg-secondary/20 rounded-full blur-3xl animate-float-medium pointer-events-none" />
 
         <div className="relative z-10 max-w-7xl mx-auto text-center md:text-left">
-          <h1 className="text-2xl md:text-5xl font-bold text-white mb-2 leading-tight whitespace-nowrap opacity-0 animate-fade-in-up">
+          <h1 className="text-2xl md:text-5xl font-bold text-white mb-2 leading-tight whitespace-nowrap animate-fade-in-up">
             Your Health, Our Priority
           </h1>
-          <p className="text-blue-100 text-sm md:text-xl mb-6 max-w-lg mx-auto md:mx-0 opacity-90 opacity-0 animate-fade-in-up delay-100">
+          <p className="text-blue-100 text-sm md:text-xl mb-6 max-w-lg mx-auto md:mx-0 opacity-90 animate-fade-in-up delay-100">
             Expert care with a personal touch. Wellness Hospital is committed to your well-being.
           </p>
 
-          <div className="flex items-center justify-center md:justify-start gap-4 opacity-0 animate-fade-in-up delay-200">
+          <div className="flex items-center justify-center md:justify-start gap-4 animate-fade-in-up delay-200">
             <div className="animate-pulse-glow rounded-xl">
               <BookingButton className="bg-white text-primary hover:bg-white/90 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95" />
             </div>

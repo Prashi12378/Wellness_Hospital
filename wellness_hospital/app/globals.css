@@ -156,7 +156,7 @@ body {
 
 /* Animation Utilities */
 .animate-fade-in-up {
-  animation: fade-in-up 1s ease-out forwards;
+  animation: fade-in-up 1s ease-out both;
 }
 
 .animate-zoom-slow {
