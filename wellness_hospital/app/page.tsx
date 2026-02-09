@@ -53,12 +53,12 @@ export default function Home() {
 
             {/* Mobile: Horizontal Scrollable List */}
             <div className="flex md:grid md:grid-cols-6 overflow-x-auto hide-scrollbar gap-4 md:gap-6 snap-x snap-mandatory pb-2 md:pb-0 justify-center">
-              <QuickAction icon={CalendarCheck} label="Book Now" href="/appointments" color="text-blue-600" bg="bg-blue-50" />
-              <QuickAction icon={Siren} label="Emergency" href="/emergency" color="text-red-500" bg="bg-red-50" />
-              <QuickAction icon={Ambulance} label="Ambulance" href="/ambulance" color="text-blue-500" bg="bg-blue-50" />
-              <QuickAction icon={UserRoundSearch} label="Doctors" href="/doctors" color="text-teal-500" bg="bg-teal-50" />
-              <QuickAction icon={FlaskConical} label="Lab Tests" href="/blood-collection" color="text-purple-500" bg="bg-purple-50" />
-              <QuickAction icon={HeartPulse} label="Packages" href="/health-packages" color="text-pink-500" bg="bg-pink-50" />
+              <QuickAction icon={CalendarCheck} label="Book Now" href="/appointments" color="text-blue-600" bg="bg-blue-50" image="/icons/3d/appointment.png" />
+              <QuickAction icon={Siren} label="Emergency" href="/emergency" color="text-red-500" bg="bg-red-50" image="/icons/3d/emergency.png" />
+              <QuickAction icon={Ambulance} label="Ambulance" href="/ambulance" color="text-blue-500" bg="bg-blue-50" image="/icons/3d/ambulance.png" />
+              <QuickAction icon={UserRoundSearch} label="Doctors" href="/doctors" color="text-teal-500" bg="bg-teal-50" image="/icons/3d/doctors.png" />
+              <QuickAction icon={FlaskConical} label="Lab Tests" href="/blood-collection" color="text-purple-500" bg="bg-purple-50" image="/icons/3d/lab.png" />
+              <QuickAction icon={HeartPulse} label="Packages" href="/health-packages" color="text-pink-500" bg="bg-pink-50" image="/icons/3d/packages.png" />
             </div>
           </div>
         </div>
@@ -128,11 +128,17 @@ export default function Home() {
 
 // Helper Components for Cleaner Code
 
-function QuickAction({ icon: Icon, label, href, color, bg }: { icon: any, label: string, href: string, color: string, bg: string }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+function QuickAction({ icon: Icon, label, href, color, bg, image }: { icon?: any, label: string, href: string, color: string, bg: string, image?: string }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   return (
     <Link href={href} className="min-w-[75px] md:w-auto snap-center flex flex-col items-center gap-2 group">
-      <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl ${bg} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
-        <Icon className={`w-5 h-5 md:w-7 md:h-7 ${color}`} />
+      <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl ${bg} flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden`}>
+        {image ? (
+          <div className="relative w-full h-full p-2">
+            <Image src={image} alt={label} fill className="object-contain" />
+          </div>
+        ) : (
+          Icon && <Icon className={`w-5 h-5 md:w-7 md:h-7 ${color}`} />
+        )}
       </div>
       <span className="text-[10px] md:text-sm font-semibold text-slate-600 text-center leading-tight group-hover:text-primary transition-colors">{label}</span>
     </Link>
