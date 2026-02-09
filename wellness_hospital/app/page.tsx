@@ -1,6 +1,7 @@
+```
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Siren, Ambulance, FlaskConical, HeartPulse, UserRoundSearch, ChevronRight, Activity } from "lucide-react";
+import { ArrowRight, Siren, Ambulance, FlaskConical, HeartPulse, UserRoundSearch, ChevronRight, Activity, Heart, Stethoscope, User } from "lucide-react";
 import BookingButton from "@/components/BookingButton";
 
 export default function Home() {
@@ -84,10 +85,10 @@ export default function Home() {
 
           {/* Horizontal Scroll on Mobile */}
           <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-4 -mx-4 px-4 snap-x snap-mandatory md:grid md:grid-cols-4 md:gap-6 md:pb-0 md:mx-0 md:px-0">
-            <ServiceCard title="Cardiology" desc="Heart Care" icon={Heart} image="/images/cardiology-v2.png" href="/services#cardiology" />
-            <ServiceCard title="Pediatrics" desc="Child Care" icon={Stethoscope} image="/images/pediatrics.png" href="/services#pediatrics" />
+            <ServiceCard title="Cardiology" desc="Heart Care" icon={HeartPulse} image="/images/cardiology-v2.png" href="/services#cardiology" />
+            <ServiceCard title="Pediatrics" desc="Child Care" icon={Activity} image="/images/pediatrics.png" href="/services#pediatrics" />
             <ServiceCard title="Orthopedics" desc="Bone & Joint" icon={UserIconPlaceholder} image="/images/orthopedics.png" href="/services#orthopedics" />
-            <ServiceCard title="Emergency" desc="24/7 Support" icon={Phone} image="/images/cardiac-emergency-v3.png" href="/emergency" />
+            <ServiceCard title="Emergency" desc="24/7 Support" icon={Siren} image="/images/cardiac-emergency-v3.png" href="/emergency" />
           </div>
         </div>
       </section>
@@ -139,8 +140,8 @@ export default function Home() {
 function QuickAction({ icon: Icon, label, href, color, bg }: { icon: any, label: string, href: string, color: string, bg: string }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   return (
     <Link href={href} className="min-w-[75px] md:w-auto snap-center flex flex-col items-center gap-2 group">
-      <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl ${bg} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
-        <Icon className={`w-5 h-5 md:w-7 md:h-7 ${color}`} />
+      <div className={`w - 12 h - 12 md: w - 16 md: h - 16 rounded - 2xl ${ bg } flex items - center justify - center group - hover: scale - 105 transition - transform duration - 300`}>
+        <Icon className={`w - 5 h - 5 md: w - 7 md: h - 7 ${ color } `} />
       </div>
       <span className="text-[10px] md:text-sm font-semibold text-slate-600 text-center leading-tight group-hover:text-primary transition-colors">{label}</span>
     </Link>
@@ -165,12 +166,12 @@ function ServiceCard({ title, desc, image, href, icon: Icon }: { title: string, 
 
 function PackageCard({ title, price, color, textColor, items }: { title: string, price: string, color: string, textColor: string, items: string[] }) {
   return (
-    <div className={`min-w-[260px] snap-center rounded-2xl p-5 ${color} shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow`}>
+    <div className={`min - w - [260px] snap - center rounded - 2xl p - 5 ${ color } shadow - sm border border - slate - 100 relative overflow - hidden group hover: shadow - md transition - shadow`}>
       {/* Background Icon (Decorative) */}
       <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
 
-      <h3 className={`text-lg font-bold mb-1 ${textColor}`}>{title}</h3>
-      <div className={`text-2xl font-bold mb-3 text-primary`}>{price}</div>
+      <h3 className={`text - lg font - bold mb - 1 ${ textColor } `}>{title}</h3>
+      <div className={`text - 2xl font - bold mb - 3 text - primary`}>{price}</div>
       <div className="space-y-1">
         {items.map((item, i) => (
           <div key={i} className="text-xs font-medium bg-slate-50 text-slate-600 w-fit px-2 py-0.5 rounded-md inline-block mr-1 mb-1 border border-slate-100">{item}</div>
@@ -186,7 +187,7 @@ function PackageCard({ title, price, color, textColor, items }: { title: string,
 function DoctorAvatar({ name, dept }: { name: string, dept: string }) {
   return (
     <div className="flex flex-col items-center gap-2 min-w-[80px] snap-center group">
-      <div className={`w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-xl font-bold text-primary ring-2 ring-white shadow-sm group-hover:ring-primary/20 transition-all`}>
+      <div className={`w - 16 h - 16 rounded - full bg - blue - 50 flex items - center justify - center text - xl font - bold text - primary ring - 2 ring - white shadow - sm group - hover: ring - primary / 20 transition - all`}>
         {name.charAt(4)}
       </div>
       <div className="text-center">
@@ -197,4 +198,4 @@ function DoctorAvatar({ name, dept }: { name: string, dept: string }) {
   )
 }
 
-const UserIconPlaceholder = Stethoscope; // Fallback icon
+const UserIconPlaceholder = User; // Fallback icon
