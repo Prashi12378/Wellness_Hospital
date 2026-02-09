@@ -66,28 +66,43 @@ export const authOptions: NextAuthOptions = {
                             role: user.profile?.role || "patient",
                             uhid: user.profile?.uhid
                         };
-                    }
+                    })();
+
+                    const timeoutPromise = new Promise<null>((resolve) =>
+                        setTimeout(() => {
+                            console.log("AUTH: Timeout reached");
+                            resolve(null);
+                        }, 10000)
+                    );
+
+                    const result = await Promise.race([authPromise, timeoutPromise]);
+                    console.log("AUTH: authorize completed, result:", result ? "user found" : "null");
+                    return result;
+                } catch (error) {
+                    console.error("AUTH: authorize exception:", error);
+                    return null;
+                }
+            }
         })
     ],
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-                token.role = (user as any).role;
-                token.uhid = (user as any).uhid;
+                token.role = user.role;
+                token.uhid = user.uhid;
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
-                (session.user as any).id = token.id;
-                (session.user as any).role = token.role;
-                (session.user as any).uhid = token.uhid;
+                session.user.id = token.id as string;
+                session.user.role = token.role as string;
+                session.user.uhid = token.uhid as string;
             }
             return session;
-        }
+        },
     },
-    secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
