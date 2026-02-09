@@ -17,67 +17,9 @@ export const authOptions: NextAuthOptions = {
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" },
-                phone: { label: "Phone", type: "text" },
-                code: { label: "OTP", type: "text" }
+                password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                // --- OTP LOGIN PATH (PHONE OR EMAIL) ---
-                if ((credentials?.phone || credentials?.email) && credentials?.code) {
-                    const phone = credentials.phone;
-                    const email = credentials.email;
-                    const code = credentials.code;
-
-                    let otpRecord;
-                    if (email) {
-                        otpRecord = await prisma.otp.findUnique({ where: { email } as any });
-                    } else if (phone) {
-                        otpRecord = await prisma.otp.findUnique({ where: { phone } });
-                    }
-
-                    if (!otpRecord || otpRecord.code !== code || new Date() > otpRecord.expiresAt) {
-                        return null; // Invalid OTP
-                    }
-
-                    // Find User via Profile (for Phone) or User table (for Email)
-                    let user;
-                    let profile;
-
-                    if (email) {
-                        // Email Login
-                        user = await prisma.user.findUnique({
-                            where: { email },
-                            include: { profile: true }
-                        });
-                        profile = user?.profile;
-                    } else if (phone) {
-                        // Phone Login
-                        profile = await prisma.profile.findFirst({
-                            where: { phone },
-                            include: { user: true }
-                        });
-                        user = profile?.user;
-                    }
-
-                    if (user) {
-                        // Success! Delete used OTP
-                        if (email) await prisma.otp.delete({ where: { email } as any });
-                        if (phone) await prisma.otp.delete({ where: { phone } });
-
-                        return {
-                            id: user.id,
-                            email: user.email,
-                            name: user.name,
-                            image: user.image,
-                            role: profile?.role || "patient",
-                            uhid: profile?.uhid
-                        };
-                    } else {
-                        // User needs to register.
-                        return null;
-                    }
-                }
-
                 // --- EMAIL/PASSWORD LOGIN PATH ---
                 if (!credentials?.email || !credentials?.password) {
                     return null;
