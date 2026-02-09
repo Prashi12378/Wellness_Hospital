@@ -27,27 +27,37 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
+                // SECURITY: Strictly restrict admin portal access to the authorized account only
+                if (credentials.email !== "wellnesshospital8383@gmail.com") {
+                    console.log(`Unauthorized login attempt blocked for: ${credentials.email}`);
+                    return null;
+                }
+
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email },
                     include: { profile: true }
                 });
 
                 if (!user) {
-                    console.log("User not found");
+                    console.log("Authorized admin user not found in database");
                     return null;
                 }
 
                 if (!user.password) {
-                    console.log("User has no password set");
+                    console.log("Admin user has no password set");
                     return null;
                 }
 
-                console.log("User found, validating password...");
-                // Simplified password check
+                console.log("Admin found, validating password...");
                 const isValid = await bcrypt.compare(credentials.password, user.password);
                 console.log("Password valid:", isValid);
 
                 if (!isValid) {
+                    return null;
+                }
+
+                if (user.profile?.role !== "admin") {
+                    console.log("User found but does not have admin role");
                     return null;
                 }
 
@@ -56,7 +66,7 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     name: user.name,
                     image: user.image,
-                    role: user.profile?.role || "patient"
+                    role: user.profile?.role || "admin"
                 };
             }
         })
