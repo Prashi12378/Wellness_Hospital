@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { useState, Suspense } from 'react';
+import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,190 +11,134 @@ import { Mail, Lock, ArrowRight, ArrowLeft, AlertCircle, Loader2, Eye, EyeOff } 
 function LoginContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const { data: session, status } = useSession(); // Added useSession
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [redirecting, setRedirecting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const callbackUrl = searchParams.get('callbackUrl') || '/portal';
-
-    // Redirect if already logged in
-    useEffect(() => {
-        // Only redirect if we're done loading AND user is authenticated
-        if (status === "loading") return; // Don't do anything while loading
-
-        if (status === "authenticated" && session && !redirecting) {
-            console.log("User already logged in, redirecting to portal");
-            setRedirecting(true);
-            // Use window.location for full page reload to ensure session is loaded
-            window.location.href = callbackUrl;
-        }
-    }, [status, session, callbackUrl, redirecting]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        console.log("Attempting login with:", email);
+        const result = await signIn('credentials', {
+            email,
+            password,
+            redirect: false,
+        });
 
-        try {
-            const res = await signIn('credentials', {
-                email,
-                password,
-                redirect: false
-            });
+        setLoading(false);
 
-            console.log("Login response:", res);
-            console.log("Response error:", res?.error);
-            console.log("Response status:", res?.status);
-            console.log("Response ok:", res?.ok);
-
-            if (!res) {
-                console.error("No response from signIn");
-                setError("Login failed - no response from server");
-                setLoading(false);
-                return;
-            }
-
-            if (res.error) {
-                console.error("Login error:", res.error);
-                setError(res.error === "CredentialsSignin"
-                    ? "Invalid email or password"
-                    : `Login failed: ${res.error}`);
-                setLoading(false);
-            } else if (res.ok) {
-                console.log("Login successful, redirecting to:", callbackUrl);
-                setRedirecting(true);
-                // Use window.location for full page reload to ensure session is loaded
-                window.location.href = callbackUrl;
-            } else {
-                console.error("Login failed with unknown state:", res);
-                setError("Login failed - please try again");
-                setLoading(false);
-            }
-        } catch (error) {
-            console.error("Login exception:", error);
-            setError(`Something went wrong: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            setLoading(false);
+        if (result?.error) {
+            setError('Invalid email or password');
+        } else if (result?.ok) {
+            // Successful login - redirect to portal
+            router.push(callbackUrl);
+            router.refresh();
         }
     };
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-background">
-            {/* Left Side - Hero/Image */}
-            <div className="hidden md:flex flex-col justify-between w-1/2 lg:w-[45%] bg-primary relative overflow-hidden p-12 text-primary-foreground">
-                <div className="z-10">
-                    <div className="flex items-center gap-4 mb-12">
-                        <Image src="/logo.png" alt="Wellness Hospital Logo" width={48} height={48} className="w-12 h-12 brightness-0 invert" />
-                        <div className="font-bold text-3xl tracking-tight">Wellness Hospital</div>
-                    </div>
-                    <h1 className="text-5xl font-bold leading-tight mb-6">
-                        Your Health, <br />
-                        <span className="text-secondary">Our Priority.</span>
-                    </h1>
-                    <p className="text-primary-foreground/90 text-lg max-w-md">
-                        Access your medical records, appointments, and lab reports securely from anywhere.
-                    </p>
-                </div>
-                <div className="z-10 text-sm text-primary-foreground/80">
-                    © 2026 Wellness Hospital. All rights reserved.
-                </div>
-
-                {/* Decorative Circles */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2" />
-            </div>
-
-            {/* Right Side - Login Form */}
-            <div className="flex-1 flex items-center justify-center p-6 md:p-12 relative">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
+            <div className="w-full max-w-md">
+                {/* Back Button */}
                 <Link
                     href="/"
-                    className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Home
                 </Link>
 
-                <div className="w-full max-w-md space-y-8">
-                    <div className="text-center md:text-left">
-                        <div className="md:hidden flex justify-center mb-6">
-                            <Image src="/logo.png" alt="Logo" width={64} height={64} className="h-16 w-auto" />
+                {/* Login Card */}
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                    {/* Logo */}
+                    <div className="flex justify-center mb-6">
+                        <div className="relative w-16 h-16">
+                            <Image
+                                src="/logo.png"
+                                alt="Wellness Hospital"
+                                fill
+                                className="object-contain"
+                            />
                         </div>
-                        <h2 className="text-3xl font-bold text-foreground">Welcome back</h2>
-                        <p className="text-muted-foreground mt-2">Please enter your details to sign in.</p>
                     </div>
 
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
+                        <p className="text-gray-600">Please enter your details to sign in</p>
+                    </div>
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-red-800">{error}</p>
+                        </div>
+                    )}
+
+                    {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
-                            <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 text-sm">
-                                <AlertCircle className="w-5 h-5 shrink-0" />
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Email Address</label>
-                                <div className="relative group">
-                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-input rounded-xl outline-none focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground"
-                                        placeholder="Enter your email"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
-                                <div className="relative group">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full pl-12 pr-12 py-3.5 bg-muted/50 border border-input rounded-xl outline-none focus:bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-foreground placeholder:text-muted-foreground"
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
-                                <span className="text-sm text-muted-foreground">Remember me</span>
+                        {/* Email Field */}
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address
                             </label>
-                            <a href="#" className="text-sm font-semibold text-primary hover:underline">
-                                Forgot password?
-                            </a>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter your email"
+                                    className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    required
+                                />
+                            </div>
                         </div>
 
+                        {/* Password Field */}
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-lg shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
-                                <div className="flex items-center gap-2">
+                                <>
                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span>{redirecting ? "Redirecting..." : "Signing in..."}</span>
-                                </div>
+                                    Signing in...
+                                </>
                             ) : (
                                 <>
                                     Sign in
@@ -204,10 +148,11 @@ function LoginContent() {
                         </button>
                     </form>
 
-                    <div className="text-center">
-                        <p className="text-muted-foreground">
+                    {/* Sign Up Link */}
+                    <div className="mt-8 text-center">
+                        <p className="text-sm text-gray-600">
                             Don't have an account?{' '}
-                            <Link href="/signup" className="font-bold text-primary hover:underline">
+                            <Link href="/signup" className="text-primary font-medium hover:underline">
                                 Sign up for free
                             </Link>
                         </p>
@@ -221,8 +166,8 @@ function LoginContent() {
 export default function LoginPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         }>
             <LoginContent />

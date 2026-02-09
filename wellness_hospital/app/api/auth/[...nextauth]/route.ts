@@ -20,75 +20,41 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                console.log("AUTH: authorize called with email:", credentials?.email);
-
-                try {
-                    // Wrap in timeout to prevent hanging
-                    const authPromise = (async () => {
-                        // --- EMAIL/PASSWORD LOGIN PATH ---
-                        if (!credentials?.email || !credentials?.password) {
-                            console.log("AUTH: Missing credentials");
-                            return null;
-                        }
-
-                        const email = credentials.email.trim();
-                        const password = credentials.password.trim();
-
-                        console.log("AUTH: Looking up user:", email);
-
-                        // 1. Check if user exists
-                        const user = await prisma.user.findUnique({
-                            where: { email },
-                            include: { profile: true }
-                        });
-
-                        if (!user || !user.password) {
-                            console.log("AUTH: User not found or has no password set:", email);
-                            return null;
-                        }
-
-                        console.log("AUTH: User found, validating password");
-
-                        // 2. Validate Password
-                        const isValid = await bcrypt.compare(password, user.password);
-                        console.log("AUTH: Password validation result:", isValid ? "SUCCESS" : "FAILED");
-
-                        if (!isValid) {
-                            return null;
-                        }
-
-                        console.log("AUTH: Returning user object");
-                        return {
-                            id: user.id,
-                            email: user.email,
-                            name: user.name,
-                            image: user.image,
-                            role: user.profile?.role || "patient",
-                            uhid: user.profile?.uhid
-                        } as any;
-                    })();
-
-                    const timeoutPromise = new Promise<null>((resolve) =>
-                        setTimeout(() => {
-                            console.log("AUTH: Timeout reached");
-                            resolve(null);
-                        }, 10000)
-                    );
-
-                    const result = await Promise.race([authPromise, timeoutPromise]);
-                    console.log("AUTH: authorize completed, result:", result ? "user found" : "null");
-                    return result;
-                } catch (error) {
-                    console.error("AUTH: authorize exception:", error);
+                if (!credentials?.email || !credentials?.password) {
                     return null;
                 }
+
+                const user = await prisma.user.findUnique({
+                    where: { email: credentials.email },
+                    include: { profile: true }
+                });
+
+                if (!user || !user.password) {
+                    return null;
+                }
+
+                const isValid = await bcrypt.compare(credentials.password, user.password);
+
+                if (!isValid) {
+                    return null;
+                }
+
+                return {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    image: user.image,
+                    // @ts-ignore
+                    role: user.profile?.role || "patient",
+                    // @ts-ignore
+                    uhid: user.profile?.uhid
+                };
             }
         })
     ],
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                // @ts-ignore - custom user fields
                 token.id = user.id;
                 // @ts-ignore
                 token.role = user.role;
@@ -99,7 +65,7 @@ export const authOptions: NextAuthOptions = {
         },
         async session({ session, token }) {
             if (session.user) {
-                // @ts-ignore - custom session fields
+                // @ts-ignore
                 session.user.id = token.id;
                 // @ts-ignore
                 session.user.role = token.role;
