@@ -2,7 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Phone, Calendar, X } from 'lucide-react';
 
 interface BookingButtonProps {
@@ -13,7 +14,11 @@ interface BookingButtonProps {
 export default function BookingButton({ className, text = "Book Appointment" }: BookingButtonProps) {
     const { data: session } = useSession();
     const router = useRouter();
-    const [showModal, setShowModal] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -35,9 +40,9 @@ export default function BookingButton({ className, text = "Book Appointment" }: 
                 {text}
             </button>
 
-            {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100">
+            {showModal && mounted && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100 relative">
 
                         {/* Header */}
                         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
@@ -86,7 +91,8 @@ export default function BookingButton({ className, text = "Book Appointment" }: 
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );
