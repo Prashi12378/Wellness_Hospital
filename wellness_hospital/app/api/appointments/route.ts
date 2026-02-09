@@ -5,19 +5,17 @@ import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function GET(req: Request) {
     try {
+        console.log("Starting Appointments Fetch");
         const session = await getServerSession(authOptions);
         if (!session || !session.user) {
+            console.log("Unauthorized: No session");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        console.log("Session retrieved for user:", session.user.id);
 
+        console.time("db_query");
         const appointments = await prisma.appointment.findMany({
             where: {
-                // If user is patient, fetch their appointments
-                // If doctor? The portal seems to be for patients.
-                // We'll rely on session.user.id mapping to Profile.userId or similar.
-                // Schema has patientId as String (Profile ID) not User ID?
-                // Let's check relation. Appointment.patient -> Profile.
-                // We need to resolve Profile ID from session User ID.
                 patient: {
                     userId: session.user.id
                 }
@@ -33,6 +31,8 @@ export async function GET(req: Request) {
                 appointmentDate: 'desc'
             }
         });
+        console.timeEnd("db_query");
+        console.log("DB Query Completed, found:", appointments.length);
 
         // Map to frontend expectation
         const formatted = appointments.map(a => ({
