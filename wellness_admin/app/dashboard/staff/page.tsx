@@ -214,14 +214,14 @@ export default function StaffManagementPage() {
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
                                                     onClick={() => openEditModal(member)}
-                                                    className="text-slate-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg"
+                                                    className="text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg"
                                                     title="Edit"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteClick(member)}
-                                                    className="text-slate-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                                                    className="text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg"
                                                     title="Delete"
                                                 >
                                                     <Trash2 className="w-4 h-4" />

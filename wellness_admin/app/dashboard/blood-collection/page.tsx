@@ -181,12 +181,12 @@ export default function BloodCollectionManagementPage() {
             ) : (
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredPackages.map(pkg => (
-                        <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow relative group">
-                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEdit(pkg)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <div key={pkg.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow relative">
+                            <div className="absolute top-4 right-4 flex gap-2">
+                                <button onClick={() => handleEdit(pkg)} className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                                     <Pencil className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => handleDeleteClick(pkg)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                                <button onClick={() => handleDeleteClick(pkg)} className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
