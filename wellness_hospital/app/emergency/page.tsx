@@ -59,7 +59,7 @@ export default function EmergencyPage() {
                             <MapPin className="w-6 h-6" />
                         </div>
                         <h3 className="font-semibold text-foreground">Central Location</h3>
-                        <a href="https://maps.app.goo.gl/fUbAw7S8i1tzBZqz8" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground cursor-pointer block">Palanajogihalli, Gowribidanur Road, Doddaballapura</a>
+                        <a href="https://maps.app.goo.gl/fUbAw7S8i1tzBZqz8" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground cursor-pointer block">Beside friend function hall, Gowribidnur main road, Palanjoghalli, Doddaballapur - 561203</a>
                     </div>
                     <div className="space-y-2">
                         <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mx-auto">
