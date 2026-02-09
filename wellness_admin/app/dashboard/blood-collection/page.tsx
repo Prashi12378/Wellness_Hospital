@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Pencil, Package, Check, X, Loader2, IndianRupee, Droplet } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, Check, X, Loader2, IndianRupee, Droplet } from 'lucide-react';
 
 export default function BloodCollectionManagementPage() {
     const [packages, setPackages] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [packageToDelete, setPackageToDelete] = useState<any>(null);
     const [editingPkg, setEditingPkg] = useState<any>(null);
 
     // Form State
@@ -83,25 +85,34 @@ export default function BloodCollectionManagementPage() {
             fetchPackages();
         } catch (error: any) {
             console.error(error);
-            alert(`Error saving package: ${error.message}`);
+            console.log(`Error saving package: ${error.message}`);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this test package?')) return;
+    const handleDeleteClick = (pkg: any) => {
+        setPackageToDelete(pkg);
+        setDeleteModalOpen(true);
+    };
 
+    const confirmDelete = async () => {
+        if (!packageToDelete) return;
+        setLoading(true);
         try {
-            const res = await fetch(`/api/health-packages?id=${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/health-packages?id=${packageToDelete.id}`, { method: 'DELETE' });
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || 'Failed to delete');
             }
             fetchPackages();
+            setDeleteModalOpen(false);
+            setPackageToDelete(null);
         } catch (error: any) {
             console.error(error);
-            alert(`Error deleting package: ${error.message}`);
+            console.log(`Failed to delete: ${error.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -165,7 +176,7 @@ export default function BloodCollectionManagementPage() {
                 />
             </div>
 
-            {loading && !modalOpen ? (
+            {loading && !modalOpen && !deleteModalOpen ? (
                 <div className="text-center py-12"><Loader2 className="animate-spin mx-auto text-primary" /></div>
             ) : (
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -175,7 +186,7 @@ export default function BloodCollectionManagementPage() {
                                 <button onClick={() => handleEdit(pkg)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                                     <Pencil className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => handleDelete(pkg.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                                <button onClick={() => handleDeleteClick(pkg)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
@@ -218,7 +229,36 @@ export default function BloodCollectionManagementPage() {
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Delete Confirmation Modal */}
+            {deleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl">
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">Delete Package?</h3>
+                        <p className="text-slate-500 mb-6">
+                            Are you sure you want to delete <span className="font-semibold text-slate-700">{packageToDelete?.name}</span>?
+                            This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setDeleteModalOpen(false)}
+                                className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={loading}
+                                className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 flex items-center gap-2"
+                            >
+                                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit/Create Modal */}
             {modalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">

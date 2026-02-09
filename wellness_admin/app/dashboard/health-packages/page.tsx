@@ -64,6 +64,7 @@ export default function HealthPackagesPage() {
             includes: formData.includes,
             icon: formData.icon,
             popular: formData.popular,
+            type: 'GENERAL',
             ...(editingPkg && { id: editingPkg.id })
         };
 
@@ -149,7 +150,7 @@ export default function HealthPackagesPage() {
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Health Packages</h1>
-                    <p className="text-slate-500">Manage health checkup packages and pricing</p>
+                    <p className="text-slate-500">Manage general health checkup packages (Wellness, Full Body, etc.)</p>
                 </div>
                 <div className="flex gap-2">
                     {packages.length > 0 && (

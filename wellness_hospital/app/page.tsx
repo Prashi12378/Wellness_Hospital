@@ -13,6 +13,7 @@ export default async function Home() {
       // You might want to filter by active/popular if you have that flag, 
       // seeing as 'popular' exists in schema, let's prioritize them or show all.
       // For now, let's just search all, maybe limit to 5.
+      type: 'GENERAL' // Only show general health packages here, not blood collection
     },
     orderBy: {
       popular: 'desc' // Show popular ones first
@@ -112,7 +113,7 @@ export default async function Home() {
 
           <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2 -mx-4 px-4 snap-x snap-mandatory">
             {packages.length > 0 ? (
-              packages.map((pkg) => (
+              packages.map((pkg: any) => (
                 <PackageCard
                   key={pkg.id}
                   title={pkg.name}
