@@ -63,7 +63,7 @@ export default function ContactPage() {
                     </div>
 
                     <div className="space-y-3 md:space-y-8">
-                        <ContactItem icon={MapPin} title="Visit" content="Doddaballapura - 561203" href="https://maps.app.goo.gl/fUbAw7S8i1tzBZqz8" />
+                        <ContactItem icon={MapPin} title="Visit" content="Beside friend function hall, Gowribidnur main road, Palanjoghalli, Doddaballapur - 561203" href="https://maps.app.goo.gl/fUbAw7S8i1tzBZqz8" />
                         <ContactItem icon={Phone} title="Call" content="8105666338" />
                         <ContactItem icon={Mail} title="Email" content="wellnesshospital8383@gmail.com" />
                     </div>
