@@ -22,7 +22,7 @@ export async function GET(req: Request) {
             doctors = await prisma.profile.findMany({
                 where: { role: 'doctor' },
                 include: { user: true },
-                orderBy: { firstName: 'asc' }
+                orderBy: { createdAt: 'asc' }
             });
         }
 
