@@ -18,6 +18,10 @@ export default function StaffManagementPage() {
     const [editForm, setEditForm] = useState({ fullName: '', phone: '' });
     const [editLoading, setEditLoading] = useState(false);
 
+    // Delete State
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [staffToDelete, setStaffToDelete] = useState<any>(null);
+
     useEffect(() => {
         fetchStaff();
     }, []);
@@ -71,22 +75,33 @@ export default function StaffManagementPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this staff member? This action cannot be undone.')) return;
+    const handleDeleteClick = (member: any) => {
+        setStaffToDelete(member);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!staffToDelete) return;
+        setLoading(true);
 
         try {
             const res = await fetch('/api/admin/delete-user', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id }), // Pass Profile ID
+                body: JSON.stringify({ id: staffToDelete.id }), // Pass Profile ID
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to delete staff');
 
             fetchStaff();
+            setDeleteModalOpen(false);
+            setStaffToDelete(null);
         } catch (err: any) {
+            console.error('Delete error:', err);
             alert(err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -205,7 +220,7 @@ export default function StaffManagementPage() {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(member.id)}
+                                                    onClick={() => handleDeleteClick(member)}
                                                     className="text-slate-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
                                                     title="Delete"
                                                 >
@@ -287,6 +302,35 @@ export default function StaffManagementPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl">
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">Delete Staff Member?</h3>
+                        <p className="text-slate-500 mb-6">
+                            Are you sure you want to delete <span className="font-semibold text-slate-700">{staffToDelete?.full_name}</span>?
+                            This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setDeleteModalOpen(false)}
+                                className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={loading}
+                                className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 flex items-center gap-2"
+                            >
+                                {loading && <span className="animate-spin">⏳</span>}
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
