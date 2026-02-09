@@ -35,19 +35,36 @@ function LoginContent() {
             });
 
             console.log("Login response:", res);
+            console.log("Response error:", res?.error);
+            console.log("Response status:", res?.status);
+            console.log("Response ok:", res?.ok);
 
-            if (res?.error) {
-                setError("Invalid credentials. Please check your email and password.");
+            if (!res) {
+                console.error("No response from signIn");
+                setError("Login failed - no response from server");
                 setLoading(false);
-            } else {
-                setRedirecting(true); // Show redirecting state
-                console.log("Redirecting to:", callbackUrl);
+                return;
+            }
+
+            if (res.error) {
+                console.error("Login error:", res.error);
+                setError(res.error === "CredentialsSignin"
+                    ? "Invalid email or password"
+                    : `Login failed: ${res.error}`);
+                setLoading(false);
+            } else if (res.ok) {
+                console.log("Login successful, redirecting to:", callbackUrl);
+                setRedirecting(true);
                 // Use window.location for full page reload to ensure session is loaded
                 window.location.href = callbackUrl;
+            } else {
+                console.error("Login failed with unknown state:", res);
+                setError("Login failed - please try again");
+                setLoading(false);
             }
         } catch (error) {
-            console.error("Login error:", error);
-            setError("Something went wrong. Please try again.");
+            console.error("Login exception:", error);
+            setError(`Something went wrong: ${error instanceof Error ? error.message : 'Unknown error'}`);
             setLoading(false);
         }
     };
