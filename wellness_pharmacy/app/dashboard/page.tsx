@@ -48,50 +48,56 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Inventory Items"
-          value={stats.totalItems.toString()}
+          value={stats.totalItems.toLocaleString()}
           icon={Package}
-          color="bg-blue-50 text-blue-600"
+          color="text-blue-600"
         />
         <StatCard
           title="Stock Units Available"
-          value={stats.totalStock.toString()}
+          value={stats.totalStock.toLocaleString()}
           icon={Scan}
-          color="bg-indigo-50 text-indigo-600"
+          color="text-slate-600"
         />
         <StatCard
           title="Low Stock Alerts"
-          value={stats.lowStock.toString()}
+          value={stats.lowStock.toLocaleString()}
           icon={AlertTriangle}
-          color="bg-amber-50 text-amber-600"
+          color="text-amber-600"
           alert={stats.lowStock > 0}
         />
         <StatCard
           title="Today's Revenue"
           value={`₹${stats.todaysSales.toLocaleString()}`}
           icon={TrendingUp}
-          color="bg-emerald-50 text-emerald-600"
+          color="text-emerald-600"
         />
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <a href="/dashboard/billing" className="p-6 bg-gradient-to-br from-primary-light to-primary rounded-2xl shadow-lg text-white group hover:shadow-xl transition-all">
-          <div className="p-3 bg-white/20 w-fit rounded-lg mb-4 backdrop-blur-sm">
-            <FileText className="w-8 h-8" />
+        <a href="/dashboard/billing" className="group p-8 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-primary-light/20 transition-all duration-300">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-100 transition-colors">
+              <FileText className="w-8 h-8" />
+            </div>
+            <TrendingUp className="w-5 h-5 text-slate-300 group-hover:text-primary-light transition-colors" />
           </div>
-          <h3 className="text-xl font-bold mb-1">New Invoice</h3>
-          <p className="text-blue-100 opacity-90 group-hover:opacity-100">Create a bill for a customer</p>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">New Invoice</h3>
+          <p className="text-slate-500 leading-relaxed">Generate instant customer bills and manage prescription sales.</p>
         </a>
 
-        <a href="/dashboard/inventory" className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-primary-light/30 hover:shadow-md transition-all group">
-          <div className="p-3 bg-orange-50 text-orange-600 w-fit rounded-lg mb-4 group-hover:bg-orange-100 transition-colors">
-            <Package className="w-8 h-8" />
+        <a href="/dashboard/inventory" className="group p-8 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-primary-light/20 transition-all duration-300">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 bg-slate-50 text-slate-600 rounded-xl group-hover:bg-slate-100 transition-colors">
+              <Package className="w-8 h-8" />
+            </div>
+            <Scan className="w-5 h-5 text-slate-300 group-hover:text-primary-light transition-colors" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-1">Stock Entry</h3>
-          <p className="text-slate-500">Add new medicines or update stock</p>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Stock Inventory</h3>
+          <p className="text-slate-500 leading-relaxed">Monitor stock levels, track expiry dates, and add new medicine arrivals.</p>
         </a>
       </div>
     </div>
@@ -100,13 +106,24 @@ export default function DashboardPage() {
 
 function StatCard({ title, value, icon: Icon, color, alert }: any) {
   return (
-    <div className={`p-6 bg-white border rounded-2xl shadow-sm flex items-center gap-4 ${alert ? 'border-red-200 bg-red-50/30' : 'border-slate-100'}`}>
-      <div className={`p-3 rounded-xl ${color}`}>
-        <Icon className="w-6 h-6" />
+    <div className={cn(
+      "p-6 bg-white border rounded-2xl shadow-sm transition-all hover:shadow-md",
+      alert ? "border-red-100 bg-red-50/10" : "border-slate-100"
+    )}>
+      <div className="flex justify-between items-start mb-4">
+        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{title}</p>
+        <Icon className={cn("w-5 h-5", color || "text-slate-400")} />
       </div>
       <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <h3 className={`text-2xl font-bold ${alert ? 'text-red-600' : 'text-slate-800'}`}>{value}</h3>
+        <h3 className={cn(
+          "text-3xl font-bold tracking-tight",
+          alert ? "text-red-600" : "text-slate-900"
+        )}>
+          {value}
+        </h3>
+        {alert && (
+          <p className="text-xs font-medium text-red-500 mt-1">Action Required</p>
+        )}
       </div>
     </div>
   );

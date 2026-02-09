@@ -110,26 +110,31 @@ export default function InventoryPage() {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                        <Package className="w-6 h-6" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                    <div className="flex justify-between items-start mb-4">
+                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Items</p>
+                        <Package className="w-5 h-5 text-blue-600" />
                     </div>
-                    <div>
-                        <p className="text-sm text-slate-500 font-medium">Total Items</p>
-                        <h3 className="text-2xl font-bold text-slate-800">{medicines.length}</h3>
-                    </div>
+                    <h3 className="text-3xl font-bold text-slate-900 tracking-tight">{medicines.length}</h3>
+                    <p className="text-xs text-slate-400 mt-1">Active inventory listing</p>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-                        <AlertTriangle className="w-6 h-6" />
+
+                <div className={cn(
+                    "bg-white p-6 rounded-2xl border shadow-sm transition-all hover:shadow-md",
+                    unreadAlerts > 0 ? "border-amber-100 bg-amber-50/10" : "border-slate-100"
+                )}>
+                    <div className="flex justify-between items-start mb-4">
+                        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Low Stock Alerts</p>
+                        <AlertTriangle className={cn("w-5 h-5", unreadAlerts > 0 ? "text-amber-600" : "text-slate-400")} />
                     </div>
-                    <div>
-                        <p className="text-sm text-slate-500 font-medium">Low Stock Alerts</p>
-                        <h3 className="text-2xl font-bold text-slate-800">
-                            {unreadAlerts}
-                        </h3>
-                    </div>
+                    <h3 className={cn(
+                        "text-3xl font-bold tracking-tight",
+                        unreadAlerts > 0 ? "text-amber-600" : "text-slate-900"
+                    )}>
+                        {unreadAlerts}
+                    </h3>
+                    {unreadAlerts > 0 && <p className="text-xs font-medium text-amber-600 mt-1">Restock recommended</p>}
                 </div>
             </div>
 
@@ -146,21 +151,21 @@ export default function InventoryPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                        <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100 uppercase tracking-tighter text-[11px]">
                             <tr>
-                                <th className="px-6 py-4">Medicine Name</th>
-                                <th className="px-6 py-4">Batch No</th>
-                                <th className="px-6 py-4">Expiry</th>
-                                <th className="px-6 py-4">Price</th>
-                                <th className="px-6 py-4">Stock</th>
-                                <th className="px-6 py-4">Location</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                <th className="px-8 py-5">Medicine Name</th>
+                                <th className="px-6 py-5">Batch No</th>
+                                <th className="px-6 py-5">Expiry</th>
+                                <th className="px-6 py-5">Price</th>
+                                <th className="px-6 py-5">Stock</th>
+                                <th className="px-6 py-5">Location</th>
+                                <th className="px-8 py-5 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100/50">
                             {loading ? (
                                 <tr><td colSpan={7} className="text-center py-8">Loading inventory...</td></tr>
                             ) : filteredMedicines.length === 0 ? (
