@@ -63,7 +63,7 @@ export default function AmbulanceServicePage() {
                 <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-center gap-4 flex-wrap">
                     <AlertTriangle className="w-5 h-5" />
                     <span className="font-medium">For cardiac or critical emergencies, call our 24/7 line:</span>
-                    <a href="tel:6366662245" className="text-2xl font-bold hover:underline">6366662245</a>
+                    <a href="tel:8105666338" className="text-2xl font-bold hover:underline">8105666338</a>
                 </div>
             </div>
 
@@ -81,8 +81,8 @@ export default function AmbulanceServicePage() {
                             Our fleet of fully-equipped ambulances with trained paramedics is ready to reach you. We prioritize speed and safety to ensure you get care when you need it most.
                         </p>
                         <div className="flex flex-wrap gap-4">
-                            <a href="tel:6366662245" className="inline-flex h-12 px-6 items-center gap-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                                <Phone className="w-5 h-5" /> Call Now: 6366662245
+                            <a href="tel:8105666338" className="inline-flex h-12 px-6 items-center gap-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                                <Phone className="w-5 h-5" /> Call Now: 8105666338
                             </a>
                         </div>
                     </div>
@@ -222,7 +222,7 @@ export default function AmbulanceServicePage() {
                                     )}
                                 </button>
                                 <p className="text-xs text-center text-muted-foreground">
-                                    For urgent life-threatening emergencies, please call our 24/7 line <strong>6366662245</strong> immediately.
+                                    For urgent life-threatening emergencies, please call our 24/7 line <strong>8105666338</strong> immediately.
                                 </p>
                             </form>
                         ) : (

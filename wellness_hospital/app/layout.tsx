@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Wellness Hospital | Your Health, Our Priority",
+  title: "Wellness Hospital | We're here for your health",
   description: "Enterprise healthcare services with a focus on trust and patient care.",
   icons: {
     icon: "/favicon.ico",

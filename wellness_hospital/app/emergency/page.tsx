@@ -16,8 +16,8 @@ export default function EmergencyPage() {
                 <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-center gap-4 text-center">
                     <AlertTriangle className="w-6 h-6" />
                     <span className="text-lg font-medium">For Life-Threatening Emergencies</span>
-                    <a href="tel:6366662245" className="text-3xl font-bold hover:underline flex items-center gap-2">
-                        <Phone className="w-6 h-6" /> 6366662245
+                    <a href="tel:8105666338" className="text-3xl font-bold hover:underline flex items-center gap-2">
+                        <Phone className="w-6 h-6" /> 8105666338
                     </a>
                 </div>
             </div>
@@ -33,8 +33,8 @@ export default function EmergencyPage() {
                             In an emergency, every second counts. Our team of experienced doctors and nurses is ready to help you 24/7 with the care and urgency you need.
                         </p>
                         <div className="flex flex-wrap gap-4">
-                            <a href="tel:6366662245" className="inline-flex h-12 px-6 items-center gap-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                                <Phone className="w-5 h-5" /> Emergency: 6366662245
+                            <a href="tel:8105666338" className="inline-flex h-12 px-6 items-center gap-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                                <Phone className="w-5 h-5" /> Emergency: 8105666338
                             </a>
                             <a href="/ambulance" className="inline-flex h-12 px-6 items-center gap-2 bg-card border border-border text-foreground rounded-lg font-medium hover:bg-muted transition-colors">
                                 <Ambulance className="w-5 h-5" /> Request Ambulance

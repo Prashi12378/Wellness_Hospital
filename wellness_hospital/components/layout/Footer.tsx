@@ -68,7 +68,7 @@ export function Footer() {
                         <h3 className="text-sm font-bold text-white uppercase tracking-wider">Contact</h3>
                         <ul className="space-y-4 text-sm">
                             <ContactItem Icon={MapPin} text={<>Doddaballapura - 561203<br />Bengaluru, India</>} />
-                            <ContactItem Icon={Phone} text="6366662245" />
+                            <ContactItem Icon={Phone} text="8105666338" />
                             <ContactItem Icon={Mail} text="wellnesshospital8383@gmail.com" />
                         </ul>
                     </div>

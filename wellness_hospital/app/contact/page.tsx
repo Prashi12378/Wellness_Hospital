@@ -58,13 +58,13 @@ export default function ContactPage() {
                     <div className="space-y-1 md:space-y-4">
                         <h1 className="text-sm md:text-4xl font-bold text-foreground">Get in Touch</h1>
                         <p className="text-[9px] md:text-lg text-muted-foreground leading-tight">
-                            We're here to help. Emergency: 6366662245.
+                            We're here to help. Emergency: 8105666338.
                         </p>
                     </div>
 
                     <div className="space-y-3 md:space-y-8">
                         <ContactItem icon={MapPin} title="Visit" content="Doddaballapura - 561203" href="https://maps.app.goo.gl/fUbAw7S8i1tzBZqz8" />
-                        <ContactItem icon={Phone} title="Call" content="6366662245" />
+                        <ContactItem icon={Phone} title="Call" content="8105666338" />
                         <ContactItem icon={Mail} title="Email" content="wellnesshospital8383@gmail.com" />
                     </div>
 
@@ -75,7 +75,7 @@ export default function ContactPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                             <h3 className="text-[9px] md:text-xl font-bold text-primary truncate">Urgent help?</h3>
-                            <div className="text-[10px] md:text-3xl font-bold text-primary truncate">6366662245</div>
+                            <div className="text-[10px] md:text-3xl font-bold text-primary truncate">8105666338</div>
                         </div>
                     </div>
                 </div>

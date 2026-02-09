@@ -28,7 +28,7 @@ export default function Home() {
 
         <div className="relative z-10 max-w-7xl mx-auto text-center md:text-left">
           <h1 className="text-2xl md:text-5xl font-bold text-white mb-2 leading-tight whitespace-nowrap animate-fade-in-up">
-            Your Health, Our Priority
+            We're here for your health
           </h1>
           <p className="text-blue-100 text-sm md:text-xl mb-6 max-w-lg mx-auto md:mx-0 opacity-90 animate-fade-in-up delay-100">
             Expert care with a personal touch. Wellness Hospital is committed to your well-being.
