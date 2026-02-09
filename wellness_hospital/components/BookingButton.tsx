@@ -14,6 +14,7 @@ interface BookingButtonProps {
 export default function BookingButton({ className, text = "Book Appointment" }: BookingButtonProps) {
     const { data: session } = useSession();
     const router = useRouter();
+    const [showModal, setShowModal] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
