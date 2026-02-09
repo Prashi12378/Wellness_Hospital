@@ -12,19 +12,40 @@ export default function PatientDashboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Appointments (Limit 3) - Front end filtering for now or update API to accept limit
-                const apptsRes = await fetch('/api/appointments');
-                if (apptsRes.ok) {
-                    const data = await apptsRes.json();
-                    setAppointments(data.slice(0, 3));
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+                const [apptsResult, reportsResult] = await Promise.allSettled([
+                    fetch('/api/appointments', { signal: controller.signal }),
+                    fetch('/api/reports', { signal: controller.signal })
+                ]);
+
+                clearTimeout(timeoutId);
+
+                // Handle Appointments
+                if (apptsResult.status === 'fulfilled' && apptsResult.value.ok) {
+                    try {
+                        const data = await apptsResult.value.json();
+                        setAppointments(Array.isArray(data) ? data.slice(0, 3) : []);
+                    } catch (e) {
+                        console.error("Failed to parse appointments", e);
+                    }
+                } else {
+                    console.error("Failed to fetch appointments", apptsResult.status === 'rejected' ? apptsResult.reason : apptsResult.value.statusText);
                 }
 
-                // Fetch Reports (Limit 2)
-                const reportsRes = await fetch('/api/reports');
-                if (reportsRes.ok) {
-                    const data = await reportsRes.json();
-                    setReports(data.slice(0, 2));
+                // Handle Reports
+                if (reportsResult.status === 'fulfilled' && reportsResult.value.ok) {
+                    try {
+                        const data = await reportsResult.value.json();
+                        setReports(Array.isArray(data) ? data.slice(0, 2) : []);
+                    } catch (e) {
+                        console.error("Failed to parse reports", e);
+                    }
+                } else {
+                    console.error("Failed to fetch reports", reportsResult.status === 'rejected' ? reportsResult.reason : reportsResult.value.statusText);
                 }
+
             } catch (e) {
                 console.error("Failed to fetch dashboard data", e);
             } finally {
