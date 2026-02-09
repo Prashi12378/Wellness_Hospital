@@ -17,21 +17,27 @@ export default function Home() {
             src="/images/hospital-building.jpg"
             alt="Hospital Background"
             fill
-            className="object-cover"
+            className="object-cover animate-zoom-slow"
             priority
           />
         </div>
 
+        {/* Floating Decorative Elements */}
+        <div className="absolute top-20 left-10 w-24 h-24 bg-white/10 rounded-full blur-3xl animate-float-slow pointer-events-none" />
+        <div className="absolute bottom-40 right-10 w-32 h-32 bg-secondary/20 rounded-full blur-3xl animate-float-medium pointer-events-none" />
+
         <div className="relative z-10 max-w-7xl mx-auto text-center md:text-left">
-          <h1 className="text-2xl md:text-5xl font-bold text-white mb-2 leading-tight whitespace-nowrap">
+          <h1 className="text-2xl md:text-5xl font-bold text-white mb-2 leading-tight whitespace-nowrap opacity-0 animate-fade-in-up">
             Your Health, Our Priority
           </h1>
-          <p className="text-blue-100 text-sm md:text-xl mb-6 max-w-lg mx-auto md:mx-0 opacity-90">
+          <p className="text-blue-100 text-sm md:text-xl mb-6 max-w-lg mx-auto md:mx-0 opacity-90 opacity-0 animate-fade-in-up delay-100">
             Expert care with a personal touch. Wellness Hospital is committed to your well-being.
           </p>
 
-          <div className="flex items-center justify-center md:justify-start gap-4">
-            <BookingButton className="bg-white text-primary hover:bg-white/90 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95" />
+          <div className="flex items-center justify-center md:justify-start gap-4 opacity-0 animate-fade-in-up delay-200">
+            <div className="animate-pulse-glow rounded-xl">
+              <BookingButton className="bg-white text-primary hover:bg-white/90 px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95" />
+            </div>
             <Link href="/services" className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-6 py-3 rounded-full font-semibold text-sm hover:bg-white/20 transition-all">
               Our Services
             </Link>
