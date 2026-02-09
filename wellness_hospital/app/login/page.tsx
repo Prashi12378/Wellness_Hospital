@@ -42,8 +42,8 @@ function LoginContent() {
             } else {
                 setRedirecting(true); // Show redirecting state
                 console.log("Redirecting to:", callbackUrl);
-                router.push(callbackUrl);
-                // router.refresh(); // Removed to prevent potential double-fetch hangs
+                // Use window.location for full page reload to ensure session is loaded
+                window.location.href = callbackUrl;
             }
         } catch (error) {
             console.error("Login error:", error);
