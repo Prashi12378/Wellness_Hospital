@@ -56,8 +56,11 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                if (user.profile?.role !== "admin") {
-                    console.log("User found but does not have admin role");
+                const userRole = user.profile?.role?.toString().toLowerCase();
+                console.log(`User role from DB: ${userRole}`);
+
+                if (userRole !== "admin") {
+                    console.log(`User found but role is "${userRole}", not "admin"`);
                     return null;
                 }
 
@@ -66,7 +69,7 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     name: user.name,
                     image: user.image,
-                    role: user.profile?.role || "admin"
+                    role: userRole
                 };
             }
         })
