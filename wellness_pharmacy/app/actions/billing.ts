@@ -42,6 +42,8 @@ export async function createInvoice(data: {
     insuranceNo?: string;
     items: any[];
     paymentMethod: string;
+    discountRate?: number;
+    discountAmount?: number;
 }) {
     try {
         const session = await getServerSession(authOptions);
@@ -91,11 +93,12 @@ export async function createInvoice(data: {
             };
         });
 
-        const grandTotal = Number((subTotal + totalGst).toFixed(2));
+        const discountAmount = Number(data.discountAmount || 0);
+        const grandTotal = Number((subTotal + totalGst - discountAmount).toFixed(2));
         subTotal = Number(subTotal.toFixed(2));
         totalGst = Number(totalGst.toFixed(2));
 
-        console.log('Final Totals:', { subTotal, totalGst, grandTotal });
+        console.log('Final Totals:', { subTotal, totalGst, discountAmount, grandTotal });
 
         // Start transaction
         const invoice = await db.$transaction(async (tx) => {
@@ -111,15 +114,17 @@ export async function createInvoice(data: {
                     subTotal: subTotal,
                     totalGst: totalGst,
                     grandTotal: grandTotal,
+                    discountRate: Number(data.discountRate || 0),
+                    discountAmount: discountAmount,
                     paymentMethod: data.paymentMethod,
                     items: {
                         create: invoiceItems
                     }
-                },
+                } as any,
                 include: {
                     items: true
                 }
-            });
+            }) as any; // Cast to any to avoid type issues with items after include if Prisma types are stale
 
             console.log('Invoice created, deducting stock...');
 
@@ -165,7 +170,9 @@ export async function createInvoice(data: {
                 subTotal: Number(invoice.subTotal),
                 totalGst: Number(invoice.totalGst),
                 grandTotal: Number(invoice.grandTotal),
-                items: invoice.items.map(item => ({
+                discountRate: Number(invoice.discountRate || 0),
+                discountAmount: Number(invoice.discountAmount || 0),
+                items: (invoice as any).items.map((item: any) => ({
                     ...item,
                     mrp: Number(item.mrp),
                     gstRate: Number(item.gstRate),
@@ -207,12 +214,14 @@ export async function getInvoices() {
             },
         });
 
-        const serialized = invoices.map(invoice => ({
+        const serialized = (invoices as any[]).map(invoice => ({
             ...invoice,
             subTotal: Number(invoice.subTotal),
             totalGst: Number(invoice.totalGst),
             grandTotal: Number(invoice.grandTotal),
-            items: invoice.items.map(item => ({
+            discountRate: Number(invoice.discountRate || 0),
+            discountAmount: Number(invoice.discountAmount || 0),
+            items: (invoice.items || []).map((item: any) => ({
                 ...item,
                 mrp: Number(item.mrp),
                 gstRate: Number(item.gstRate),

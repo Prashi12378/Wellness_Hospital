@@ -17,6 +17,8 @@ interface InvoicePreviewProps {
         subTotal: number;
         totalGst: number;
         grandTotal: number;
+        discountRate?: number;
+        discountAmount?: number;
         paymentMethod: string;
         items: any[];
     };
@@ -75,15 +77,41 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                     <style dangerouslySetInnerHTML={{
                         __html: `
                         @media print {
+                            @page {
+                                size: A5;
+                                margin: 5mm;
+                            }
                             body * { visibility: hidden; }
                             #print-area, #print-area * { visibility: visible; }
-                            #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+                            #print-area { 
+                                position: absolute; 
+                                left: 0; 
+                                top: 0; 
+                                width: 100%; 
+                                padding: 0 !important;
+                                margin: 0 !important;
+                            }
                             .no-print { display: none !important; }
+                            
+                            /* Ensure content fits A5 */
+                            .invoice-container {
+                                border: none !important;
+                                shadow: none !important;
+                                width: 100% !important;
+                                max-width: 100% !important;
+                                padding: 5mm !important;
+                            }
+                            
+                            /* Adjust font sizes for smaller paper */
+                            h1 { font-size: 16pt !important; }
+                            h2 { font-size: 14pt !important; }
+                            p, span, td, th { font-size: 9pt !important; }
+                            .tax-table th, .tax-table td { font-size: 8pt !important; }
                         }
                     `}} />
 
                     {/* Invoice Paper Design */}
-                    <div className="max-w-[800px] mx-auto text-slate-800 font-sans border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none bg-white">
+                    <div className="invoice-container max-w-[800px] mx-auto text-slate-800 font-sans border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none bg-white">
                         {/* Hospital Header */}
                         <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-6">
                             <div className="flex items-center gap-4">
@@ -134,8 +162,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                     <th className="py-2 px-2 text-left">Item Name</th>
                                     <th className="py-2 px-2 text-left">Hsn Code</th>
                                     <th className="py-2 px-2 text-center w-10">Qty</th>
-                                    <th className="py-2 px-2 text-left">Batch</th>
-                                    <th className="py-2 px-2 text-left">Exp</th>
+                                    <th className="py-2 px-2 text-right">Batch</th>
                                     <th className="py-2 px-2 text-right">MRP</th>
                                     <th className="py-2 px-2 text-right">GST%</th>
                                     <th className="py-2 px-2 text-right">Amount</th>
@@ -148,8 +175,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                         <td className="py-2 px-2 font-bold">{item.name}</td>
                                         <td className="py-2 px-2">{item.hsnCode}</td>
                                         <td className="py-2 px-2 text-center">{item.qty}</td>
-                                        <td className="py-2 px-2 uppercase">{item.batchNo}</td>
-                                        <td className="py-2 px-2">{item.expiryDate ? format(new Date(item.expiryDate), 'MM/yy') : '-'}</td>
+                                        <td className="py-2 px-2 uppercase text-right">{item.batchNo}</td>
                                         <td className="py-2 px-2 text-right">{Number(item.mrp).toFixed(2)}</td>
                                         <td className="py-2 px-2 text-right">{item.gstRate}</td>
                                         <td className="py-2 px-2 text-right font-bold">{Number(item.amount).toFixed(2)}</td>
@@ -162,7 +188,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         <div className="grid grid-cols-2 gap-8 pt-4">
                             {/* Tax Summary Table */}
                             <div>
-                                <table className="w-full text-[10px] border border-slate-300">
+                                <table className="tax-table w-full text-[10px] border border-slate-300">
                                     <thead className="bg-slate-50">
                                         <tr className="border-b border-slate-300">
                                             <th className="px-1 py-1 text-left">TAX</th>
@@ -201,6 +227,12 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                         <span>Total Items :</span>
                                         <span className="font-bold">{invoice.items.length}</span>
                                     </div>
+                                    {Number(invoice.discountAmount || 0) > 0 && (
+                                        <div className="flex justify-between text-red-600 font-bold">
+                                            <span>Discount ({invoice.discountRate}%):</span>
+                                            <span>-₹{Number(invoice.discountAmount).toFixed(2)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-2xl font-black mt-4 border-t border-slate-200 pt-2">
                                         <span>Total :</span>
                                         <span>₹{invoice.grandTotal.toFixed(2)}</span>

@@ -26,6 +26,7 @@ export default function BillingPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [createdInvoice, setCreatedInvoice] = useState<any>(null);
     const [showPreview, setShowPreview] = useState(false);
+    const [discountRate, setDiscountRate] = useState<number>(0);
 
     // Search logic
     useEffect(() => {
@@ -147,7 +148,8 @@ export default function BillingPage() {
     // Calculations
     const subTotal = cart.reduce((acc, item) => acc + (item.qty * item.mrp), 0);
     const totalGst = cart.reduce((acc, item) => acc + ((item.qty * item.mrp) * item.gstRate / 100), 0);
-    const grandTotal = subTotal + totalGst;
+    const discountAmount = (subTotal + totalGst) * (discountRate / 100);
+    const grandTotal = subTotal + totalGst - discountAmount;
 
     const handleCreateBilling = async () => {
         if (!patientInfo.name || cart.length === 0) {
@@ -162,7 +164,9 @@ export default function BillingPage() {
             doctorName: patientInfo.doctor,
             insuranceNo: patientInfo.insurance,
             paymentMethod,
-            items: cart
+            items: cart,
+            discountRate,
+            discountAmount
         });
 
         if (result.success && result.invoice) {
@@ -171,6 +175,7 @@ export default function BillingPage() {
             // Reset form
             setCart([]);
             setPatientInfo({ name: '', phone: '', doctor: '', insurance: '' });
+            setDiscountRate(0);
         } else {
             alert(result.error || 'Failed to create invoice');
         }
@@ -372,6 +377,24 @@ export default function BillingPage() {
                             <div className="flex justify-between items-center text-slate-400">
                                 <span>Total Tax (GST)</span>
                                 <span className="font-bold text-emerald-400">+₹{totalGst.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <span>Discount</span>
+                                    <div className="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1">
+                                        <input
+                                            type="number"
+                                            value={discountRate}
+                                            onChange={(e) => setDiscountRate(Number(e.target.value))}
+                                            className="w-12 bg-transparent text-white font-bold outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            placeholder="0"
+                                            min="0"
+                                            max="100"
+                                        />
+                                        <span className="text-primary-light font-bold text-xs">%</span>
+                                    </div>
+                                </div>
+                                <span className="font-bold text-red-400">-₹{discountAmount.toFixed(2)}</span>
                             </div>
                             <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
                                 <span className="text-lg font-bold">Grand Total</span>
