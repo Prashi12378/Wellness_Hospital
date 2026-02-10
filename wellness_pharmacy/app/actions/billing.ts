@@ -2,6 +2,8 @@
 
 import { prisma as db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../api/auth/[...nextauth]/route';
 
 export async function searchMedicines(query: string) {
     if (!query) return { data: [] };
@@ -9,10 +11,10 @@ export async function searchMedicines(query: string) {
     try {
         const medicines = await db.pharmacyInventory.findMany({
             where: {
-                name: {
-                    contains: query,
-                    mode: 'insensitive',
-                },
+                OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { batch_no: { contains: query, mode: 'insensitive' } }
+                ],
                 stock: {
                     gt: 0,
                 },
@@ -42,6 +44,11 @@ export async function createInvoice(data: {
     paymentMethod: string;
 }) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { error: 'Authentication required to create invoice' };
+        }
+
         // Generate Bill No (S-XXXXX format as per image)
         const lastInvoice = await db.invoice.findFirst({
             orderBy: { createdAt: 'desc' },
@@ -129,6 +136,21 @@ export async function createInvoice(data: {
             }
 
             console.log('Stock deduction complete.');
+
+            // 3. Create Ledger Entry
+            console.log('Creating ledger entry for pharmacy sale...');
+            await tx.ledger.create({
+                data: {
+                    transactionType: 'income',
+                    category: 'pharmacy',
+                    description: `Pharmacy Sale - Bill #${nextBillNo} (${data.patientName})`,
+                    amount: grandTotal,
+                    paymentMethod: data.paymentMethod,
+                    transactionDate: new Date(),
+                    recordedBy: (session.user as any).id
+                }
+            });
+
             return newInvoice;
         });
 
@@ -154,5 +176,53 @@ export async function createInvoice(data: {
     } catch (error: any) {
         console.error('Create invoice error full details:', error);
         return { error: 'Failed to create invoice: ' + (error.message || 'Unknown error') };
+    }
+}
+
+export async function getPharmacySettings() {
+    try {
+        const settings = await db.pharmacySettings.findUnique({
+            where: { id: 'default' }
+        });
+        return {
+            success: true,
+            settings: settings ? {
+                ...settings,
+                defaultGstRate: Number(settings.defaultGstRate)
+            } : { defaultGstRate: 5 } // Fallback if record not created yet
+        };
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+        return { success: false, settings: { defaultGstRate: 5 } };
+    }
+}
+export async function getInvoices() {
+    try {
+        const invoices = await db.invoice.findMany({
+            include: {
+                items: true,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
+        const serialized = invoices.map(invoice => ({
+            ...invoice,
+            subTotal: Number(invoice.subTotal),
+            totalGst: Number(invoice.totalGst),
+            grandTotal: Number(invoice.grandTotal),
+            items: invoice.items.map(item => ({
+                ...item,
+                mrp: Number(item.mrp),
+                gstRate: Number(item.gstRate),
+                amount: Number(item.amount),
+            }))
+        }));
+
+        return { success: true, invoices: serialized };
+    } catch (error) {
+        console.error('Error fetching invoices:', error);
+        return { success: false, error: 'Failed to fetch invoice history' };
     }
 }

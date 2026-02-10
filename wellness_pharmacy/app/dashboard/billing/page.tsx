@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, FileText, Loader2, Hospital } from 'lucide-react';
-import { searchMedicines, createInvoice } from '@/app/actions/billing';
+import { searchMedicines, createInvoice, getPharmacySettings } from '@/app/actions/billing';
 import InvoicePreview from '@/components/billing/InvoicePreview';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ export default function BillingPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [defaultGstRate, setDefaultGstRate] = useState(5);
 
     // Billing State
     const [cart, setCart] = useState<any[]>([]);
@@ -51,7 +52,6 @@ export default function BillingPage() {
             const currentTime = Date.now();
             const char = e.key;
 
-            // If time between keys is long, reset buffer (it's manual typing, not a scanner)
             if (currentTime - lastKeyTime > 100) {
                 buffer = '';
             }
@@ -59,8 +59,24 @@ export default function BillingPage() {
 
             if (char === 'Enter') {
                 if (buffer.length > 2) {
-                    console.log('Scanned Barcode:', buffer); // Verify if scanner reads properly
-                    setSearchTerm(buffer); // Set search term to trigger the existing search effect
+                    const processScan = async () => {
+                        const { data } = await searchMedicines(buffer);
+                        if (data && data.length > 0) {
+                            // Try exact match on batch_no
+                            const exactMatch = data.find(m => m.batch_no?.toLowerCase() === buffer.toLowerCase());
+                            const item = exactMatch || (data.length === 1 ? data[0] : null);
+
+                            if (item) {
+                                addToCart(item);
+                                console.log(`Auto-added: ${item.name} | Price: ₹${item.price}`);
+                            } else {
+                                setSearchTerm(buffer);
+                            }
+                        } else {
+                            setSearchTerm(buffer);
+                        }
+                    };
+                    processScan();
                     buffer = '';
                 }
             } else if (char.length === 1) {
@@ -70,13 +86,24 @@ export default function BillingPage() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [cart]); // Add cart to dependencies to ensure addToCart has latest state if needed
+
+    // Fetch default GST rate
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const result = await getPharmacySettings();
+            if (result.success && result.settings) {
+                setDefaultGstRate(result.settings.defaultGstRate);
+            }
+        };
+        fetchSettings();
     }, []);
 
     const addToCart = (medicine: any) => {
-        const existing = cart.find(item => item.id === medicine.id);
+        const existing = cart.find(item => item.medicineId === medicine.id);
         if (existing) {
             setCart(cart.map(item =>
-                item.id === medicine.id ? { ...item, qty: item.qty + 1 } : item
+                item.medicineId === medicine.id ? { ...item, qty: item.qty + 1 } : item
             ));
         } else {
             setCart([...cart, {
@@ -87,12 +114,18 @@ export default function BillingPage() {
                 expiryDate: medicine.expiry_date,
                 qty: 1,
                 mrp: medicine.price,
-                gstRate: medicine.gst_rate || 5,
+                gstRate: 0, // Default to 0% as per user request
                 stock: medicine.stock
             }]);
         }
         setSearchTerm('');
         setSearchResults([]);
+    };
+
+    const handleUpdateGst = (medicineId: string, rate: number) => {
+        setCart(cart.map(item =>
+            item.medicineId === medicineId ? { ...item, gstRate: rate } : item
+        ));
     };
 
     const removeFromCart = (medicineId: string) => {
@@ -293,8 +326,19 @@ export default function BillingPage() {
                                                     </div>
                                                 </td>
                                                 <td className="py-4 text-right font-medium text-slate-600">₹{item.mrp}</td>
-                                                <td className="py-4 text-right font-medium text-slate-600">{item.gstRate}%</td>
-                                                <td className="py-4 text-right font-black text-slate-900">₹{(item.qty * item.mrp).toFixed(2)}</td>
+                                                <td className="py-4 text-right">
+                                                    <select
+                                                        value={item.gstRate}
+                                                        onChange={(e) => handleUpdateGst(item.medicineId, Number(e.target.value))}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                                                    >
+                                                        <option value="0">0%</option>
+                                                        <option value="5">5%</option>
+                                                        <option value="12">12%</option>
+                                                        <option value="18">18%</option>
+                                                    </select>
+                                                </td>
+                                                <td className="py-4 text-right font-black text-slate-900">₹{(item.qty * item.mrp * (1 + item.gstRate / 100)).toFixed(2)}</td>
                                                 <td className="py-4 text-center">
                                                     <button
                                                         onClick={() => removeFromCart(item.medicineId)}

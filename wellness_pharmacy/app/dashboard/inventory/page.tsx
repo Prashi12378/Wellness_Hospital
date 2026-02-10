@@ -28,11 +28,13 @@ export default function InventoryPage() {
     });
 
     // Stock Update Modal State
-    const [stockModal, setStockModal] = useState<{ isOpen: boolean; id: string; name: string; currentStock: number }>({
+    const [stockModal, setStockModal] = useState<{ isOpen: boolean; id: string; name: string; currentStock: number; expiry?: string; price?: number }>({
         isOpen: false,
         id: '',
         name: '',
-        currentStock: 0
+        currentStock: 0,
+        expiry: '',
+        price: 0
     });
     const [stockToAdd, setStockToAdd] = useState('');
 
@@ -94,12 +96,13 @@ export default function InventoryPage() {
         if (existing) {
             // Open Stock Update Modal
             openStockModal(existing);
-            showAlert('Item Found', `Scanned "${existing.name}". Enter quantity to add.`, 'info');
+            const expiryStr = existing.expiry_date ? format(new Date(existing.expiry_date), 'MMM yyyy') : 'N/A';
+            showAlert('Item Found', `Scanned: ${existing.name}\nBatch: ${existing.batch_no}\nExpiry: ${expiryStr}\nPrice: ₹${existing.price}\n\nEnter quantity to add.`, 'info');
         } else {
             // Open Add New Modal
             setFormData(prev => ({ ...prev, batch_no: code }));
             setIsModalOpen(true);
-            showAlert('New Item', `Item not found. Batch No "${code}" pre-filled. Not found`, 'info');
+            showAlert('New Item', `Item not found. Batch No "${code}" pre-filled.`, 'info');
         }
     };
 
@@ -156,7 +159,9 @@ export default function InventoryPage() {
             isOpen: true,
             id: item.id,
             name: item.name,
-            currentStock: item.stock
+            currentStock: item.stock,
+            expiry: item.expiry_date,
+            price: item.price
         });
         setStockToAdd('');
     };
@@ -218,18 +223,18 @@ export default function InventoryPage() {
 
                 <div className={cn(
                     "bg-white p-6 rounded-2xl border shadow-sm transition-all hover:shadow-md",
-                    unreadAlerts > 0 ? "border-amber-100 bg-amber-50/10" : "border-slate-100"
+                    medicines.filter(m => m.stock < 10).length > 0 ? "border-amber-100 bg-amber-50/10" : "border-slate-100"
                 )}>
                     <div className="mb-4">
                         <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Low Stock Alerts</p>
                     </div>
                     <h3 className={cn(
                         "text-3xl font-bold tracking-tight",
-                        unreadAlerts > 0 ? "text-amber-600" : "text-slate-900"
+                        medicines.filter(m => m.stock < 10).length > 0 ? "text-amber-600" : "text-slate-900"
                     )}>
-                        {unreadAlerts}
+                        {medicines.filter(m => m.stock < 10).length}
                     </h3>
-                    {unreadAlerts > 0 && <p className="text-xs font-medium text-amber-600 mt-1">Restock recommended</p>}
+                    {medicines.filter(m => m.stock < 10).length > 0 && <p className="text-xs font-medium text-amber-600 mt-1">Restock recommended</p>}
                 </div>
             </div>
 
@@ -330,7 +335,20 @@ export default function InventoryPage() {
                         <form onSubmit={handleStockUpdate} className="p-6 space-y-4">
                             <div>
                                 <p className="text-sm text-slate-500 mb-2">Adding stock for <span className="font-bold text-slate-900">{stockModal.name}</span></p>
-                                <p className="text-xs text-slate-400 mb-4">Current Stock: {stockModal.currentStock}</p>
+                                <div className="grid grid-cols-2 gap-4 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expiry Date</p>
+                                        <p className="text-sm font-bold text-slate-700">{stockModal.expiry ? format(new Date(stockModal.expiry), 'MMM yyyy') : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Price (MRP)</p>
+                                        <p className="text-sm font-bold text-primary">₹{stockModal.price}</p>
+                                    </div>
+                                    <div className="col-span-2 pt-2 border-t border-slate-200">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Stock</p>
+                                        <p className="text-sm font-bold text-slate-700">{stockModal.currentStock} Units</p>
+                                    </div>
+                                </div>
                                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Quantity to Add</label>
                                 <input
                                     autoFocus

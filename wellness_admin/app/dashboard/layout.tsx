@@ -54,6 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Blood@Home', href: '/dashboard/blood-collection', icon: Droplet },
         { name: 'Pharmacy Inventory', href: '/dashboard/inventory', icon: Pill },
         { name: 'Financial Ledger', href: '/dashboard/ledger', icon: FileText },
+        { name: 'System Settings', href: '/dashboard/settings', icon: Settings },
     ];
 
 

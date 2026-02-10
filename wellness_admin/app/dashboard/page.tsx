@@ -1,16 +1,48 @@
 import { Users, Stethoscope, FileText, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { prisma } from "@/lib/db";
+import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardOverview() {
     // Fetch real-time stats
-    const [doctorCount, staffCount, inventoryAlerts] = await Promise.all([
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [doctorCount, staffCount, inventoryAlerts, ledgerAgg] = await Promise.all([
         prisma.profile.count({ where: { role: 'doctor' } }),
         prisma.profile.count({ where: { role: 'staff' } }),
-        prisma.pharmacyInventory.count({ where: { stock: { lt: 10 } } })
+        prisma.pharmacyInventory.count({ where: { stock: { lt: 10 } } }),
+        prisma.ledger.aggregate({
+            where: {
+                transactionDate: {
+                    gte: today
+                }
+            },
+            _sum: {
+                amount: true
+            }
+        })
     ]);
+
+    // For a more accurate "Net" daily balance, we'd need separate sums for income/expense
+    // but the schema uses transactionType string. Let's fetch the actual items for today.
+    const todayTransactions = await prisma.ledger.findMany({
+        where: {
+            transactionDate: {
+                gte: today
+            }
+        }
+    });
+
+    const dailyIncome = todayTransactions
+        .filter(t => t.transactionType === 'income')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+    const dailyExpense = todayTransactions
+        .filter(t => t.transactionType === 'expense')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+    const dailyNet = dailyIncome - dailyExpense;
 
     return (
         <div className="space-y-8">
@@ -52,7 +84,12 @@ export default async function DashboardOverview() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Daily Ledger</p>
-                            <h3 className="text-2xl font-bold">₹0</h3>
+                            <h3 className={cn(
+                                "text-2xl font-bold",
+                                dailyNet >= 0 ? "text-emerald-600" : "text-red-600"
+                            )}>
+                                {dailyNet >= 0 ? '+' : ''}₹{dailyNet.toLocaleString()}
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -79,10 +116,10 @@ export default async function DashboardOverview() {
                             <span className="font-semibold block">Add New Staff</span>
                             <span className="text-xs text-muted-foreground">Create staff account</span>
                         </Link>
-                        <button className="p-4 rounded-lg border border-border hover:bg-muted transition-colors text-left">
+                        <Link href="/dashboard/ledger" className="p-4 rounded-lg border border-border hover:bg-muted transition-colors text-left">
                             <span className="font-semibold block">Record Transaction</span>
                             <span className="text-xs text-muted-foreground">Add to ledger</span>
-                        </button>
+                        </Link>
                     </div>
                 </div>
 

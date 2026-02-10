@@ -14,11 +14,27 @@ export async function getDashboardStats() {
             },
         });
 
-        // Get unread low stock notifications from the database
-        const lowStockAlerts = await db.notification.count({
+        // 2. Low Stock Count (Actual inventory check)
+        const lowStockCount = await db.pharmacyInventory.count({
             where: {
-                type: 'low_stock',
-                read: false
+                stock: {
+                    lt: 10 // Default threshold
+                }
+            }
+        });
+
+        // 3. Today's Revenue
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const salesAgg = await db.invoice.aggregate({
+            where: {
+                createdAt: {
+                    gte: today
+                }
+            },
+            _sum: {
+                grandTotal: true
             }
         });
 
@@ -26,8 +42,8 @@ export async function getDashboardStats() {
             stats: {
                 totalStock: inventoryAgg._sum.stock || 0,
                 totalItems: inventoryAgg._count.id || 0,
-                lowStock: lowStockAlerts,
-                todaysSales: 0
+                lowStock: lowStockCount,
+                todaysSales: Number(salesAgg._sum.grandTotal) || 0
             }
         };
 
