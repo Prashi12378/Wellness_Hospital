@@ -1,8 +1,13 @@
 'use client';
 
 import { Bell, Shield, Smartphone, LogOut, ChevronRight } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 
 export default function SettingsPage() {
+    const handleLogout = async () => {
+        await signOut({ callbackUrl: '/login' });
+    };
+
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold text-foreground">Settings</h1>
@@ -60,7 +65,10 @@ export default function SettingsPage() {
 
                 <section>
                     <div className="bg-red-50 border border-red-100 rounded-xl mt-8">
-                        <button className="w-full flex items-center gap-4 p-4 text-red-600 hover:bg-red-100/50 transition-colors">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-4 p-4 text-red-600 hover:bg-red-100/50 transition-colors"
+                        >
                             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                                 <LogOut className="w-5 h-5" />
                             </div>
