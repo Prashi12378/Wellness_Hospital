@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Brain, Baby, Bone, Eye, Stethoscope, Microscope, Pill, ArrowRight, AlertTriangle, Shield, Activity, Droplet } from "lucide-react";
+import { Heart, Brain, Baby, Bone, Eye, Stethoscope, Microscope, Pill, ArrowRight, AlertTriangle, Shield, Activity, Droplet, Sparkles, Wind, Scissors } from "lucide-react";
 import BookingButton from "@/components/BookingButton";
 
 const departments = [
@@ -13,6 +13,10 @@ const departments = [
     { icon: Droplet, image: "/images/radiology.png", title: "Radiology", description: "Advanced diagnostic imaging services including X-Ray, Ultrasound, and CT scans for precise medical evaluation." },
     { icon: Activity, image: "/images/physiotherapy.png", title: "Physiotherapy", description: "Personalized rehabilitation programs to restore mobility, strength, and function after injury or surgery." },
     { icon: Shield, image: "/images/gastroenterology.png", title: "Gastroenterology", description: "Specialized treatment for digestive system disorders, including liver, gallbladder, and pancreatic conditions." },
+    { icon: Baby, image: "/images/gynecology.png", title: "Gynecology & Obstetrics", description: "Specialized care for women's reproductive health, prenatal care, and safe childbirth services with a compassionate approach." },
+    { icon: Sparkles, image: "/images/dermatology.png", title: "Dermatology", description: "Expert diagnosis and treatment for all skin, hair, and nail conditions, including medical, surgical, and cosmetic dermatology." },
+    { icon: Wind, image: "/images/pulmonology.png", title: "Pulmonology", description: "Comprehensive care for respiratory and lung-related conditions, specializing in asthma, COPD, and sleep-related breathing disorders." },
+    { icon: Scissors, image: "/images/general-surgery.png", title: "General Surgery", description: "Broad-spectrum surgical services for various conditions of the abdomen, digestive tract, endocrine system, and more." },
     { icon: AlertTriangle, image: "/images/emergency-care.png", title: "Emergency Care", description: "24/7 emergency medical services with a rapid response team and life-support equipment for critical care situations.", href: "/emergency" },
     { icon: Microscope, image: "/images/pathology.png", title: "Pathology", description: "State-of-the-art laboratory services for accurate and timely diagnostic testing across all medical disciplines.", showAction: false },
     { icon: Pill, image: "/images/pharmacy.png", title: "Pharmacy", description: "A fully stocked 24/7 pharmacy providing all essential medications and professional counseling with home delivery options.", showAction: false },

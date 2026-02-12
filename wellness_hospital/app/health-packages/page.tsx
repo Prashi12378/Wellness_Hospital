@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
 import Link from 'next/link';
-import { Heart, Activity, Brain, Stethoscope, Baby, Shield, CheckCircle, ArrowRight, TestTube, Loader2, Info } from 'lucide-react';
+import { Heart, Activity, Brain, Stethoscope, Baby, Shield, CheckCircle, ArrowRight, TestTube, Loader2, Info, ChevronRight } from 'lucide-react';
+import PackageDetailsModal from '@/components/PackageDetailsModal';
 
 const iconMap: any = {
     'Stethoscope': Stethoscope,
@@ -28,7 +28,8 @@ const colorMap: any = {
 export default function HealthPackagesPage() {
     const [packages, setPackages] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-
+    const [selectedPackage, setSelectedPackage] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchPackages = async () => {
@@ -46,6 +47,11 @@ export default function HealthPackagesPage() {
         };
         fetchPackages();
     }, []);
+
+    const openDetails = (pkg: any) => {
+        setSelectedPackage(pkg);
+        setIsModalOpen(true);
+    };
 
     return (
         <main className="min-h-screen">
@@ -126,7 +132,15 @@ export default function HealthPackagesPage() {
                                             </div>
 
                                             <div className="border-t border-border pt-4 mb-6 flex-1">
-                                                <p className="text-sm font-medium text-foreground mb-3">Includes:</p>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <p className="text-sm font-medium text-foreground">Includes:</p>
+                                                    <button
+                                                        onClick={() => openDetails(pkg)}
+                                                        className="text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 flex items-center gap-1 group/btn"
+                                                    >
+                                                        View All Details <ChevronRight className="w-3 h-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                    </button>
+                                                </div>
                                                 <ul className="space-y-2">
                                                     {Array.isArray(pkg.includes) && pkg.includes.slice(0, 5).map((item: string, i: number) => (
                                                         <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -134,7 +148,12 @@ export default function HealthPackagesPage() {
                                                         </li>
                                                     ))}
                                                     {Array.isArray(pkg.includes) && pkg.includes.length > 5 && (
-                                                        <li className="text-sm text-primary font-medium">+ {pkg.includes.length - 5} more tests</li>
+                                                        <li
+                                                            onClick={() => openDetails(pkg)}
+                                                            className="text-sm text-primary font-bold cursor-pointer hover:underline flex items-center gap-1.5"
+                                                        >
+                                                            + {pkg.includes.length - 5} more tests <ArrowRight className="w-3.5 h-3.5" />
+                                                        </li>
                                                     )}
                                                 </ul>
                                             </div>
@@ -153,6 +172,16 @@ export default function HealthPackagesPage() {
                     )}
                 </div>
             </section>
+
+            {/* Modal */}
+            {selectedPackage && (
+                <PackageDetailsModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    packageName={selectedPackage.name}
+                    tests={Array.isArray(selectedPackage.includes) ? selectedPackage.includes : []}
+                />
+            )}
 
             {/* CTA */}
             <section className="py-16 md:py-24 bg-primary text-primary-foreground">

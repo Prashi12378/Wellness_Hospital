@@ -28,7 +28,7 @@ export default function AboutPage() {
                             Caring for Your Health with Experienced Professionals
                         </h1>
                         <p className="text-lg text-muted-foreground leading-relaxed">
-                            Founded in 2026, Wellness Hospital brings together a team of highly experienced medical professionals with over a decade of expertise. We combine warm, personal care with advanced medical practices to make sure every patient feels seen, heard, and cared for.
+                            Founded in 2025, Wellness Hospital brings together a team of highly experienced medical professionals with over a decade of expertise. We combine warm, personal care with advanced medical practices to make sure every patient feels seen, heard, and cared for.
                         </p>
                     </div>
                 </div>

@@ -78,8 +78,13 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         __html: `
                         @media print {
                             @page {
-                                size: A5;
-                                margin: 5mm;
+                                size: A5 portrait;
+                                margin: 0;
+                            }
+                            body {
+                                margin: 0;
+                                padding: 0;
+                                -webkit-print-color-adjust: exact;
                             }
                             body * { visibility: hidden; }
                             #print-area, #print-area * { visibility: visible; }
@@ -87,26 +92,34 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 position: absolute; 
                                 left: 0; 
                                 top: 0; 
-                                width: 100%; 
+                                width: 148mm; 
+                                height: 210mm;
                                 padding: 0 !important;
                                 margin: 0 !important;
+                                overflow: hidden;
                             }
                             .no-print { display: none !important; }
                             
-                            /* Ensure content fits A5 */
+                            /* Ensure content fits exactly on A5 / Half-A4 */
                             .invoice-container {
                                 border: none !important;
-                                shadow: none !important;
-                                width: 100% !important;
-                                max-width: 100% !important;
-                                padding: 5mm !important;
+                                box-shadow: none !important;
+                                width: 148mm !important;
+                                height: 210mm !important;
+                                padding: 10mm !important;
+                                margin: 0 !important;
+                                display: flex;
+                                flex-direction: column;
                             }
                             
                             /* Adjust font sizes for smaller paper */
-                            h1 { font-size: 16pt !important; }
-                            h2 { font-size: 14pt !important; }
-                            p, span, td, th { font-size: 9pt !important; }
-                            .tax-table th, .tax-table td { font-size: 8pt !important; }
+                            h1 { font-size: 14pt !important; }
+                            h2 { font-size: 12pt !important; }
+                            p, span, td, th { font-size: 8pt !important; line-height: 1.2 !important; }
+                            .tax-table th, .tax-table td { font-size: 7pt !important; }
+                            
+                            /* Ensure table doesn't overflow */
+                            table { page-break-inside: avoid; }
                         }
                     `}} />
 
