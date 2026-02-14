@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Search, Package, AlertTriangle, ArrowUpRight, Trash2, Edit, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
