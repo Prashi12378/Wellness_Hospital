@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getInventory, updateStock } from '@/app/actions/inventory';
+import { getInventory, addMedicine, deleteMedicine, updateStock } from '@/app/actions/inventory';
 import { getUnreadCount } from '@/app/actions/notifications';
 import { Plus, Search, Trash2, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
@@ -107,8 +107,10 @@ export default function InventoryPage() {
             const expiryStr = existing.expiryDate ? format(new Date(existing.expiryDate), 'MMM yyyy') : 'N/A';
             showAlert('Item Found', `Scanned: ${existing.name}\nBatch: ${existing.batchNo}\nExpiry: ${expiryStr}\nPrice: ₹${existing.price}\n\nEnter quantity to add.`, 'info');
         } else {
-            // Item not found - refer to admin
-            showAlert('Unknown Item', `Item with barcode "${code}" not found in inventory. Please ask the Admin to add this medicine.`, 'info');
+            // Open Add New Modal
+            setFormData(prev => ({ ...prev, batchNo: code }));
+            setIsModalOpen(true);
+            showAlert('New Item', `Item not found. Batch No "${code}" pre-filled.`, 'info');
         }
     };
 
@@ -127,11 +129,21 @@ export default function InventoryPage() {
         setAlertConfig({ isOpen: true, title, message, type });
     };
 
-    /* // Add/Edit logic moved to Admin Portal
     const handleSubmit = async (e: React.FormEvent) => {
-        ...
+        e.preventDefault();
+        try {
+            const result = await addMedicine(formData);
+
+            if (result.error) throw new Error(result.error);
+
+            setIsModalOpen(false);
+            setFormData({ name: '', batchNo: '', hsnCode: '', expiryDate: '', price: '', gstRate: '5', stock: '', location: '' });
+            fetchInventory();
+            showAlert('Success', 'Medicine added successfully to inventory.', 'success');
+        } catch (error: any) {
+            showAlert('Add Failed', error.message, 'error');
+        }
     };
-    */
 
     const openStockModal = (item: any) => {
         setStockModal({
@@ -336,7 +348,128 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            {/* Add Modal removed - moved to Admin Portal */}
+            {/* Add Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Add New Medicine</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-lg border border-slate-200 shadow-sm transition-all">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Medicine Name</label>
+                                <input
+                                    required
+                                    type="text"
+                                    className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light focus:ring-4 focus:ring-primary-light/10 outline-none transition-all"
+                                    placeholder="Medicine brand name..."
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Batch No</label>
+                                    <input
+                                        type="text"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                        placeholder="e.g. 25E31G83"
+                                        value={formData.batchNo}
+                                        onChange={e => setFormData({ ...formData, batchNo: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">HSN Code</label>
+                                    <input
+                                        type="text"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                        placeholder="3004xxxx"
+                                        value={formData.hsnCode}
+                                        onChange={e => setFormData({ ...formData, hsnCode: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all font-bold"
+                                        value={formData.price}
+                                        onChange={e => setFormData({ ...formData, price: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">GST Rate (%)</label>
+                                    <select
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all font-bold"
+                                        value={formData.gstRate}
+                                        onChange={e => setFormData({ ...formData, gstRate: e.target.value })}
+                                    >
+                                        <option value="0">0% (Exempt)</option>
+                                        <option value="5">5% (Common)</option>
+                                        <option value="12">12% (Standard)</option>
+                                        <option value="18">18% (Luxury)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Stock Quantity</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        min="0"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                        value={formData.stock}
+                                        onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Expiry Date</label>
+                                    <input
+                                        type="date"
+                                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                        value={formData.expiryDate}
+                                        onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Location / Rack</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Rack A-12"
+                                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
+                                    value={formData.location}
+                                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                />
+                            </div>
+                            <div className="pt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="flex-1 h-11 border border-slate-200 text-slate-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 h-11 bg-primary-light hover:bg-primary text-white font-medium rounded-lg shadow-lg shadow-primary-light/20 transition-colors"
+                                >
+                                    Add Medicine
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
 
             {/* Branded Alert Modal */}
