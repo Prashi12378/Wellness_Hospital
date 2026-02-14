@@ -13,7 +13,7 @@ export async function searchMedicines(query: string) {
             where: {
                 OR: [
                     { name: { contains: query, mode: 'insensitive' } },
-                    { batch_no: { contains: query, mode: 'insensitive' } }
+                    { batchNo: { contains: query, mode: 'insensitive' } }
                 ],
                 stock: {
                     gt: 0,
@@ -25,7 +25,7 @@ export async function searchMedicines(query: string) {
         const serialized = medicines.map(m => ({
             ...m,
             price: Number(m.price),
-            gst_rate: Number(m.gst_rate),
+            gstRate: Number(m.gstRate),
         }));
 
         return { data: serialized };

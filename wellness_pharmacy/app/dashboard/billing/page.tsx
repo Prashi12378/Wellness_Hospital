@@ -67,8 +67,8 @@ export default function BillingPage() {
                     const processScan = async () => {
                         const { data } = await searchMedicines(buffer);
                         if (data && data.length > 0) {
-                            // Try exact match on batch_no
-                            const exactMatch = data.find(m => m.batch_no?.toLowerCase() === buffer.toLowerCase());
+                            // Try exact match on batchNo
+                            const exactMatch = data.find(m => m.batchNo?.toLowerCase() === buffer.toLowerCase());
                             const item = exactMatch || (data.length === 1 ? data[0] : null);
 
                             if (item) {
@@ -126,9 +126,9 @@ export default function BillingPage() {
             setCart([...cart, {
                 medicineId: medicine.id,
                 name: medicine.name,
-                hsnCode: medicine.hsn_code || '30049099',
-                batchNo: medicine.batch_no || 'NA',
-                expiryDate: medicine.expiry_date,
+                hsnCode: medicine.hsnCode || '30049099',
+                batchNo: medicine.batchNo || 'NA',
+                expiryDate: medicine.expiryDate,
                 qty: 1,
                 mrp: medicine.price,
                 gstRate: 0, // Default to 0% as per user request
@@ -296,7 +296,7 @@ export default function BillingPage() {
                                         >
                                             <div className="text-left">
                                                 <p className="font-bold text-slate-900">{med.name}</p>
-                                                <p className="text-xs text-slate-500">Batch: {med.batch_no || 'N/A'} | Stock: {med.stock}</p>
+                                                <p className="text-xs text-slate-500">Batch: {med.batchNo || 'N/A'} | Stock: {med.stock}</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-black text-primary">₹{med.price}</p>
