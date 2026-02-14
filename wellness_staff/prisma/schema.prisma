@@ -167,3 +167,18 @@ model Otp {
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
+
+model PharmacyInventory {
+  id               String    @id @default(uuid())
+  name             String
+  batchNo          String?   @map("batch_no")
+  hsnCode          String?   @map("hsn_code")
+  expiryDate       DateTime? @map("expiry_date")
+  price            Decimal
+  gstRate          Decimal   @default(0) @map("gst_rate")
+  stock            Int
+  location         String?
+  autoReorderPoint Int?      @default(10)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
