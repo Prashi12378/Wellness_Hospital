@@ -15,11 +15,6 @@ export default function InventoryPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Custom Modal States
-    const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
-        isOpen: false,
-        id: '',
-        name: ''
-    });
     const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info' }>({
         isOpen: false,
         title: '',
@@ -40,11 +35,11 @@ export default function InventoryPage() {
 
     const [formData, setFormData] = useState({
         name: '',
-        batch_no: '',
-        hsn_code: '',
-        expiry_date: '',
+        batchNo: '',
+        hsnCode: '',
+        expiryDate: '',
         price: '',
-        gst_rate: '5',
+        gstRate: '5',
         stock: '',
         location: ''
     });
@@ -55,7 +50,7 @@ export default function InventoryPage() {
 
     // Scroll Lock Logic
     useEffect(() => {
-        const isAnyModalOpen = isModalOpen || deleteConfirm.isOpen || alertConfig.isOpen || stockModal.isOpen;
+        const isAnyModalOpen = isModalOpen || alertConfig.isOpen || stockModal.isOpen;
         if (isAnyModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -64,7 +59,7 @@ export default function InventoryPage() {
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isModalOpen, deleteConfirm.isOpen, alertConfig.isOpen, stockModal.isOpen]);
+    }, [isModalOpen, alertConfig.isOpen, stockModal.isOpen]);
 
     // Barcode Listener
     useEffect(() => {
@@ -100,20 +95,20 @@ export default function InventoryPage() {
 
     const handleBarcodeScan = (code: string) => {
         console.log('Scanned:', code);
-        // Find if medicine exists (by batch_no or name)
+        // Find if medicine exists (by batchNo or name)
         const existing = medicines.find(m =>
-            (m.batch_no && m.batch_no.toLowerCase() === code.toLowerCase()) ||
+            (m.batchNo && m.batchNo.toLowerCase() === code.toLowerCase()) ||
             (m.name.toLowerCase() === code.toLowerCase())
         );
 
         if (existing) {
             // Open Stock Update Modal
             openStockModal(existing);
-            const expiryStr = existing.expiry_date ? format(new Date(existing.expiry_date), 'MMM yyyy') : 'N/A';
-            showAlert('Item Found', `Scanned: ${existing.name}\nBatch: ${existing.batch_no}\nExpiry: ${expiryStr}\nPrice: ₹${existing.price}\n\nEnter quantity to add.`, 'info');
+            const expiryStr = existing.expiryDate ? format(new Date(existing.expiryDate), 'MMM yyyy') : 'N/A';
+            showAlert('Item Found', `Scanned: ${existing.name}\nBatch: ${existing.batchNo}\nExpiry: ${expiryStr}\nPrice: ₹${existing.price}\n\nEnter quantity to add.`, 'info');
         } else {
             // Open Add New Modal
-            setFormData(prev => ({ ...prev, batch_no: code }));
+            setFormData(prev => ({ ...prev, batchNo: code }));
             setIsModalOpen(true);
             showAlert('New Item', `Item not found. Batch No "${code}" pre-filled.`, 'info');
         }
@@ -142,28 +137,11 @@ export default function InventoryPage() {
             if (result.error) throw new Error(result.error);
 
             setIsModalOpen(false);
-            setFormData({ name: '', batch_no: '', hsn_code: '', expiry_date: '', price: '', gst_rate: '5', stock: '', location: '' });
+            setFormData({ name: '', batchNo: '', hsnCode: '', expiryDate: '', price: '', gstRate: '5', stock: '', location: '' });
             fetchInventory();
             showAlert('Success', 'Medicine added successfully to inventory.', 'success');
         } catch (error: any) {
             showAlert('Add Failed', error.message, 'error');
-        }
-    };
-
-    const confirmDelete = (id: string, name: string) => {
-        setDeleteConfirm({ isOpen: true, id, name });
-    };
-
-    const handleDelete = async () => {
-        const { id } = deleteConfirm;
-        setDeleteConfirm({ ...deleteConfirm, isOpen: false });
-
-        const result = await deleteMedicine(id);
-        if (result.success) {
-            fetchInventory();
-            showAlert('Deleted', 'Medicine record removed successfully.', 'success');
-        } else {
-            showAlert('Delete Failed', result.error || 'Could not delete medicine.', 'error');
         }
     };
 
@@ -173,7 +151,7 @@ export default function InventoryPage() {
             id: item.id,
             name: item.name,
             currentStock: item.stock,
-            expiry: item.expiry_date,
+            expiry: item.expiryDate,
             price: item.price
         });
         setStockToAdd('');
@@ -196,7 +174,7 @@ export default function InventoryPage() {
 
     const filteredMedicines = medicines.filter(m =>
         m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (m.batch_no && m.batch_no.toLowerCase().includes(searchTerm.toLowerCase()))
+        (m.batchNo && m.batchNo.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -213,13 +191,6 @@ export default function InventoryPage() {
                         title="Refresh Inventory"
                     >
                         <RefreshCw className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 bg-primary-light hover:bg-primary text-white px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Add Medicine
                     </button>
                 </div>
             </div>
@@ -290,15 +261,15 @@ export default function InventoryPage() {
                                             <p className="font-bold text-slate-900">{item.name}</p>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <p className="text-slate-700 font-medium">{item.batch_no || '-'}</p>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase">{item.hsn_code || '-'}</p>
+                                            <p className="text-slate-700 font-medium">{item.batchNo || '-'}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase">{item.hsnCode || '-'}</p>
                                         </td>
                                         <td className="px-6 py-4 text-slate-500">
-                                            {item.expiry_date ? format(new Date(item.expiry_date), 'MMM yyyy') : '-'}
+                                            {item.expiryDate ? format(new Date(item.expiryDate), 'MMM yyyy') : '-'}
                                         </td>
                                         <td className="px-6 py-4">
                                             <p className="font-black text-slate-900">₹{item.price}</p>
-                                            <p className="text-[10px] text-emerald-600 font-bold">GST: {item.gst_rate}%</p>
+                                            <p className="text-[10px] text-emerald-600 font-bold">GST: {item.gstRate}%</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.stock < 10
@@ -318,13 +289,6 @@ export default function InventoryPage() {
                                                 title="Add Stock"
                                             >
                                                 <Plus className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => confirmDelete(item.id, item.name)}
-                                                className="p-1 text-slate-300 hover:text-red-500 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </td>
                                     </tr>
@@ -413,8 +377,8 @@ export default function InventoryPage() {
                                         type="text"
                                         className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
                                         placeholder="e.g. 25E31G83"
-                                        value={formData.batch_no}
-                                        onChange={e => setFormData({ ...formData, batch_no: e.target.value })}
+                                        value={formData.batchNo}
+                                        onChange={e => setFormData({ ...formData, batchNo: e.target.value })}
                                     />
                                 </div>
                                 <div>
@@ -423,8 +387,8 @@ export default function InventoryPage() {
                                         type="text"
                                         className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
                                         placeholder="3004xxxx"
-                                        value={formData.hsn_code}
-                                        onChange={e => setFormData({ ...formData, hsn_code: e.target.value })}
+                                        value={formData.hsnCode}
+                                        onChange={e => setFormData({ ...formData, hsnCode: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -445,8 +409,8 @@ export default function InventoryPage() {
                                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">GST Rate (%)</label>
                                     <select
                                         className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all font-bold"
-                                        value={formData.gst_rate}
-                                        onChange={e => setFormData({ ...formData, gst_rate: e.target.value })}
+                                        value={formData.gstRate}
+                                        onChange={e => setFormData({ ...formData, gstRate: e.target.value })}
                                     >
                                         <option value="0">0% (Exempt)</option>
                                         <option value="5">5% (Common)</option>
@@ -472,8 +436,8 @@ export default function InventoryPage() {
                                     <input
                                         type="date"
                                         className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-primary-light outline-none transition-all"
-                                        value={formData.expiry_date}
-                                        onChange={e => setFormData({ ...formData, expiry_date: e.target.value })}
+                                        value={formData.expiryDate}
+                                        onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -507,37 +471,6 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            {/* Custom Delete Confirmation Modal */}
-            {deleteConfirm.isOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-8 text-center">
-                            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-8 h-8" />
-                            </div>
-                            <h2 className="text-xl font-bold text-slate-900 mb-2">Are you sure?</h2>
-                            <p className="text-slate-500 mb-8 leading-relaxed">
-                                You are about to delete <span className="font-bold text-slate-900">"{deleteConfirm.name}"</span>.
-                                This action cannot be undone.
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setDeleteConfirm({ ...deleteConfirm, isOpen: false })}
-                                    className="flex-1 h-11 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-all active:scale-95"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleDelete}
-                                    className="flex-1 h-11 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95"
-                                >
-                                    Yes, Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Branded Alert Modal */}
             {alertConfig.isOpen && (
