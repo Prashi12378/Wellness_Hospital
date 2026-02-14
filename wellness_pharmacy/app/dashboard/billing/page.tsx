@@ -50,6 +50,10 @@ export default function BillingPage() {
         let lastKeyTime = Date.now();
 
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore ONLY if inside an input field
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
             const currentTime = Date.now();
             const char = e.key;
 
@@ -87,7 +91,7 @@ export default function BillingPage() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [cart]); // Add cart to dependencies to ensure addToCart has latest state if needed
+    }, [cart]); // Removed showPreview from dependencies
 
     // Fetch default GST rate
     useEffect(() => {
@@ -99,6 +103,18 @@ export default function BillingPage() {
         };
         fetchSettings();
     }, []);
+
+    // Scroll Lock Logic
+    useEffect(() => {
+        if (showPreview) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showPreview]);
 
     const addToCart = (medicine: any) => {
         const existing = cart.find(item => item.medicineId === medicine.id);

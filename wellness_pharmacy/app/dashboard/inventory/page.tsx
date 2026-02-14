@@ -53,13 +53,26 @@ export default function InventoryPage() {
         fetchInventory();
     }, []);
 
+    // Scroll Lock Logic
+    useEffect(() => {
+        const isAnyModalOpen = isModalOpen || deleteConfirm.isOpen || alertConfig.isOpen || stockModal.isOpen;
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isModalOpen, deleteConfirm.isOpen, alertConfig.isOpen, stockModal.isOpen]);
+
     // Barcode Listener
     useEffect(() => {
         let buffer = '';
         let lastKeyTime = Date.now();
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore if inside an input field
+            // Ignore ONLY if inside an input field
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
 
@@ -83,7 +96,7 @@ export default function InventoryPage() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [medicines]); // Dependency on medicines to check existence
+    }, [medicines]); // Reverted dependencies to medicines only
 
     const handleBarcodeScan = (code: string) => {
         console.log('Scanned:', code);
