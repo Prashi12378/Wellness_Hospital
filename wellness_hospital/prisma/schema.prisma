@@ -140,11 +140,11 @@ model Otp {
 
 model PharmacyInventory {
   id               String    @id @default(uuid())
-  name             String
-  batch_no         String?
-  expiry_date      DateTime?
+  batchNo          String?   @map("batch_no")
+  hsnCode          String?   @map("hsn_code")
+  expiryDate       DateTime? @map("expiry_date")
   price            Decimal
-  stock            Int
+  gstRate          Decimal   @default(0) @map("gst_rate")
   location         String?
   autoReorderPoint Int?      @default(10)
   createdAt        DateTime  @default(now())
