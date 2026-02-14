@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getInventory, addMedicine, deleteMedicine, updateStock } from '@/app/actions/inventory';
+import { getInventory, addMedicine, updateStock } from '@/app/actions/inventory';
 import { getUnreadCount } from '@/app/actions/notifications';
-import { Plus, Search, Trash2, X, RefreshCw } from 'lucide-react';
+import { Plus, Search, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -185,6 +185,13 @@ export default function InventoryPage() {
                     <p className="text-slate-500">Track stock levels, expiry dates, and medicine details.</p>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary-light text-white rounded-lg font-medium hover:bg-primary transition-colors shadow-lg shadow-primary-light/20"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Medicine
+                    </button>
                     <button
                         onClick={fetchInventory}
                         className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
