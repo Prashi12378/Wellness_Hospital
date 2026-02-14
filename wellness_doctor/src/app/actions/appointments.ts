@@ -2,18 +2,19 @@
 
 import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
-// We might need an auth options file or just use a generic fetch if session is handled elsewhere. 
-// For now, I'll assume we can get the session or at least list all scheduled appointments if filtering by doctor isn't strictly enforced yet.
-// Re-reading previous logic: it was creating client to fetch appointments. 
-// The system seems to rely on the logged-in user being linked to a Profile.
+import { authOptions } from '@/lib/auth';
 
 export async function getDoctorAppointments() {
     try {
-        // For debugging, we'll fetch all scheduled/completed appointments relative to today.
-        // Ideally we filter by the logged-in doctor's ID, but let's first get DATA showing up.
+        const session = await getServerSession(authOptions);
+        if (!session?.user) return { error: 'Not authenticated' };
+
+        const profileId = (session.user as any).profileId;
+        if (!profileId) return { error: 'Doctor profile not found' };
 
         const appointments = await prisma.appointment.findMany({
             where: {
+                doctorId: profileId,
                 status: {
                     in: ['scheduled', 'completed']
                 }
@@ -27,9 +28,6 @@ export async function getDoctorAppointments() {
         });
 
         // Transform data to match what the frontend expects (snake_case vs camelCase mismatch handling)
-        // The frontend expects: id, patient_name, appointment_time, appointment_date, status, department, patient_phone, reason
-        // The DB (Prisma) returns: id, patientName, appointmentTime, appointmentDate, status, department, patientPhone, reason
-
         const mappedAppointments = appointments.map(apt => ({
             id: apt.id,
             patient_name: apt.patientName || (apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Unknown'),

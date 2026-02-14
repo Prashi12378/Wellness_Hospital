@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, use } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Plus, Trash2, Printer, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
@@ -152,6 +153,7 @@ export default function ConsultationPage({ params }: PageProps) {
     const [saving, setSaving] = useState(false);
     const [appointment, setAppointment] = useState<any>(null);
     const [existingPrescription, setExistingPrescription] = useState<any>(null);
+    const { data: session } = useSession();
 
     // Core Data
     const [medicines, setMedicines] = useState<Medicine[]>([]);
@@ -162,9 +164,9 @@ export default function ConsultationPage({ params }: PageProps) {
     const [patientGender, setPatientGender] = useState('');
     const [patientId, setPatientId] = useState('');
 
-    const [doctorName, setDoctorName] = useState('Dr. Sanath');
-    const [qualification, setQualification] = useState('MBBS, MD');
-    const [speciality, setSpeciality] = useState('General Physician');
+    const [doctorName, setDoctorName] = useState('');
+    const [qualification, setQualification] = useState('');
+    const [speciality, setSpeciality] = useState('');
 
     const [diagnosis, setDiagnosis] = useState('');
     const [adviceLines, setAdviceLines] = useState<string[]>(['']);
@@ -202,6 +204,15 @@ export default function ConsultationPage({ params }: PageProps) {
     }, [adviceLines, focusIndex]);
 
     useEffect(() => {
+        if (session?.user) {
+            const u = session.user as any;
+            if (!doctorName) setDoctorName(`Dr. ${u.firstName || ''} ${u.lastName || ''}`.trim());
+            if (!qualification) setQualification(u.qualifications || 'MBBS');
+            if (!speciality) setSpeciality(u.specialization || 'General Physician');
+        }
+    }, [session, doctorName, qualification, speciality]);
+
+    useEffect(() => {
         if (appointment?.profiles) {
             setPatientName(`${appointment.profiles.first_name} ${appointment.profiles.last_name}`);
             setPatientAge(`${appointment.profiles.age || ''}`);
@@ -225,6 +236,7 @@ export default function ConsultationPage({ params }: PageProps) {
         if (rx) {
             setExistingPrescription(rx);
             setMedicines(rx.medicines as any as Medicine[]);
+            if (rx.doctorName) setDoctorName(rx.doctorName);
 
             try {
                 if (rx.additionalNotes?.startsWith('{')) {
@@ -692,7 +704,7 @@ export default function ConsultationPage({ params }: PageProps) {
                 {/* 6. Footer Signature */}
                 <div className="mt-12 flex justify-end">
                     <div className="text-center">
-                        <p className="font-bold text-sm mb-2 uppercase">Dr. {existingPrescription?.doctor_name || 'Sanath'}</p>
+                        <p className="font-bold text-sm mb-2 uppercase">{doctorName || 'Signature'}</p>
                         <div className="w-48 h-[1px] bg-black mb-1"></div>
                         <p className="font-bold text-xs uppercase">Signature</p>
                     </div>

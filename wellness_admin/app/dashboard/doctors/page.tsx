@@ -522,14 +522,13 @@ export default function DoctorManagementPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium text-slate-700">
-                                                {isEditing ? 'Reset Password (Optional)' : 'Temporary Password'}
+                                                {isEditing ? 'Reset Password (Optional)' : 'Password'}
                                             </label>
                                             <input
                                                 type="password"
                                                 required={!isEditing}
-                                                disabled={isEditing}
-                                                className={`w-full h-10 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${isEditing ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`}
-                                                placeholder={isEditing ? "(Managed in User Settings)" : "••••••••"}
+                                                className={`w-full h-10 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all`}
+                                                placeholder={isEditing ? "Leave blank to keep same" : "••••••••"}
                                                 value={formData.password}
                                                 onChange={e => setFormData({ ...formData, password: e.target.value })}
                                             />

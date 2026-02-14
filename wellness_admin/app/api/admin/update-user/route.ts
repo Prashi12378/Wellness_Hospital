@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
     try {
@@ -22,19 +23,18 @@ export async function POST(req: Request) {
             fee,
             timings,
             bio,
-            avatar_url
+            avatar_url,
+            password,
+            email
         } = body;
 
         if (!id) {
             return NextResponse.json({ error: "Missing ID" }, { status: 400 });
         }
 
-        // We update Profile primarily. If name changes, maybe User too?
-        // Let's update both.
-
         const result = await prisma.$transaction(async (tx) => {
             const profile = await tx.profile.update({
-                where: { id: id }, // This ID is Profile ID from the frontend editing
+                where: { id: id },
                 data: {
                     firstName: fullName.split(' ')[0],
                     lastName: fullName.split(' ').slice(1).join(' '),
@@ -45,18 +45,23 @@ export async function POST(req: Request) {
                     consultationFee: fee ? parseFloat(fee) : undefined,
                     availableTimings: timings,
                     bio,
-                    // Note: cannot update email easily due to User relation consistency
                 },
                 include: { user: true }
             });
 
             if (profile.userId) {
+                const userData: any = {
+                    name: fullName,
+                    image: avatar_url
+                };
+
+                if (password) {
+                    userData.password = await bcrypt.hash(password, 10);
+                }
+
                 await tx.user.update({
                     where: { id: profile.userId },
-                    data: {
-                        name: fullName,
-                        image: avatar_url
-                    }
+                    data: userData
                 });
             }
 

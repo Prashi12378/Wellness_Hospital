@@ -5,16 +5,21 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Users, LogOut, Menu, X, Stethoscope, Pill } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const { data: session } = useSession();
+
+    const doctorName = (session?.user as any)?.firstName
+        ? `Dr. ${(session?.user as any).firstName} ${(session?.user as any).lastName || ''}`.trim()
+        : 'Doctor';
 
     const handleSignOut = async () => {
-        await signOut({ callbackUrl: '/login' });
+        await signOut({ callbackUrl: '/' });
     };
 
     const navItems = [
@@ -48,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
                         <div>
                             <p className="text-xs text-slate-400">Welcome,</p>
-                            <p className="font-semibold text-sm">Dr. Sanath</p>
+                            <p className="font-semibold text-sm">{doctorName}</p>
                         </div>
                     </div>
                 </div>

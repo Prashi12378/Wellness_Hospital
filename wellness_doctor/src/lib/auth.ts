@@ -46,7 +46,12 @@ export const authOptions: NextAuthOptions = {
                     name: user.name,
                     image: user.image,
                     // Additional fields to pass to token
-                    role: user.profile?.role || "patient"
+                    role: user.profile?.role || "patient",
+                    firstName: user.profile?.firstName,
+                    lastName: user.profile?.lastName,
+                    specialization: user.profile?.specialization,
+                    qualifications: user.profile?.qualifications,
+                    profileId: user.profile?.id
                 };
             }
         })
@@ -56,6 +61,11 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id;
                 token.role = (user as any).role;
+                token.firstName = (user as any).firstName;
+                token.lastName = (user as any).lastName;
+                token.specialization = (user as any).specialization;
+                token.qualifications = (user as any).qualifications;
+                token.profileId = (user as any).profileId;
             }
             return token;
         },
@@ -63,6 +73,11 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 (session.user as any).id = token.id;
                 (session.user as any).role = token.role;
+                (session.user as any).firstName = token.firstName;
+                (session.user as any).lastName = token.lastName;
+                (session.user as any).specialization = token.specialization;
+                (session.user as any).qualifications = token.qualifications;
+                (session.user as any).profileId = token.profileId;
             }
             return session;
         }
