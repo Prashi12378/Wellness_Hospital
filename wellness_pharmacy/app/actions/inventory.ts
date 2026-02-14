@@ -26,51 +26,16 @@ export async function getInventory() {
     }
 }
 
+// Management actions (Add/Delete) moved to Admin Portal
+/*
 export async function addMedicine(formData: any) {
-    try {
-        const stock = parseInt(formData.stock);
-        const medicine = await db.pharmacyInventory.create({
-            data: {
-                name: formData.name,
-                batchNo: formData.batchNo,
-                hsnCode: formData.hsnCode,
-                expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : null,
-                price: parseFloat(formData.price),
-                gstRate: parseFloat(formData.gstRate || 5),
-                stock: stock,
-                location: formData.location,
-            },
-        });
-
-        // Trigger alert if stock is low
-        if (stock < 10) {
-            await createNotification(
-                'Low Stock Alert',
-                `Medicine "${formData.name}" is low on stock (${stock} units).`,
-                'low_stock'
-            );
-        }
-
-        revalidatePath('/dashboard/inventory');
-        return { success: true };
-    } catch (error) {
-        console.error('Error adding medicine:', error);
-        return { error: 'Failed to add medicine' };
-    }
+...
 }
 
 export async function deleteMedicine(id: string) {
-    try {
-        await db.pharmacyInventory.delete({
-            where: { id },
-        });
-        revalidatePath('/dashboard/inventory');
-        return { success: true };
-    } catch (error) {
-        console.error('Error deleting medicine:', error);
-        return { error: 'Failed to delete medicine' };
-    }
+...
 }
+*/
 
 export async function updateStock(id: string, qty: number) {
     try {
