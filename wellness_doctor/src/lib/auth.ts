@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-    adapter: PrismaAdapter(prisma),
+    debug: process.env.NODE_ENV === 'development',
     session: {
         strategy: "jwt",
     },
@@ -24,9 +24,11 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
+                const email = credentials.email.toLowerCase();
+
                 // 1. Check if user exists
                 const user = await prisma.user.findUnique({
-                    where: { email: credentials.email },
+                    where: { email },
                     include: { profile: true } // Include profile to get role
                 });
 
