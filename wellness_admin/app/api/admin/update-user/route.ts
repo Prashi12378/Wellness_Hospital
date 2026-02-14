@@ -38,6 +38,7 @@ export async function POST(req: Request) {
                 data: {
                     firstName: fullName.split(' ')[0],
                     lastName: fullName.split(' ').slice(1).join(' '),
+                    email: email || undefined, // Keep email in sync
                     phone,
                     specialization,
                     qualifications: qualification,
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
             if (profile.userId) {
                 const userData: any = {
                     name: fullName,
+                    email: email || undefined, // Keep email in sync
                     image: avatar_url
                 };
 
