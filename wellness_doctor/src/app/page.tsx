@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Stethoscope, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
+import Logo from '../../public/doctor-logo.png';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -61,12 +62,13 @@ export default function LoginPage() {
                     <div className="text-center mb-8">
                         <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-white/10 rotate-3 transform transition-transform hover:rotate-0 overflow-hidden p-3">
                             <Image
-                                src="/logo.png"
+                                src={Logo}
                                 alt="Logo"
                                 width={64}
                                 height={64}
                                 className="object-contain"
                                 priority
+                                unoptimized
                             />
                         </div>
                         <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Doctor Portal</h1>
@@ -151,7 +153,7 @@ export default function LoginPage() {
 
                 <div className="mt-8 text-center">
                     <img
-                        src="/logo.png"
+                        src="/doctor-logo.png"
                         alt="Wellness Hospital"
                         className="h-8 mx-auto opacity-50 grayscale hover:opacity-100 transition-all cursor-pointer"
                     />

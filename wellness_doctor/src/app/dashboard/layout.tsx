@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Calendar, Users, LogOut, Menu, X, Stethoscope, Pill } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
+import Logo from '../../../public/doctor-logo.png';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -43,12 +44,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800 bg-slate-950">
                     <div className="w-8 h-8 relative flex items-center justify-center">
                         <Image
-                            src="/logo.png"
+                            src={Logo}
                             alt="Logo"
                             width={32}
                             height={32}
                             className="object-contain"
                             priority
+                            unoptimized
                         />
                     </div>
                     <span className="font-bold text-lg">Doctor Portal</span>
@@ -98,12 +100,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 relative flex items-center justify-center">
                         <Image
-                            src="/logo.png"
+                            src={Logo}
                             alt="Logo"
                             width={32}
                             height={32}
                             className="object-contain"
                             priority
+                            unoptimized
                         />
                     </div>
                     <span className="font-bold">Doctor Portal</span>
