@@ -4,8 +4,12 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
+const useSecureCookies = process.env.NODE_ENV === "production";
+const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+
 export const authOptions: NextAuthOptions = {
     debug: process.env.NODE_ENV === 'development',
+    secret: process.env.NEXTAUTH_SECRET,
     session: {
         strategy: "jwt",
     },
@@ -84,12 +88,12 @@ export const authOptions: NextAuthOptions = {
     ],
     cookies: {
         sessionToken: {
-            name: `wellness-doctor.session-token`,
+            name: `${cookiePrefix}wellness-doctor.session-token`,
             options: {
                 httpOnly: true,
                 sameSite: "lax",
                 path: "/",
-                secure: process.env.NODE_ENV === "production",
+                secure: useSecureCookies,
             },
         },
     },
