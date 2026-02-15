@@ -1,5 +1,9 @@
-import { withAuth } from "next-auth/middleware";
+// import { withAuth } from "next-auth/middleware";
 
+// Temporarily disabled for testing
+export default function middleware() { }
+
+/*
 export default withAuth({
     pages: {
         signIn: "/",
@@ -7,5 +11,6 @@ export default withAuth({
 });
 
 export const config = {
-    // matcher: ["/dashboard/:path*"]
+    matcher: ["/dashboard/:path*"]
 };
+*/
