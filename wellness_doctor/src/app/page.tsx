@@ -23,6 +23,17 @@ export default function LoginPage() {
         }
     }, [status, router]);
 
+    // Handle URL error parameters (e.g. from middleware redirects)
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorParam = urlParams.get('error');
+        if (errorParam) {
+            setError('Authentication failed. Please check your credentials and try again.');
+            // Clean up URL
+            window.history.replaceState({}, '', '/');
+        }
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -42,17 +53,19 @@ export default function LoginPage() {
             if (result?.error) {
                 console.error("[Login] Sign-in error:", result.error);
                 setError('Invalid email or password. Please try again.');
+                setLoading(false); // Ensure loading stops
             } else if (result?.ok) {
                 console.log("[Login] Sign-in successful, redirecting...");
-                window.location.href = '/dashboard';
+                // Don't stop loading here, let the redirect happen
+                router.push('/dashboard');
             } else {
                 console.error("[Login] Sign-in failed with no specific error");
                 setError('An unexpected error occurred. Please try again.');
+                setLoading(false);
             }
         } catch (err) {
             console.error("[Login] Exception during sign-in:", err);
-            setError('An unexpected error occurred. Please try again.');
-        } finally {
+            setError('An unexpected error occurred. Do not refresh. Contact support if persists.');
             setLoading(false);
         }
     };
