@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { Stethoscope, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
 
@@ -132,7 +133,14 @@ export default function LoginPage() {
                         </div>
                     </form>
 
-                    <div className="mt-10 text-center">
+                    <div className="mt-8 text-center space-y-4">
+                        <Link
+                            href="/dashboard"
+                            className="inline-block text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors border-b border-blue-400/30 hover:border-blue-300 pb-1"
+                        >
+                            Developer Bypass: Skip Sign-In →
+                        </Link>
+
                         <div className="flex items-center gap-3 justify-center text-slate-500 text-xs">
                             <div className="h-[1px] w-8 bg-slate-800"></div>
                             <span>Hospital IT Security</span>

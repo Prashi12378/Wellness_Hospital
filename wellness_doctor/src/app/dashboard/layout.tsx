@@ -14,11 +14,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const { data: session } = useSession();
 
-    const doctorName = (session?.user as any)?.firstName
-        ? `Dr. ${(session?.user as any).firstName} ${(session?.user as any).lastName || ''}`.trim()
-        : 'Doctor';
+    // DEV BYPASS: Use fallback name if no session
+    let doctorName = 'Doctor';
+    if ((session?.user as any)?.firstName) {
+        doctorName = `Dr. ${(session?.user as any).firstName} ${(session?.user as any).lastName || ''}`.trim();
+    } else {
+        doctorName = 'Dr. Pushpa (Guest)';
+    }
 
     const handleSignOut = async () => {
+        if (!session) {
+            router.push('/');
+            return;
+        }
         await signOut({ callbackUrl: '/' });
     };
 
