@@ -4,7 +4,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
-const useSecureCookies = process.env.NODE_ENV === "production";
+const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://") ?? !!process.env.VERCEL_URL;
 const cookiePrefix = useSecureCookies ? "__Secure-" : "";
 
 export const authOptions: NextAuthOptions = {
@@ -31,41 +31,52 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                const email = credentials.email.toLowerCase(); // Ensure case-insensitive match
+                const originalEmail = credentials.email;
+                const lowerEmail = originalEmail.toLowerCase();
 
                 try {
-                    console.log("[Auth] Looking up user by email:", email);
-                    // 1. Check if user exists
-                    const user = await prisma.user.findUnique({
-                        where: { email },
-                        include: { profile: true } // Include profile to get role
+                    console.log("[Auth] Looking up user by email:", originalEmail);
+                    // 1. Check if user exists (trying both original and lowercase)
+                    let user = await prisma.user.findUnique({
+                        where: { email: originalEmail },
+                        include: { profile: true }
                     });
 
+                    if (!user && originalEmail !== lowerEmail) {
+                        console.log("[Auth] User not found with original casing, trying lowercase:", lowerEmail);
+                        user = await prisma.user.findUnique({
+                            where: { email: lowerEmail },
+                            include: { profile: true }
+                        });
+                    }
+
                     if (!user) {
-                        console.error("[Auth] User not found in database:", email);
+                        console.error("[Auth] User not found in database with email:", originalEmail, "or", lowerEmail);
                         return null;
                     }
 
                     if (!user.password) {
-                        console.error("[Auth] User has no password set:", email);
+                        console.error("[Auth] User has no password set:", user.email);
                         return null;
                     }
 
                     // 2. Validate Password with bcrypt
                     const isValid = await bcrypt.compare(credentials.password, user.password);
                     if (!isValid) {
-                        console.error("[Auth] Invalid password for:", email);
+                        console.error("[Auth] Invalid password for:", user.email);
                         return null;
                     }
 
                     // 3. Strict Role Validation for Doctor Portal
-                    const role = user.profile?.role || "patient";
+                    const role = user.profile?.role?.toString().toLowerCase() || "patient";
+                    console.log(`[Auth] User found: ${user.email}, Role: ${role}`);
+
                     if (role !== "doctor") {
-                        console.error(`[Auth] Unauthorized role for doctor portal: ${role} (${email})`);
+                        console.error(`[Auth] Unauthorized role for doctor portal: ${role} (${user.email})`);
                         return null;
                     }
 
-                    console.log("[Auth] Doctor signed in successfully:", email);
+                    console.log("[Auth] Doctor signed in successfully:", user.email);
 
                     return {
                         id: user.id,
