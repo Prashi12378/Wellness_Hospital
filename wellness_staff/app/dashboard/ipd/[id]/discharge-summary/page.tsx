@@ -226,14 +226,13 @@ export default function DischargeSummaryPage() {
                 <div className="mt-12 pt-8 border-t border-slate-200">
                     <div className="flex flex-col items-start space-y-2 text-[11px]">
                         <p className="font-bold underline italic">In case of emergency: -</p>
-                        <p className="text-slate-700">Contact A & E Wellness Hospital | Ph No: <span className="font-sans font-bold text-slate-900 tracking-tight">8105666338</span></p>
+                        <p className="text-slate-700">Contact Emergency Department Wellness Hospital | Ph No: <span className="font-sans font-bold text-slate-900 tracking-tight">8105666338</span></p>
                     </div>
 
                     <div className="flex justify-end mt-12 mb-8">
                         <div className="text-right border-t border-slate-900 pt-2 min-w-[200px]">
                             <p className="font-black uppercase text-sm">Dr. {admission.primaryDoctor?.firstName} {admission.primaryDoctor?.lastName}</p>
                             <p className="text-[10px] uppercase font-bold text-slate-600">CONSULTANT AYURVEDA</p>
-                            <p className="text-[10px] uppercase font-bold text-slate-600">KMC NO: <span className="font-sans text-[11px] font-black">{admission.primaryDoctor?.id.slice(-1) || '2'}</span></p>
                         </div>
                     </div>
 
