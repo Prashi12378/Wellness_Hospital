@@ -18,6 +18,8 @@ export default function LoginPage() {
         setError('');
         setLoading(true);
 
+        console.log("[Login] Attempting sign-in for:", email);
+
         try {
             const result = await signIn('credentials', {
                 email,
@@ -25,12 +27,21 @@ export default function LoginPage() {
                 redirect: false,
             });
 
+            console.log("[Login] Sign-in result:", result);
+
             if (result?.error) {
+                console.error("[Login] Sign-in error:", result.error);
                 setError('Invalid email or password. Please try again.');
-            } else {
+            } else if (result?.ok) {
+                console.log("[Login] Sign-in successful, redirecting...");
+                // Force a hard redirect to dashbaord to ensure session is picked up
                 window.location.href = '/dashboard';
+            } else {
+                console.error("[Login] Sign-in failed with no specific error");
+                setError('An unexpected error occurred. Please try again.');
             }
         } catch (err) {
+            console.error("[Login] Exception during sign-in:", err);
             setError('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
