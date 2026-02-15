@@ -15,8 +15,10 @@ export default function LoginPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
+        // We don't clear error immediately to avoid "flicker" if current state is already error
+        // But we should reset it if a new attempt starts
+        if (error) setError('');
 
         console.log("[Login] Attempting sign-in for:", email);
 
@@ -34,7 +36,6 @@ export default function LoginPage() {
                 setError('Invalid email or password. Please try again.');
             } else if (result?.ok) {
                 console.log("[Login] Sign-in successful, redirecting...");
-                // Force a hard redirect to dashbaord to ensure session is picked up
                 window.location.href = '/dashboard';
             } else {
                 console.error("[Login] Sign-in failed with no specific error");
@@ -72,7 +73,7 @@ export default function LoginPage() {
                     </div>
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3 animate-shake">
+                        <div role="alert" className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3 animate-shake">
                             <AlertCircle className="w-5 h-5 shrink-0" />
                             <p className="text-sm font-medium">{error}</p>
                         </div>
@@ -80,10 +81,12 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300 ml-1">Work Email</label>
+                            <label htmlFor="email" className="text-sm font-medium text-slate-300 ml-1">Work Email</label>
                             <div className="relative group">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
                                 <input
+                                    id="email"
+                                    name="email"
                                     type="email"
                                     required
                                     value={email}
@@ -95,10 +98,12 @@ export default function LoginPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300 ml-1">Password</label>
+                            <label htmlFor="password" className="text-sm font-medium text-slate-300 ml-1">Password</label>
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
                                 <input
+                                    id="password"
+                                    name="password"
                                     type="password"
                                     required
                                     value={password}
