@@ -121,6 +121,7 @@ model Admission {
   labRecords      LabRecord[]
   surgeries       Surgery[]
   clinicalNotes   ClinicalNote[]
+  pharmacyInvoices Invoice[]
 
   // Discharge Summary Fields
   diagnoses           String?   @db.Text
@@ -291,6 +292,8 @@ model Invoice {
   paymentMethod    String        @default("CASH")
   status           String        @default("PAID")
   items            InvoiceItem[]
+  admissionId      String?
+  admission        Admission?    @relation(fields: [admissionId], references: [id])
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 }

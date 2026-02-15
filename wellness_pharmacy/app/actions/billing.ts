@@ -64,6 +64,7 @@ export async function createInvoice(data: {
     patientPhone?: string;
     doctorName?: string;
     insuranceNo?: string;
+    admissionId?: string; // Optional: Link to IPD admission
     items: any[];
     paymentMethod: string;
     discountRate?: number;
@@ -102,7 +103,7 @@ export async function createInvoice(data: {
             subTotal += amount;
             totalGst += gstAmount;
 
-            console.log(`Item: ${item.name}, Qty: ${qty}, MRP: ${mrp}, GST: ${gstRate}%, Amount: ${amount}, GST Amt: ${gstAmount}`);
+            // console.log(`Item: ${item.name}, Qty: ${qty}, MRP: ${mrp}, GST: ${gstRate}%, Amount: ${amount}, GST Amt: ${gstAmount}`);
 
             return {
                 medicineId: item.medicineId,
@@ -135,12 +136,14 @@ export async function createInvoice(data: {
                     patientPhone: data.patientPhone,
                     doctorName: data.doctorName,
                     insuranceNo: data.insuranceNo,
+                    admissionId: data.admissionId, // Link to IPD Admission
                     subTotal: subTotal,
                     totalGst: totalGst,
                     grandTotal: grandTotal,
                     discountRate: Number(data.discountRate || 0),
                     discountAmount: discountAmount,
                     paymentMethod: data.paymentMethod,
+                    status: data.paymentMethod === 'CREDIT' ? 'UNPAID' : 'PAID',
                     items: {
                         create: invoiceItems
                     }
@@ -148,7 +151,7 @@ export async function createInvoice(data: {
                 include: {
                     items: true
                 }
-            }) as any; // Cast to any to avoid type issues with items after include if Prisma types are stale
+            }) as any;
 
             console.log('Invoice created, deducting stock...');
 
@@ -166,19 +169,33 @@ export async function createInvoice(data: {
 
             console.log('Stock deduction complete.');
 
-            // 3. Create Ledger Entry
-            console.log('Creating ledger entry for pharmacy sale...');
-            await tx.ledger.create({
-                data: {
-                    transactionType: 'income',
-                    category: 'pharmacy',
-                    description: `Pharmacy Sale - Bill #${nextBillNo} (${data.patientName})`,
-                    amount: grandTotal,
-                    paymentMethod: data.paymentMethod,
-                    transactionDate: new Date(),
-                    recordedBy: (session.user as any).id
-                }
-            });
+            // 3. Handle Payment Logic
+            if (data.paymentMethod === 'CREDIT' && data.admissionId) {
+                console.log('Creating hospital charge for IPD Credit...');
+                await tx.hospitalCharge.create({
+                    data: {
+                        admissionId: data.admissionId,
+                        description: `Pharmacy Bill #${nextBillNo}`,
+                        amount: grandTotal,
+                        type: 'medicine',
+                        date: new Date(),
+                    }
+                });
+                // No Ledger entry for Credit bills (revenue recognized at discharge/settlement)
+            } else {
+                console.log('Creating ledger entry for pharmacy sale...');
+                await tx.ledger.create({
+                    data: {
+                        transactionType: 'income',
+                        category: 'pharmacy',
+                        description: `Pharmacy Sale - Bill #${nextBillNo} (${data.patientName})`,
+                        amount: grandTotal,
+                        paymentMethod: data.paymentMethod,
+                        transactionDate: new Date(),
+                        recordedBy: (session.user as any).id
+                    }
+                });
+            }
 
             return newInvoice;
         });
@@ -257,5 +274,47 @@ export async function getInvoices() {
     } catch (error) {
         console.error('Error fetching invoices:', error);
         return { success: false, error: 'Failed to fetch invoice history' };
+    }
+}
+
+export async function searchAdmittedPatients(query: string) {
+    if (!query) return { data: [] };
+
+    try {
+        const admissions = await db.admission.findMany({
+            where: {
+                status: 'admitted',
+                patient: {
+                    OR: [
+                        { phone: { contains: query } },
+                        { uhid: { contains: query, mode: 'insensitive' } },
+                        { firstName: { contains: query, mode: 'insensitive' } },
+                        { lastName: { contains: query, mode: 'insensitive' } },
+                    ],
+                }
+            },
+            take: 5,
+            include: {
+                patient: true,
+                primaryDoctor: true
+            }
+        });
+
+        const serialized = admissions.map(adm => ({
+            id: adm.patient.id, // Use patient ID for selection
+            admissionId: adm.id,
+            firstName: adm.patient.firstName,
+            lastName: adm.patient.lastName,
+            phone: adm.patient.phone,
+            uhid: adm.patient.uhid,
+            doctorName: adm.primaryDoctor ? `${adm.primaryDoctor.firstName} ${adm.primaryDoctor.lastName}` : '',
+            bedNumber: adm.bedNumber,
+            ward: adm.ward,
+        }));
+
+        return { data: serialized };
+    } catch (error) {
+        console.error('Search admitted patients error:', error);
+        return { error: 'Search failed' };
     }
 }

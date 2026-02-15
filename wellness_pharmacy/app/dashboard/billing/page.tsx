@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, FileText, Loader2, Hospital } from 'lucide-react';
-import { searchMedicines, createInvoice, getPharmacySettings, searchPatients } from '@/app/actions/billing';
+import { searchMedicines, createInvoice, getPharmacySettings, searchPatients, searchAdmittedPatients } from '@/app/actions/billing';
 import InvoicePreview from '@/components/billing/InvoicePreview';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +32,13 @@ export default function BillingPage() {
     const [patientSearchTerm, setPatientSearchTerm] = useState('');
     const [patientSearchResults, setPatientSearchResults] = useState<any[]>([]);
     const [isSearchingPatient, setIsSearchingPatient] = useState(false);
+
+    // IPD State
+    const [isIpdEnabled, setIsIpdEnabled] = useState(false);
+    const [admittedPatientSearchTerm, setAdmittedPatientSearchTerm] = useState('');
+    const [admittedSearchResults, setAdmittedSearchResults] = useState<any[]>([]);
+    const [isSearchingAdmitted, setIsSearchingAdmitted] = useState(false);
+    const [selectedAdmittedPatient, setSelectedAdmittedPatient] = useState<any>(null);
 
     // Search logic
     useEffect(() => {
@@ -64,6 +71,22 @@ export default function BillingPage() {
 
         return () => clearTimeout(delayDebounceFn);
     }, [patientSearchTerm]);
+
+    // Admitted Patient Search logic
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(async () => {
+            if (admittedPatientSearchTerm.length > 2) {
+                setIsSearchingAdmitted(true);
+                const { data } = await searchAdmittedPatients(admittedPatientSearchTerm);
+                if (data) setAdmittedSearchResults(data);
+                setIsSearchingAdmitted(false);
+            } else {
+                setAdmittedSearchResults([]);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [admittedPatientSearchTerm]);
 
     // Barcode Scanner Logic
     useEffect(() => {
@@ -200,7 +223,8 @@ export default function BillingPage() {
             patientPhone: patientInfo.phone,
             doctorName: patientInfo.doctor,
             insuranceNo: patientInfo.insurance,
-            paymentMethod,
+            admissionId: isIpdEnabled ? selectedAdmittedPatient?.admissionId : undefined,
+            paymentMethod: isIpdEnabled ? 'CREDIT' : paymentMethod,
             items: cart,
             discountRate,
             discountAmount
@@ -237,25 +261,61 @@ export default function BillingPage() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Patient Info Card */}
                     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-primary rounded-full" />
-                            Patient Information
-                        </h3>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                <span className="w-2 h-6 bg-primary rounded-full" />
+                                Patient Information
+                            </h3>
+                            <div className="flex items-center gap-3 bg-slate-100 p-1 rounded-xl">
+                                <button
+                                    onClick={() => {
+                                        setIsIpdEnabled(false);
+                                        setPaymentMethod('CASH');
+                                        setPatientInfo({ name: '', phone: '', doctor: '', insurance: '' });
+                                    }}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                                        !isIpdEnabled ? "bg-white shadow text-slate-800" : "text-slate-500 hover:text-slate-700"
+                                    )}
+                                >
+                                    Regular / OPD
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsIpdEnabled(true);
+                                        setPaymentMethod('CREDIT');
+                                        setPatientInfo({ name: '', phone: '', doctor: '', insurance: '' });
+                                    }}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                                        isIpdEnabled ? "bg-primary text-white shadow" : "text-slate-500 hover:text-slate-700"
+                                    )}
+                                >
+                                    IPD Credit
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1.5 lg:col-span-2">
                                 <label className="text-xs font-bold text-slate-500 uppercase flex items-center justify-between">
-                                    Patient Lookup (UHID / Phone)
-                                    {isSearchingPatient && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                                    {isIpdEnabled ? 'Admitted Patient Search (Name/Phone/UHID)' : 'Patient Lookup (UHID / Phone)'}
+                                    {(isSearchingPatient || isSearchingAdmitted) && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
                                 </label>
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        value={patientSearchTerm}
-                                        onChange={(e) => setPatientSearchTerm(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-blue-50/50 border border-blue-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                        placeholder="Search existing patient..."
+                                        value={isIpdEnabled ? admittedPatientSearchTerm : patientSearchTerm}
+                                        onChange={(e) => isIpdEnabled ? setAdmittedPatientSearchTerm(e.target.value) : setPatientSearchTerm(e.target.value)}
+                                        className={cn(
+                                            "w-full px-4 py-2.5 bg-blue-50/50 border border-blue-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all",
+                                            isIpdEnabled && "border-primary/30 bg-primary/5"
+                                        )}
+                                        placeholder={isIpdEnabled ? "Search admitted patient..." : "Search existing patient..."}
                                     />
-                                    {patientSearchResults.length > 0 && (
+
+                                    {/* OPD Search Results */}
+                                    {!isIpdEnabled && patientSearchResults.length > 0 && (
                                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-48 overflow-auto">
                                             {patientSearchResults.map((p) => (
                                                 <button
@@ -281,6 +341,39 @@ export default function BillingPage() {
                                             ))}
                                         </div>
                                     )}
+
+                                    {/* IPD Search Results */}
+                                    {isIpdEnabled && admittedSearchResults.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-48 overflow-auto">
+                                            {admittedSearchResults.map((p) => (
+                                                <button
+                                                    key={p.admissionId}
+                                                    onClick={() => {
+                                                        setSelectedAdmittedPatient(p);
+                                                        setPatientInfo({
+                                                            name: `${p.firstName} ${p.lastName}`,
+                                                            phone: p.phone || '',
+                                                            doctor: p.doctorName || '',
+                                                            insurance: p.uhid || '',
+                                                        });
+                                                        setAdmittedPatientSearchTerm('');
+                                                        setAdmittedSearchResults([]);
+                                                    }}
+                                                    className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center justify-between border-b border-slate-50 last:border-0"
+                                                >
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 text-sm">{p.firstName} {p.lastName}</p>
+                                                        <p className="text-[10px] text-slate-500">
+                                                            {p.uhid} | Ward: {p.ward} | Bed: {p.bedNumber}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded">ADMITTED</span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="space-y-1.5">
@@ -290,7 +383,7 @@ export default function BillingPage() {
                                     value={patientInfo.name}
                                     onChange={(e) => setPatientInfo({ ...patientInfo, name: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                    placeholder=""
+                                    readOnly={isIpdEnabled}
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -300,7 +393,7 @@ export default function BillingPage() {
                                     value={patientInfo.phone}
                                     onChange={(e) => setPatientInfo({ ...patientInfo, phone: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                    placeholder=""
+                                    readOnly={isIpdEnabled}
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -310,7 +403,7 @@ export default function BillingPage() {
                                     value={patientInfo.doctor}
                                     onChange={(e) => setPatientInfo({ ...patientInfo, doctor: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                    placeholder=""
+                                    readOnly={isIpdEnabled}
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -320,7 +413,7 @@ export default function BillingPage() {
                                     value={patientInfo.insurance}
                                     onChange={(e) => setPatientInfo({ ...patientInfo, insurance: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                    placeholder=""
+                                    readOnly={isIpdEnabled}
                                 />
                             </div>
                         </div>
@@ -481,22 +574,35 @@ export default function BillingPage() {
                         </div>
 
                         <div className="space-y-3">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Payment Method</label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                Payment Method {isIpdEnabled && <span className="text-primary">(Locked to Credit)</span>}
+                            </label>
                             <div className="grid grid-cols-2 gap-2">
                                 {['CASH', 'UPI', 'CARD', 'INSURANCE'].map((method) => (
                                     <button
                                         key={method}
-                                        onClick={() => setPaymentMethod(method)}
+                                        onClick={() => !isIpdEnabled && setPaymentMethod(method)}
+                                        disabled={isIpdEnabled}
                                         className={cn(
                                             "py-2.5 rounded-xl text-xs font-bold transition-all border",
-                                            paymentMethod === method
+                                            paymentMethod === method || (isIpdEnabled && method === 'CREDIT') // Force highlight if credit needed but usually CREDIT isn't in list? Wait, CREDIT is not in the list.
                                                 ? "bg-primary-light/10 border-primary-light text-primary-light shadow-[0_0_15px_rgba(59,130,246,0.1)]"
-                                                : "bg-white/5 border-slate-800 text-slate-400 hover:border-slate-700"
+                                                : "bg-white/5 border-slate-800 text-slate-400 hover:border-slate-700",
+                                            isIpdEnabled && "opacity-50 cursor-not-allowed"
                                         )}
                                     >
                                         {method}
                                     </button>
                                 ))}
+                                {/* Add CREDIT option if IPD enabled */}
+                                {isIpdEnabled && (
+                                    <button
+                                        disabled
+                                        className="py-2.5 rounded-xl text-xs font-bold transition-all border bg-primary-light/10 border-primary-light text-primary-light shadow-[0_0_15px_rgba(59,130,246,0.1)] col-span-2"
+                                    >
+                                        CREDIT (IPD BILL)
+                                    </button>
+                                )}
                             </div>
                         </div>
 
