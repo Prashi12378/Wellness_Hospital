@@ -20,41 +20,65 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log("[Auth] Authorize called for:", credentials?.email);
+
                 if (!credentials?.email || !credentials?.password) {
+                    console.error("[Auth] Missing credentials");
                     return null;
                 }
 
-                const email = credentials.email.toLowerCase();
+                const email = credentials.email; // Removed .toLowerCase() to avoid mismatch
 
-                // 1. Check if user exists
-                const user = await prisma.user.findUnique({
-                    where: { email },
-                    include: { profile: true } // Include profile to get role
-                });
+                try {
+                    // 1. Check if user exists
+                    const user = await prisma.user.findUnique({
+                        where: { email },
+                        include: { profile: true } // Include profile to get role
+                    });
 
-                if (!user || !user.password) {
+                    if (!user) {
+                        console.error("[Auth] User not found:", email);
+                        return null;
+                    }
+
+                    if (!user.password) {
+                        console.error("[Auth] User has no password set:", email);
+                        return null;
+                    }
+
+                    // 2. Validate Password with bcrypt
+                    const isValid = await bcrypt.compare(credentials.password, user.password);
+                    if (!isValid) {
+                        console.error("[Auth] Invalid password for:", email);
+                        return null;
+                    }
+
+                    // 3. Strict Role Validation for Doctor Portal
+                    const role = user.profile?.role || "patient";
+                    if (role !== "doctor") {
+                        console.error(`[Auth] Unauthorized role for doctor portal: ${role} (${email})`);
+                        return null;
+                    }
+
+                    console.log("[Auth] Doctor signed in successfully:", email);
+
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        image: user.image,
+                        // Additional fields to pass to token
+                        role: role,
+                        firstName: user.profile?.firstName,
+                        lastName: user.profile?.lastName,
+                        specialization: user.profile?.specialization,
+                        qualifications: user.profile?.qualifications,
+                        profileId: user.profile?.id
+                    };
+                } catch (error) {
+                    console.error("[Auth] Database error during sign-in:", error);
                     return null;
                 }
-
-                // 2. Validate Password with bcrypt
-                const isValid = await bcrypt.compare(credentials.password, user.password);
-                if (!isValid) {
-                    return null;
-                }
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    image: user.image,
-                    // Additional fields to pass to token
-                    role: user.profile?.role || "patient",
-                    firstName: user.profile?.firstName,
-                    lastName: user.profile?.lastName,
-                    specialization: user.profile?.specialization,
-                    qualifications: user.profile?.qualifications,
-                    profileId: user.profile?.id
-                };
             }
         })
     ],
