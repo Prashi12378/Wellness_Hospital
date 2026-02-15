@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, FileText, Loader2, Hospital } from 'lucide-react';
-import { searchMedicines, createInvoice, getPharmacySettings } from '@/app/actions/billing';
+import { searchMedicines, createInvoice, getPharmacySettings, searchPatients } from '@/app/actions/billing';
 import InvoicePreview from '@/components/billing/InvoicePreview';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +28,11 @@ export default function BillingPage() {
     const [showPreview, setShowPreview] = useState(false);
     const [discountRate, setDiscountRate] = useState<number>(0);
 
+    // Patient Lookup State
+    const [patientSearchTerm, setPatientSearchTerm] = useState('');
+    const [patientSearchResults, setPatientSearchResults] = useState<any[]>([]);
+    const [isSearchingPatient, setIsSearchingPatient] = useState(false);
+
     // Search logic
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
@@ -43,6 +48,22 @@ export default function BillingPage() {
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
+
+    // Patient Search logic
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(async () => {
+            if (patientSearchTerm.length > 2) {
+                setIsSearchingPatient(true);
+                const { data } = await searchPatients(patientSearchTerm);
+                if (data) setPatientSearchResults(data);
+                setIsSearchingPatient(false);
+            } else {
+                setPatientSearchResults([]);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [patientSearchTerm]);
 
     // Barcode Scanner Logic
     useEffect(() => {
@@ -221,6 +242,47 @@ export default function BillingPage() {
                             Patient Information
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5 lg:col-span-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center justify-between">
+                                    Patient Lookup (UHID / Phone)
+                                    {isSearchingPatient && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={patientSearchTerm}
+                                        onChange={(e) => setPatientSearchTerm(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-blue-50/50 border border-blue-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                        placeholder="Search existing patient..."
+                                    />
+                                    {patientSearchResults.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-48 overflow-auto">
+                                            {patientSearchResults.map((p) => (
+                                                <button
+                                                    key={p.id}
+                                                    onClick={() => {
+                                                        setPatientInfo({
+                                                            name: `${p.firstName} ${p.lastName}`,
+                                                            phone: p.phone || '',
+                                                            doctor: '',
+                                                            insurance: '',
+                                                        });
+                                                        setPatientSearchTerm('');
+                                                        setPatientSearchResults([]);
+                                                    }}
+                                                    className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center justify-between border-b border-slate-50 last:border-0"
+                                                >
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 text-sm">{p.firstName} {p.lastName}</p>
+                                                        <p className="text-[10px] text-slate-500">{p.uhid || 'No UHID'} | {p.phone}</p>
+                                                    </div>
+                                                    <Plus className="w-4 h-4 text-primary" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold text-slate-500 uppercase">Patient Name *</label>
                                 <input
@@ -252,7 +314,7 @@ export default function BillingPage() {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">IP / Insurance No</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase">IP / UHID / Insurance</label>
                                 <input
                                     type="text"
                                     value={patientInfo.insurance}

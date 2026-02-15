@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
-import { LayoutDashboard, Calendar, Users, Stethoscope, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, Calendar, Users, Stethoscope, LogOut, Menu, Hospital } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -14,6 +14,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const menuItems = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Appointments', href: '/dashboard/appointments', icon: Calendar },
+        { name: 'In-Patient (IPD)', href: '/dashboard/ipd', icon: Hospital },
         { name: 'Patients', href: '/dashboard/patients', icon: Users },
         { name: 'Doctors', href: '/dashboard/doctors', icon: Stethoscope },
     ];
@@ -30,7 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className="w-8 h-8 relative flex items-center justify-center">
                         <Image src="/logo.png" alt="Wellness Hospital" width={32} height={32} className="object-contain" />
                     </div>
-                    {isSidebarOpen && <span className="font-bold text-lg">Staff Portal</span>}
+                    {isSidebarOpen && <span className="font-bold text-lg">Front Desk Executive</span>}
                 </div>
 
                 {/* Navigation */}

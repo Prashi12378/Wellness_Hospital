@@ -35,6 +35,30 @@ export async function searchMedicines(query: string) {
     }
 }
 
+export async function searchPatients(query: string) {
+    if (!query) return { data: [] };
+
+    try {
+        const patients = await db.profile.findMany({
+            where: {
+                role: 'patient',
+                OR: [
+                    { phone: { contains: query } },
+                    { uhid: { contains: query, mode: 'insensitive' } },
+                    { firstName: { contains: query, mode: 'insensitive' } },
+                    { lastName: { contains: query, mode: 'insensitive' } },
+                ],
+            },
+            take: 5,
+        });
+
+        return { data: patients };
+    } catch (error) {
+        console.error('Search patients error:', error);
+        return { error: 'Search failed' };
+    }
+}
+
 export async function createInvoice(data: {
     patientName: string;
     patientPhone?: string;

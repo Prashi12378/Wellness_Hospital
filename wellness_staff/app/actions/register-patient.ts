@@ -27,10 +27,46 @@ export async function registerPatient(formData: FormData) {
             return { success: false, error: "A patient with this email already exists." };
         }
 
-        // Generate UHID (WH-YYYYMMDD-XXXX)
+        // Limit: Max 3 patients per phone number
+        const phoneCount = await prisma.profile.count({
+            where: { phone, role: 'patient' }
+        });
+
+        if (phoneCount >= 3) {
+            return { success: false, error: "Maximum registration limit (3) reached for this phone number." };
+        }
+
+        // Generate Unique UHID (WH-YYYYMMDD-XXXX)
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-        const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-        const uhid = `WH-${dateStr}-${randomSuffix}`;
+        const prefix = `WH-${dateStr}-`;
+
+        // Find the latest UHID for today to determine the next sequential number
+        const lastProfile = await prisma.profile.findFirst({
+            where: {
+                uhid: {
+                    startsWith: prefix
+                }
+            },
+            orderBy: {
+                uhid: 'desc'
+            },
+            select: {
+                uhid: true
+            }
+        });
+
+        let nextCounter = 1;
+        if (lastProfile?.uhid) {
+            const lastCounterPart = lastProfile.uhid.split('-').pop();
+            if (lastCounterPart) {
+                const lastCount = parseInt(lastCounterPart, 10);
+                if (!isNaN(lastCount)) {
+                    nextCounter = lastCount + 1;
+                }
+            }
+        }
+
+        const uhid = `${prefix}${nextCounter.toString().padStart(4, '0')}`;
         const defaultPassword = "Password@123";
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
@@ -58,8 +94,9 @@ export async function registerPatient(formData: FormData) {
         revalidatePath('/dashboard/patients');
         return { success: true, user };
 
-    } catch (error: any) {
+    } catch (error) {
         console.error("Registration failed:", error);
-        return { success: false, error: error.message || "Failed to register patient" };
+        const errorMessage = error instanceof Error ? error.message : "Failed to register patient";
+        return { success: false, error: errorMessage };
     }
 }

@@ -59,7 +59,7 @@ export default async function DashboardPage() {
         <div className="max-w-6xl mx-auto space-y-8">
             {/* Welcome */}
             <div className="bg-gradient-to-r from-primary to-primary-dark rounded-2xl p-8 text-white shadow-xl">
-                <h1 className="text-3xl font-bold mb-2">Welcome Back, Staff!</h1>
+                <h1 className="text-3xl font-bold mb-2">Welcome Back, Front Desk Executive!</h1>
                 <p className="text-blue-100">Manage appointments and patient registrations efficiently.</p>
             </div>
 
@@ -92,7 +92,7 @@ export default async function DashboardPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-slate-800">Manage Appointments</h4>
-                                    <p className="text-sm text-slate-500">Check-in, cancel or viewing today's schedule</p>
+                                    <p className="text-sm text-slate-500">Check-in, cancel or viewing today&apos;s schedule</p>
                                 </div>
                             </div>
                             <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors" />

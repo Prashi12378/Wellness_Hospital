@@ -78,7 +78,80 @@ model Profile {
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
+  admissions            Admission[]    @relation("PatientAdmissions")
+  admissionsAsDoctor    Admission[]    @relation("AdmissionDoctor")
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Admission {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         Profile  @relation("PatientAdmissions", fields: [patientId], references: [id])
+  
+  admissionDate   DateTime @default(now())
+  dischargeDate   DateTime?
+  status          String   @default("admitted") // admitted, discharged
+  
+  bedNumber       String?
+  ward            String?
+  
+  doctorId        String?
+  primaryDoctor   Profile?  @relation("AdmissionDoctor", fields: [doctorId], references: [id])
+  
+  charges         HospitalCharge[]
+  labRecords      LabRecord[]
+  surgeries       Surgery[]
+  clinicalNotes   ClinicalNote[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model HospitalCharge {
+  id              String   @id @default(uuid())
+  admissionId     String
+  admission       Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  
+  description     String
+  amount          Decimal
+  type            String   // e.g., 'bed', 'nursing', 'operating_theatre', 'other', 'medicine'
+  
+  date            DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model LabRecord {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  testName      String
+  result        String?
+  fileUrl       String?   // For uploaded reports
+  recordedAt    DateTime  @default(now())
+}
+
+model Surgery {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  surgeryName   String
+  surgeonName   String
+  surgeryDate   DateTime
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now())
+}
+
+model ClinicalNote {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  doctorName    String
+  note          String    @db.Text
+  type          String    @default("suggestion") // suggestion, daily_note, instruction
+  fileUrl       String?   // For suggestion files/reports
+  createdAt     DateTime  @default(now())
 }
 
 model Appointment {

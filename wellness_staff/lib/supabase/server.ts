@@ -6,7 +6,7 @@ export async function createClient() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    if (!url || !key || url.includes('your-supabase-url')) return null as any
+    if (!url || !key || url.includes('your-supabase-url')) return null as unknown as ReturnType<typeof createServerClient>;
 
     return createServerClient(url, key, {
         cookies: {
@@ -16,7 +16,7 @@ export async function createClient() {
             set(name: string, value: string, options: CookieOptions) {
                 try {
                     cookieStore.set({ name, value, ...options })
-                } catch (error) {
+                } catch {
                     // The `set` method was called from a Server Component.
                     // This can be ignored if you have middleware refreshing
                     // user sessions.
@@ -25,7 +25,7 @@ export async function createClient() {
             remove(name: string, options: CookieOptions) {
                 try {
                     cookieStore.set({ name, value: '', ...options })
-                } catch (error) {
+                } catch {
                     // The `remove` method was called from a Server Component.
                     // This can be ignored if you have middleware refreshing
                     // user sessions.

@@ -1,7 +1,7 @@
 
 import { prisma } from "@/lib/db";
 import { format } from "date-fns";
-import { BadgeCheck, Clock, XCircle } from "lucide-react";
+import { BadgeCheck, Clock, XCircle, Plus } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +45,12 @@ export default async function AppointmentsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Appointments</h1>
                     <p className="text-slate-500">View and manage all patient appointments.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <a href="/dashboard/appointments/direct" className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 active:scale-95">
+                        <Plus className="w-5 h-5" />
+                        OPD Registration
+                    </a>
                 </div>
             </div>
 

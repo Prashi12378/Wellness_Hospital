@@ -5,7 +5,7 @@ export function createClient() {
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!url || !key || url.includes('your-supabase-url')) {
-        return null as any // Allow page to load even without DB
+        return null as unknown as ReturnType<typeof createBrowserClient>;
     }
 
     return createBrowserClient(url, key)

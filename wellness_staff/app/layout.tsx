@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wellness Hospital | Staff Portal",
-  description: "Hospital Staff Management and Operational Portal",
+  title: "Wellness Hospital | Front Desk Executive Portal",
+  description: "Hospital Front Desk Management and Operational Portal",
   icons: {
     icon: "/favicon.ico",
   },

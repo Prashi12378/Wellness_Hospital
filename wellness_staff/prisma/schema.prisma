@@ -48,6 +48,7 @@ model User {
   
   // Custom Relation to our App Profile
   profile       Profile?
+  ledgers       Ledger[]
 }
 
 model VerificationToken {
@@ -90,13 +91,97 @@ model Profile {
   availableTimings Json?   // JSONB for flexible schedule
   
   // Relations
-  appointmentsAsDoctor  Appointment[] @relation("DoctorAppointments")
-  appointmentsAsPatient Appointment[] @relation("PatientAppointments")
+  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
+  admissions            Admission[]    @relation("PatientAdmissions")
+  admissionsAsDoctor    Admission[]    @relation("AdmissionDoctor")
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Admission {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         Profile  @relation("PatientAdmissions", fields: [patientId], references: [id])
+  
+  admissionDate   DateTime @default(now())
+  dischargeDate   DateTime?
+  status          String   @default("admitted") // admitted, discharged
+  
+  bedNumber       String?
+  ward            String?
+  
+  doctorId        String?
+  primaryDoctor   Profile?  @relation("AdmissionDoctor", fields: [doctorId], references: [id])
+  
+  charges         HospitalCharge[]
+  labRecords      LabRecord[]
+  surgeries       Surgery[]
+  clinicalNotes   ClinicalNote[]
+
+  // Discharge Summary Fields
+  diagnoses           String?   @db.Text
+  presentingSymptoms  String?   @db.Text
+  physicalFindings    String?   @db.Text
+  investigations      String?   @db.Text
+  hospitalCourse      String?   @db.Text
+  dischargeMedication String?   @db.Text
+  dischargeCondition  String?
+  dischargeAdvice     String?   @db.Text
+  noteAndReview       String?   @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model HospitalCharge {
+  id              String   @id @default(uuid())
+  admissionId     String
+  admission       Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  
+  description     String
+  amount          Decimal
+  type            String   // e.g., 'bed', 'nursing', 'operating_theatre', 'other', 'medicine'
+  
+  date            DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model LabRecord {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  testName      String
+  result        String?
+  fileUrl       String?   // For uploaded reports
+  recordedAt    DateTime  @default(now())
+}
+
+model Surgery {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  surgeryName   String
+  surgeonName   String
+  surgeryDate   DateTime
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now())
+}
+
+model ClinicalNote {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  doctorName    String
+  note          String    @db.Text
+  type          String    @default("suggestion") // suggestion, daily_note, instruction
+  fileUrl       String?   // For suggestion files/reports
+  createdAt     DateTime  @default(now())
 }
 
 model Appointment {
@@ -147,17 +232,23 @@ model Prescription {
 }
 
 model HealthPackage {
-  id            String   @id @default(uuid())
+  id            String            @id @default(uuid())
   name          String
-  description   String?  @db.Text
+  description   String?           @db.Text
   price         Decimal
   originalPrice Decimal
-  includes      Json     // Array of strings
-  icon          String   @default("Stethoscope")
-  popular       Boolean  @default(false)
+  includes      Json              // Array of strings
+  icon          String            @default("Stethoscope")
+  popular       Boolean           @default(false)
+  type          HealthPackageType @default(GENERAL)
   
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+enum HealthPackageType {
+  GENERAL
+  BLOOD_COLLECTION
 }
 
 model Otp {
@@ -181,4 +272,70 @@ model PharmacyInventory {
   autoReorderPoint Int?      @default(10)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+}
+
+model Invoice {
+  id               String        @id @default(uuid())
+  billNo           String        @unique
+  date             DateTime      @default(now())
+  patientName      String
+  patientPhone     String?
+  doctorName       String?
+  insuranceNo      String?
+  gstin            String        @default("29JNVPS4919B2Z5")
+  subTotal         Decimal
+  totalGst         Decimal
+  grandTotal       Decimal
+  discountRate     Decimal       @default(0)
+  discountAmount   Decimal       @default(0)
+  paymentMethod    String        @default("CASH")
+  status           String        @default("PAID")
+  items            InvoiceItem[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  medicineId  String
+  name        String
+  hsnCode     String?
+  batchNo     String?
+  expiryDate  DateTime?
+  qty         Int
+  mrp         Decimal
+  gstRate     Decimal
+  amount      Decimal
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Ledger {
+  id              String   @id @default(uuid())
+  transactionType String
+  category        String
+  description     String
+  amount          Decimal
+  paymentMethod   String
+  transactionDate DateTime
+  recordedBy      String
+  user            User     @relation(fields: [recordedBy], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String   // e.g., 'low_stock', 'expiry', 'system'
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PharmacySettings {
+  id             String   @id @default("default")
+  defaultGstRate Decimal  @default(5)
+  updatedAt      DateTime @updatedAt
 }
