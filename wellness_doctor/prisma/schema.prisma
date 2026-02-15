@@ -55,29 +55,31 @@ model VerificationToken {
 }
 
 model Profile {
-  id                    String         @id @default(cuid())
-  userId                String         @unique
-  email                 String         @unique
-  firstName             String?
-  lastName              String?
-  phone                 String?
-  role                  UserRole       @default(patient)
-  specialization        String?
-  qualifications        String?
-  experience            Int?
-  consultationFee       Decimal?
-  bio                   String?
-  availableTimings      Json?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  dob                   String?
-  gender                String?
-  uhid                  String?        @unique
-  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
-  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
-  prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
-  prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
-  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                                     String         @id @default(cuid())
+  userId                                 String         @unique
+  email                                  String         @unique
+  firstName                              String?
+  lastName                               String?
+  phone                                  String?
+  role                                   UserRole       @default(patient)
+  specialization                         String?
+  qualifications                         String?
+  experience                             Int?
+  consultationFee                        Decimal?
+  bio                                    String?
+  availableTimings                       Json?
+  createdAt                              DateTime       @default(now())
+  updatedAt                              DateTime       @updatedAt
+  dob                                    String?
+  gender                                 String?
+  uhid                                   String?        @unique
+  Admission_Admission_doctorIdToProfile  Admission[]    @relation("Admission_doctorIdToProfile")
+  Admission_Admission_patientIdToProfile Admission[]    @relation("Admission_patientIdToProfile")
+  appointmentsAsDoctor                   Appointment[]  @relation("DoctorAppointments")
+  appointmentsAsPatient                  Appointment[]  @relation("PatientAppointments")
+  prescriptionsWritten                   Prescription[] @relation("DoctorPrescriptions")
+  prescriptionsReceived                  Prescription[] @relation("PatientPrescriptions")
+  user                                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
@@ -216,6 +218,78 @@ model PharmacySettings {
   id             String   @id @default("default")
   defaultGstRate Decimal  @default(5)
   updatedAt      DateTime
+}
+
+model Admission {
+  id                                   String           @id
+  patientId                            String
+  admissionDate                        DateTime         @default(now())
+  dischargeDate                        DateTime?
+  status                               String           @default("admitted")
+  bedNumber                            String?
+  ward                                 String?
+  createdAt                            DateTime         @default(now())
+  updatedAt                            DateTime
+  doctorId                             String?
+  diagnoses                            String?
+  dischargeAdvice                      String?
+  dischargeCondition                   String?
+  dischargeMedication                  String?
+  hospitalCourse                       String?
+  investigations                       String?
+  noteAndReview                        String?
+  physicalFindings                     String?
+  presentingSymptoms                   String?
+  Profile_Admission_doctorIdToProfile  Profile?         @relation("Admission_doctorIdToProfile", fields: [doctorId], references: [id])
+  Profile_Admission_patientIdToProfile Profile          @relation("Admission_patientIdToProfile", fields: [patientId], references: [id])
+  ClinicalNote                         ClinicalNote[]
+  HospitalCharge                       HospitalCharge[]
+  LabRecord                            LabRecord[]
+  Surgery                              Surgery[]
+}
+
+model ClinicalNote {
+  id          String    @id
+  admissionId String
+  doctorName  String
+  note        String
+  type        String    @default("suggestion")
+  fileUrl     String?
+  createdAt   DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model HospitalCharge {
+  id          String    @id
+  admissionId String
+  description String
+  amount      Decimal
+  type        String
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model LabRecord {
+  id          String    @id
+  admissionId String
+  testName    String
+  result      String?
+  fileUrl     String?
+  recordedAt  DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model Surgery {
+  id          String    @id
+  admissionId String
+  surgeryName String
+  surgeonName String
+  surgeryDate DateTime
+  notes       String?
+  createdAt   DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 }
 
 enum HealthPackageType {

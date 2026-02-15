@@ -31,9 +31,10 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                const email = credentials.email; // Removed .toLowerCase() to avoid mismatch
+                const email = credentials.email.toLowerCase(); // Ensure case-insensitive match
 
                 try {
+                    console.log("[Auth] Looking up user by email:", email);
                     // 1. Check if user exists
                     const user = await prisma.user.findUnique({
                         where: { email },
@@ -41,7 +42,7 @@ export const authOptions: NextAuthOptions = {
                     });
 
                     if (!user) {
-                        console.error("[Auth] User not found:", email);
+                        console.error("[Auth] User not found in database:", email);
                         return null;
                     }
 

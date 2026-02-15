@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,18 +9,24 @@ import { Stethoscope, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
 import Logo from '../../public/doctor-logo.png';
 
 export default function LoginPage() {
+    const { data: session, status } = useSession();
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Auto-redirect if already logged in
+    useEffect(() => {
+        if (status === 'authenticated') {
+            router.replace('/dashboard');
+        }
+    }, [status, router]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // We don't clear error immediately to avoid "flicker" if current state is already error
-        // But we should reset it if a new attempt starts
-        if (error) setError('');
+        setError(''); // Reset error on new attempt
 
         console.log("[Login] Attempting sign-in for:", email);
 

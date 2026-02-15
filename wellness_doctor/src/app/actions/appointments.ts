@@ -41,8 +41,8 @@ export async function getDoctorAppointments() {
 
         return { data: mappedAppointments };
 
-    } catch (error) {
-        console.error('Error fetching appointments:', error);
-        return { error: 'Failed to fetch appointments' };
+    } catch (error: any) {
+        console.error('[AppointmentsAction] Error fetching appointments:', error);
+        return { error: `Failed to fetch appointments: ${error.message || 'Unknown error'}` };
     }
 }
