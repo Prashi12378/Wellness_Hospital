@@ -261,13 +261,13 @@ export default function AdmissionDetailPage() {
                                 <p className="text-slate-500 font-medium">Daily breakdowns and service charges.</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => window.print()}
+                                <Link
+                                    href={`/dashboard/ipd/${id}/invoice`}
                                     className="px-6 py-3 bg-white text-slate-600 border border-slate-200 rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all active:scale-95"
                                 >
                                     <Printer className="w-5 h-5" />
                                     Print Bill
-                                </button>
+                                </Link>
                                 <button
                                     onClick={() => setModalType('charge')}
                                     className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-primary transition-all active:scale-95"
