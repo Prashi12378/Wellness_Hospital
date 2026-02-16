@@ -66,7 +66,9 @@ async function main() {
 
     const pharmacist = await prisma.user.upsert({
         where: { email: pharmacyEmail },
-        update: {},
+        update: {
+            password: pharmacyPassword,
+        },
         create: {
             email: pharmacyEmail,
             password: pharmacyPassword,
