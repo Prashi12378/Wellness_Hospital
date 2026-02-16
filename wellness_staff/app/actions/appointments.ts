@@ -1,4 +1,5 @@
 'use server';
+// Triggering type re-evaluation
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -92,7 +93,7 @@ export async function requestLabTest(data: {
     priority?: string;
 }) {
     try {
-        const request = await prisma.labRequest.create({
+        const request = await (prisma as any).labRequest.create({
             data: {
                 patientId: data.patientId,
                 patientName: data.patientName,
