@@ -8,6 +8,7 @@ const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://") ?? !!p
 const cookiePrefix = useSecureCookies ? "__Secure-" : "";
 
 export const authOptions: NextAuthOptions = {
+    adapter: PrismaAdapter(prisma),
     debug: process.env.NODE_ENV === 'development',
     secret: process.env.NEXTAUTH_SECRET,
     session: {
