@@ -173,3 +173,36 @@ export async function getConsultationHistory() {
         return { error: error.message };
     }
 }
+
+export async function requestLabTest(data: {
+    appointmentId: string;
+    patientId: string;
+    patientName: string;
+    testName: string;
+    priority?: string;
+}) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!(session?.user as any)?.id) return { error: 'Not authenticated' };
+
+        const userId = (session.user as any).id;
+        const userName = session.user.name || "Doctor";
+
+        const request = await prisma.labRequest.create({
+            data: {
+                patientId: data.patientId,
+                patientName: data.patientName,
+                testName: data.testName,
+                priority: data.priority || "normal",
+                requestedById: userId,
+                requestedByName: userName,
+                status: "pending"
+            }
+        });
+
+        return { success: true, data: request };
+    } catch (error: any) {
+        console.error('Error requesting lab test:', error);
+        return { error: error.message };
+    }
+}

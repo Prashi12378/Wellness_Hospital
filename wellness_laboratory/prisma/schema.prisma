@@ -79,6 +79,7 @@ model Profile {
   appointmentsAsPatient                  Appointment[]  @relation("PatientAppointments")
   prescriptionsWritten                   Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived                  Prescription[] @relation("PatientPrescriptions")
+  labRequests                            LabRequest[]   @relation("PatientLabRequests")
   user                                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -284,6 +285,22 @@ model LabRecord {
   Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 }
 
+model LabRequest {
+  id              String   @id @default(uuid())
+  patientId       String
+  patientName     String
+  testName        String
+  priority        String   @default("normal")
+  status          String   @default("pending") // pending, processing, completed, cancelled
+  result          String?
+  reportUrl       String?
+  requestedById   String?
+  requestedByName String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  patient         Profile  @relation("PatientLabRequests", fields: [patientId], references: [id])
+}
+
 model Surgery {
   id          String    @id
   admissionId String
@@ -305,4 +322,5 @@ enum UserRole {
   doctor
   staff
   patient
+  lab
 }

@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -42,7 +41,7 @@ model User {
   image         String?
   password      String?
   accounts      Account[]
-  Ledger        Ledger[]
+  ledgers       Ledger[]
   profile       Profile?
   sessions      Session[]
 }
@@ -56,31 +55,32 @@ model VerificationToken {
 }
 
 model Profile {
-  id                    String         @id @default(cuid())
-  userId                String         @unique
-  email                 String         @unique
-  firstName             String?
-  lastName              String?
-  phone                 String?
-  role                  UserRole       @default(patient)
-  specialization        String?
-  qualifications        String?
-  experience            Int?
-  consultationFee       Decimal?
-  bio                   String?
-  availableTimings      Json?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  dob                   String?
-  gender                String?
-  uhid                  String?        @unique
-  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
-  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
-  prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
-  prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
-  admissionsAsPatient   Admission[]    @relation("PatientAdmissions")
+  id                                     String         @id @default(cuid())
+  userId                                 String         @unique
+  email                                  String         @unique
+  firstName                              String?
+  lastName                               String?
+  phone                                  String?
+  role                                   UserRole       @default(patient)
+  specialization                         String?
+  qualifications                         String?
+  experience                             Int?
+  consultationFee                        Decimal?
+  bio                                    String?
+  availableTimings                       Json?
+  createdAt                              DateTime       @default(now())
+  updatedAt                              DateTime       @updatedAt
+  dob                                    String?
+  gender                                 String?
+  uhid                                   String?        @unique
+  admissions            Admission[]    @relation("PatientAdmissions")
   admissionsAsDoctor    Admission[]    @relation("AdmissionDoctor")
-  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointmentsAsDoctor                   Appointment[]  @relation("DoctorAppointments")
+  appointmentsAsPatient                  Appointment[]  @relation("PatientAppointments")
+  prescriptionsWritten                   Prescription[] @relation("DoctorPrescriptions")
+  prescriptionsReceived                  Prescription[] @relation("PatientPrescriptions")
+  labRequests                            LabRequest[]   @relation("PatientLabRequests")
+  user                                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
@@ -133,7 +133,7 @@ model HealthPackage {
 }
 
 model Otp {
-  id        String   @id @default(cuid())
+  id        String   @id
   phone     String   @unique
   code      String
   expiresAt DateTime
@@ -141,22 +141,22 @@ model Otp {
 }
 
 model PharmacyInventory {
-  id               String    @id @default(uuid())
+  id               String    @id
   name             String
-  stock            Int
   batchNo          String?   @map("batch_no")
-  hsnCode          String?   @map("hsn_code")
   expiryDate       DateTime? @map("expiry_date")
   price            Decimal
-  gstRate          Decimal   @default(0) @map("gst_rate")
+  stock            Int
   location         String?
   autoReorderPoint Int?      @default(10)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  gstRate          Decimal   @default(0) @map("gst_rate")
+  hsnCode          String?   @map("hsn_code")
 }
 
 model Ledger {
-  id              String   @id
+  id              String   @id @default(uuid())
   transactionType String
   category        String
   description     String
@@ -165,78 +165,31 @@ model Ledger {
   transactionDate DateTime
   recordedBy      String
   createdAt       DateTime @default(now())
-  updatedAt       DateTime
-  User            User     @relation(fields: [recordedBy], references: [id])
-}
-
-enum HealthPackageType {
-  GENERAL
-  BLOOD_COLLECTION
-}
-
-enum UserRole {
-  admin
-  doctor
-  staff
-  patient
-}
-
-model AmbulanceRequest {
-  id          String   @id @default(uuid())
-  patientName String
-  phone       String
-  location    String
-  serviceType String
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model BloodCollectionRequest {
-  id             String   @id @default(uuid())
-  patientName    String
-  phone          String
-  address        String
-  collectionDate String
-  collectionTime String
-  selectedTests  Json
-  totalPrice     Decimal
-  status         String   @default("pending")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
-
-model Message {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String?
-  email     String
-  subject   String?
-  message   String
-  createdAt DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [recordedBy], references: [id], onDelete: Cascade)
 }
 
 model Invoice {
-  id            String        @id
-  billNo        String        @unique
-  date          DateTime      @default(now())
-  patientName   String
-  patientPhone  String?
-  doctorName    String?
-  insuranceNo   String?
-  gstin         String        @default("29JNVPS4919B2Z5")
-  subTotal      Decimal
-  totalGst      Decimal
-  grandTotal    Decimal
-  discountRate     Decimal       @default(0)
-  discountAmount   Decimal       @default(0)
-  paymentMethod String        @default("CASH")
-  status        String        @default("PAID")
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime
-  items         InvoiceItem[]
-  admissionId   String?
-  admission     Admission?    @relation(fields: [admissionId], references: [id])
+  id             String        @id
+  billNo         String        @unique
+  date           DateTime      @default(now())
+  patientName    String
+  patientPhone   String?
+  doctorName     String?
+  insuranceNo    String?
+  gstin          String        @default("29JNVPS4919B2Z5")
+  subTotal       Decimal
+  totalGst       Decimal
+  grandTotal     Decimal
+  paymentMethod  String        @default("CASH")
+  status         String        @default("PAID")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime
+  discountAmount Decimal       @default(0)
+  discountRate   Decimal       @default(0)
+  items          InvoiceItem[]
+  admissionId    String?
+  admission      Admission?    @relation(fields: [admissionId], references: [id])
 }
 
 model InvoiceItem {
@@ -254,101 +207,120 @@ model InvoiceItem {
   invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
-model Admission {
-  id              String   @id @default(uuid())
-  patientId       String
-  patient         Profile  @relation("PatientAdmissions", fields: [patientId], references: [id])
-  
-  admissionDate   DateTime @default(now())
-  dischargeDate   DateTime?
-  status          String   @default("admitted") // admitted, discharged
-  
-  bedNumber       String?
-  ward            String?
-  
-  doctorId        String?
-  primaryDoctor   Profile?  @relation("AdmissionDoctor", fields: [doctorId], references: [id])
-  
-  charges         HospitalCharge[]
-  labRecords      LabRecord[]
-  surgeries       Surgery[]
-  clinicalNotes   ClinicalNote[]
-  pharmacyInvoices Invoice[]
-
-  // Discharge Summary Fields
-  diagnoses           String?   @db.Text
-  presentingSymptoms  String?   @db.Text
-  physicalFindings    String?   @db.Text
-  investigations      String?   @db.Text
-  hospitalCourse      String?   @db.Text
-  dischargeMedication String?   @db.Text
-  dischargeCondition  String?
-  dischargeAdvice     String?   @db.Text
-  noteAndReview       String?   @db.Text
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model HospitalCharge {
-  id              String   @id @default(uuid())
-  admissionId     String
-  admission       Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
-  
-  description     String
-  amount          Decimal
-  type            String   // e.g., 'bed', 'nursing', 'operating_theatre', 'other', 'medicine'
-  
-  date            DateTime @default(now())
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model LabRecord {
-  id            String    @id @default(uuid())
-  admissionId   String
-  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
-  testName      String
-  result        String?
-  fileUrl       String?   // For uploaded reports
-  recordedAt    DateTime  @default(now())
-}
-
-model Surgery {
-  id            String    @id @default(uuid())
-  admissionId   String
-  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
-  surgeryName   String
-  surgeonName   String
-  surgeryDate   DateTime
-  notes         String?   @db.Text
-  createdAt     DateTime  @default(now())
-}
-
-model ClinicalNote {
-  id            String    @id @default(uuid())
-  admissionId   String
-  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
-  doctorName    String
-  note          String    @db.Text
-  type          String    @default("suggestion") // suggestion, daily_note, instruction
-  fileUrl       String?   // For suggestion files/reports
-  createdAt     DateTime  @default(now())
-}
-
 model Notification {
-  id        String   @id @default(uuid())
+  id        String   @id
   title     String
   message   String
-  type      String   // e.g., 'low_stock', 'expiry', 'system'
+  type      String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime
 }
 
 model PharmacySettings {
   id             String   @id @default("default")
   defaultGstRate Decimal  @default(5)
-  updatedAt      DateTime @updatedAt
+  updatedAt      DateTime
+}
+
+model Admission {
+  id                                   String           @id
+  patientId                            String
+  admissionDate                        DateTime         @default(now())
+  dischargeDate                        DateTime?
+  status                               String           @default("admitted")
+  bedNumber                            String?
+  ward                                 String?
+  createdAt                            DateTime         @default(now())
+  updatedAt                            DateTime
+  doctorId                             String?
+  diagnoses                            String?
+  dischargeAdvice                      String?
+  dischargeCondition                   String?
+  dischargeMedication                  String?
+  hospitalCourse                       String?
+  investigations                       String?
+  noteAndReview                        String?
+  physicalFindings                     String?
+  presentingSymptoms                   String?
+  primaryDoctor   Profile?  @relation("AdmissionDoctor", fields: [doctorId], references: [id])
+  patient         Profile   @relation("PatientAdmissions", fields: [patientId], references: [id])
+  ClinicalNote                         ClinicalNote[]
+  HospitalCharge                       HospitalCharge[]
+  LabRecord                            LabRecord[]
+  Surgery                              Surgery[]
+  pharmacyInvoices                     Invoice[]
+}
+
+model ClinicalNote {
+  id          String    @id
+  admissionId String
+  doctorName  String
+  note        String
+  type        String    @default("suggestion")
+  fileUrl     String?
+  createdAt   DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model HospitalCharge {
+  id          String    @id
+  admissionId String
+  description String
+  amount      Decimal
+  type        String
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model LabRecord {
+  id          String    @id
+  admissionId String
+  testName    String
+  result      String?
+  fileUrl     String?
+  recordedAt  DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model LabRequest {
+  id              String   @id @default(uuid())
+  patientId       String
+  patientName     String
+  testName        String
+  priority        String   @default("normal")
+  status          String   @default("pending") // pending, processing, completed, cancelled
+  result          String?
+  reportUrl       String?
+  requestedById   String?
+  requestedByName String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  patient         Profile  @relation("PatientLabRequests", fields: [patientId], references: [id])
+}
+
+model Surgery {
+  id          String    @id
+  admissionId String
+  surgeryName String
+  surgeonName String
+  surgeryDate DateTime
+  notes       String?
+  createdAt   DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+enum HealthPackageType {
+  GENERAL
+  BLOOD_COLLECTION
+}
+
+enum UserRole {
+  admin
+  doctor
+  staff
+  patient
+  lab
 }

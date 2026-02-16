@@ -84,3 +84,27 @@ export async function searchPatients(query: string) {
         return { success: false, error: "Failed to search patients" };
     }
 }
+
+export async function requestLabTest(data: {
+    patientId: string;
+    patientName: string;
+    testName: string;
+    priority?: string;
+}) {
+    try {
+        const request = await prisma.labRequest.create({
+            data: {
+                patientId: data.patientId,
+                patientName: data.patientName,
+                testName: data.testName,
+                priority: data.priority || "normal",
+                status: "pending"
+            }
+        });
+        revalidatePath('/dashboard/appointments');
+        return { success: true, request };
+    } catch (error) {
+        console.error("Failed to request lab test:", error);
+        return { success: false, error: "Failed to request lab test" };
+    }
+}
