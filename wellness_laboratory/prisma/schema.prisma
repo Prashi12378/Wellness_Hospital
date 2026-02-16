@@ -1,0 +1,308 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  ledgers       Ledger[]
+  profile       Profile?
+  sessions      Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Profile {
+  id                                     String         @id @default(cuid())
+  userId                                 String         @unique
+  email                                  String         @unique
+  firstName                              String?
+  lastName                               String?
+  phone                                  String?
+  role                                   UserRole       @default(patient)
+  specialization                         String?
+  qualifications                         String?
+  experience                             Int?
+  consultationFee                        Decimal?
+  bio                                    String?
+  availableTimings                       Json?
+  createdAt                              DateTime       @default(now())
+  updatedAt                              DateTime       @updatedAt
+  dob                                    String?
+  gender                                 String?
+  uhid                                   String?        @unique
+  admissions            Admission[]    @relation("PatientAdmissions")
+  admissionsAsDoctor    Admission[]    @relation("AdmissionDoctor")
+  appointmentsAsDoctor                   Appointment[]  @relation("DoctorAppointments")
+  appointmentsAsPatient                  Appointment[]  @relation("PatientAppointments")
+  prescriptionsWritten                   Prescription[] @relation("DoctorPrescriptions")
+  prescriptionsReceived                  Prescription[] @relation("PatientPrescriptions")
+  user                                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id              String        @id @default(uuid())
+  patientId       String
+  doctorId        String?
+  patientName     String?
+  patientPhone    String?
+  patientEmail    String?
+  appointmentDate DateTime
+  appointmentTime String
+  status          String        @default("scheduled")
+  reason          String?
+  department      String?
+  type            String?       @default("General")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  doctor          Profile?      @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient         Profile       @relation("PatientAppointments", fields: [patientId], references: [id])
+  prescription    Prescription?
+}
+
+model Prescription {
+  id              String      @id @default(uuid())
+  appointmentId   String      @unique
+  doctorId        String
+  patientId       String
+  doctorName      String
+  medicines       Json
+  additionalNotes String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  appointment     Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  doctor          Profile     @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  patient         Profile     @relation("PatientPrescriptions", fields: [patientId], references: [id])
+}
+
+model HealthPackage {
+  id            String            @id @default(uuid())
+  name          String
+  description   String?
+  price         Decimal
+  originalPrice Decimal
+  includes      Json
+  icon          String            @default("Stethoscope")
+  popular       Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  type          HealthPackageType @default(GENERAL)
+}
+
+model Otp {
+  id        String   @id
+  phone     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PharmacyInventory {
+  id               String    @id
+  name             String
+  batchNo          String?   @map("batch_no")
+  expiryDate       DateTime? @map("expiry_date")
+  price            Decimal
+  stock            Int
+  location         String?
+  autoReorderPoint Int?      @default(10)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  gstRate          Decimal   @default(0) @map("gst_rate")
+  hsnCode          String?   @map("hsn_code")
+}
+
+model Ledger {
+  id              String   @id @default(uuid())
+  transactionType String
+  category        String
+  description     String
+  amount          Decimal
+  paymentMethod   String
+  transactionDate DateTime
+  recordedBy      String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [recordedBy], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id             String        @id
+  billNo         String        @unique
+  date           DateTime      @default(now())
+  patientName    String
+  patientPhone   String?
+  doctorName     String?
+  insuranceNo    String?
+  gstin          String        @default("29JNVPS4919B2Z5")
+  subTotal       Decimal
+  totalGst       Decimal
+  grandTotal     Decimal
+  paymentMethod  String        @default("CASH")
+  status         String        @default("PAID")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime
+  discountAmount Decimal       @default(0)
+  discountRate   Decimal       @default(0)
+  items          InvoiceItem[]
+  admissionId    String?
+  admission      Admission?    @relation(fields: [admissionId], references: [id])
+}
+
+model InvoiceItem {
+  id         String    @id
+  invoiceId  String
+  medicineId String
+  name       String
+  hsnCode    String?
+  batchNo    String?
+  expiryDate DateTime?
+  qty        Int
+  mrp        Decimal
+  gstRate    Decimal
+  amount     Decimal
+  invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id
+  title     String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model PharmacySettings {
+  id             String   @id @default("default")
+  defaultGstRate Decimal  @default(5)
+  updatedAt      DateTime
+}
+
+model Admission {
+  id                                   String           @id
+  patientId                            String
+  admissionDate                        DateTime         @default(now())
+  dischargeDate                        DateTime?
+  status                               String           @default("admitted")
+  bedNumber                            String?
+  ward                                 String?
+  createdAt                            DateTime         @default(now())
+  updatedAt                            DateTime
+  doctorId                             String?
+  diagnoses                            String?
+  dischargeAdvice                      String?
+  dischargeCondition                   String?
+  dischargeMedication                  String?
+  hospitalCourse                       String?
+  investigations                       String?
+  noteAndReview                        String?
+  physicalFindings                     String?
+  presentingSymptoms                   String?
+  primaryDoctor   Profile?  @relation("AdmissionDoctor", fields: [doctorId], references: [id])
+  patient         Profile   @relation("PatientAdmissions", fields: [patientId], references: [id])
+  ClinicalNote                         ClinicalNote[]
+  HospitalCharge                       HospitalCharge[]
+  LabRecord                            LabRecord[]
+  Surgery                              Surgery[]
+  pharmacyInvoices                     Invoice[]
+}
+
+model ClinicalNote {
+  id          String    @id
+  admissionId String
+  doctorName  String
+  note        String
+  type        String    @default("suggestion")
+  fileUrl     String?
+  createdAt   DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model HospitalCharge {
+  id          String    @id
+  admissionId String
+  description String
+  amount      Decimal
+  type        String
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model LabRecord {
+  id          String    @id
+  admissionId String
+  testName    String
+  result      String?
+  fileUrl     String?
+  recordedAt  DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+model Surgery {
+  id          String    @id
+  admissionId String
+  surgeryName String
+  surgeonName String
+  surgeryDate DateTime
+  notes       String?
+  createdAt   DateTime  @default(now())
+  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+}
+
+enum HealthPackageType {
+  GENERAL
+  BLOOD_COLLECTION
+}
+
+enum UserRole {
+  admin
+  doctor
+  staff
+  patient
+}
