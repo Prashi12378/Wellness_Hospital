@@ -24,98 +24,69 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
+                console.log("[Auth] Authorize attempt for:", credentials?.email);
                 if (!credentials?.email || !credentials?.password) {
-                    console.error("[Auth] Missing credentials");
                     return null;
                 }
 
-                const originalEmail = credentials.email;
-                const lowerEmail = originalEmail.toLowerCase();
-
                 try {
-                    // 1. Check if user exists (trying both original and lowercase)
+                    const email = credentials.email.toLowerCase();
                     let user = await prisma.user.findUnique({
-                        where: { email: originalEmail },
+                        where: { email: email },
                         include: { profile: true }
                     });
 
-                    if (!user && originalEmail !== lowerEmail) {
-                        console.log("[Auth] User not found with original casing, trying lowercase:", lowerEmail);
+                    if (!user && credentials.email !== email) {
                         user = await prisma.user.findUnique({
-                            where: { email: lowerEmail },
+                            where: { email: credentials.email },
                             include: { profile: true }
                         });
                     }
 
-                    if (!user) {
-                        console.error("[Auth] User not found in database with email:", originalEmail, "or", lowerEmail);
+                    if (!user || !user.password) {
+                        console.log("[Auth] User not found or no password:", credentials.email);
                         return null;
                     }
 
-                    if (!user.password) {
-                        console.error("[Auth] User has no password set:", user.email);
-                        return null;
-                    }
-
-                    // 2. Validate Password with bcrypt
                     const isValid = await bcrypt.compare(credentials.password, user.password);
                     if (!isValid) {
-                        console.error("[Auth] Invalid password for:", user.email);
+                        console.log("[Auth] Invalid password for:", credentials.email);
                         return null;
                     }
 
-                    // 3. Strict Role Validation for Doctor Portal
                     const role = user.profile?.role?.toString().toLowerCase() || "patient";
-                    console.log(`[Auth] User found: ${user.email}, Role: ${role}`);
-
                     if (role !== "doctor") {
-                        console.error(`[Auth] Unauthorized role for doctor portal: ${role} (${user.email})`);
+                        console.log("[Auth] Forbidden role:", role);
                         return null;
                     }
 
-                    console.log("[Auth] Doctor signed in successfully:", user.email);
-
+                    console.log("[Auth] Login successful:", user.email);
                     return {
                         id: user.id,
                         email: user.email,
                         name: user.name,
-                        image: user.image,
-                        // Additional fields to pass to token
                         role: role,
+                        profileId: user.profile?.id,
                         firstName: user.profile?.firstName,
                         lastName: user.profile?.lastName,
                         specialization: user.profile?.specialization,
-                        qualifications: user.profile?.qualifications,
-                        profileId: user.profile?.id
+                        qualifications: user.profile?.qualifications
                     };
                 } catch (error) {
-                    console.error("[Auth] Database error during sign-in:", error);
+                    console.error("[Auth] Exception:", error);
                     return null;
                 }
             }
         })
     ],
-    cookies: {
-        sessionToken: {
-            name: `next-auth.session-token`,
-            options: {
-                httpOnly: true,
-                sameSite: "lax",
-                path: "/",
-                secure: useSecureCookies, // Keep false for HTTP LAN access
-            },
-        },
-    },
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
                 token.role = (user as any).role;
+                token.profileId = (user as any).profileId;
                 token.firstName = (user as any).firstName;
                 token.lastName = (user as any).lastName;
-                token.specialization = (user as any).specialization;
-                token.qualifications = (user as any).qualifications;
-                token.profileId = (user as any).profileId;
             }
             return token;
         },
@@ -123,11 +94,9 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 (session.user as any).id = token.id;
                 (session.user as any).role = token.role;
+                (session.user as any).profileId = token.profileId;
                 (session.user as any).firstName = token.firstName;
                 (session.user as any).lastName = token.lastName;
-                (session.user as any).specialization = token.specialization;
-                (session.user as any).qualifications = token.qualifications;
-                (session.user as any).profileId = token.profileId;
             }
             return session;
         }

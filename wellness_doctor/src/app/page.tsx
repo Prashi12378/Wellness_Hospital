@@ -27,21 +27,11 @@ export default function LoginPage() {
         setError('');
 
         try {
-            const result = await signIn('credentials', {
+            await signIn('credentials', {
                 email,
                 password,
-                redirect: false,
+                callbackUrl: '/dashboard',
             });
-
-            if (result?.error) {
-                setError('Invalid credentials. Please check your email and password.');
-                setLoading(false);
-            } else if (result?.ok) {
-                router.push('/dashboard');
-            } else {
-                setError('Login failed. Please try again.');
-                setLoading(false);
-            }
         } catch (err) {
             setError('Connection error. Please check your network.');
             setLoading(false);
