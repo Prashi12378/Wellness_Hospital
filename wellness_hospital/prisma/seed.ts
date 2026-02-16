@@ -60,7 +60,8 @@ async function main() {
     console.log(`Created doctor with id: ${doctor.id}`);
 
     // Create a Verified Pharmacist
-    const pharmacyEmail = 'pharmacist@wellness.com';
+    const pharmacyEmail = 'wellnesshospital8383@gmail.com';
+    const pharmacyPassword = await hash('Wellness_8383', 12);
     console.log(`Seeding pharmacist: ${pharmacyEmail}...`);
 
     const pharmacist = await prisma.user.upsert({
@@ -68,20 +69,83 @@ async function main() {
         update: {},
         create: {
             email: pharmacyEmail,
-            password, // same password
-            name: 'Head Pharmacist',
+            password: pharmacyPassword,
+            name: 'Wellness Pharmacy',
             profile: {
                 create: {
                     email: pharmacyEmail,
-                    firstName: 'Pharmacy',
-                    lastName: 'Head',
-                    role: 'staff', // Using 'staff' role but access restricted to pharmacy in logic
-                    phone: '555-PHARM'
+                    firstName: 'Wellness',
+                    lastName: 'Pharmacy',
+                    role: 'staff', // Using 'staff' role
+                    phone: '8383838383'
                 }
             }
         },
     });
     console.log(`Created pharmacist with id: ${pharmacist.id}`);
+
+    // Add Dr. Nikhita
+    const drNikhitaEmail = 'dr.nikhita@wellness-hospital.health';
+    console.log(`Seeding doctor: ${drNikhitaEmail}...`);
+    await prisma.user.upsert({
+        where: { email: drNikhitaEmail },
+        update: {},
+        create: {
+            email: drNikhitaEmail,
+            password,
+            name: 'Dr. Nikhita',
+            profile: {
+                create: {
+                    email: drNikhitaEmail,
+                    firstName: 'Nikhita',
+                    lastName: '',
+                    role: 'doctor',
+                    specialization: 'General Medicine',
+                    qualifications: 'MBBS',
+                    experience: 5,
+                    consultationFee: 500,
+                    phone: '6366662245',
+                    bio: 'Experienced general physician specializing in primary care and family medicine.',
+                    availableTimings: [
+                        { day: "Mon-Fri", start: "09:00 AM", end: "05:00 PM" },
+                        { day: "Saturday", start: "09:00 AM", end: "01:00 PM" }
+                    ]
+                }
+            }
+        }
+    });
+
+    // Add Dr. Pushpa
+    const drPushpaEmail = 'dr.pushpa@wellness-hospital.health';
+    console.log(`Seeding doctor: ${drPushpaEmail}...`);
+    await prisma.user.upsert({
+        where: { email: drPushpaEmail },
+        update: {},
+        create: {
+            email: drPushpaEmail,
+            password,
+            name: 'Dr. Pushpa',
+            profile: {
+                create: {
+                    email: drPushpaEmail,
+                    firstName: 'Pushpa',
+                    lastName: '',
+                    role: 'doctor',
+                    specialization: 'Ayurveda',
+                    qualifications: 'BAMS',
+                    experience: 8,
+                    consultationFee: 400,
+                    phone: '6366662245',
+                    bio: 'Certified Ayurvedic practitioner with expertise in traditional medicine and holistic healing.',
+                    availableTimings: [
+                        { day: "Mon-Fri", start: "10:00 AM", end: "06:00 PM" },
+                        { day: "Saturday", start: "10:00 AM", end: "02:00 PM" }
+                    ]
+                }
+            }
+        }
+    });
+
 }
 
 main()

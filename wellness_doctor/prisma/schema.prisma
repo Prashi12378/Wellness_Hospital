@@ -73,8 +73,8 @@ model Profile {
   dob                                    String?
   gender                                 String?
   uhid                                   String?        @unique
-  Admission_Admission_doctorIdToProfile  Admission[]    @relation("Admission_doctorIdToProfile")
-  Admission_Admission_patientIdToProfile Admission[]    @relation("Admission_patientIdToProfile")
+  admissions            Admission[]    @relation("PatientAdmissions")
+  admissionsAsDoctor    Admission[]    @relation("AdmissionDoctor")
   appointmentsAsDoctor                   Appointment[]  @relation("DoctorAppointments")
   appointmentsAsPatient                  Appointment[]  @relation("PatientAppointments")
   prescriptionsWritten                   Prescription[] @relation("DoctorPrescriptions")
@@ -186,7 +186,9 @@ model Invoice {
   updatedAt      DateTime
   discountAmount Decimal       @default(0)
   discountRate   Decimal       @default(0)
-  InvoiceItem    InvoiceItem[]
+  items          InvoiceItem[]
+  admissionId    String?
+  admission      Admission?    @relation(fields: [admissionId], references: [id])
 }
 
 model InvoiceItem {
@@ -201,7 +203,7 @@ model InvoiceItem {
   mrp        Decimal
   gstRate    Decimal
   amount     Decimal
-  Invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
@@ -240,12 +242,13 @@ model Admission {
   noteAndReview                        String?
   physicalFindings                     String?
   presentingSymptoms                   String?
-  Profile_Admission_doctorIdToProfile  Profile?         @relation("Admission_doctorIdToProfile", fields: [doctorId], references: [id])
-  Profile_Admission_patientIdToProfile Profile          @relation("Admission_patientIdToProfile", fields: [patientId], references: [id])
+  primaryDoctor   Profile?  @relation("AdmissionDoctor", fields: [doctorId], references: [id])
+  patient         Profile   @relation("PatientAdmissions", fields: [patientId], references: [id])
   ClinicalNote                         ClinicalNote[]
   HospitalCharge                       HospitalCharge[]
   LabRecord                            LabRecord[]
   Surgery                              Surgery[]
+  pharmacyInvoices                     Invoice[]
 }
 
 model ClinicalNote {

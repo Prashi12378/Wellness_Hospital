@@ -78,6 +78,8 @@ model Profile {
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
   prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
+  admissionsAsPatient   Admission[]    @relation("PatientAdmissions")
+  admissionsAsDoctor    Admission[]    @relation("AdmissionDoctor")
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -185,11 +187,15 @@ model Invoice {
   subTotal      Decimal
   totalGst      Decimal
   grandTotal    Decimal
+  discountRate     Decimal       @default(0)
+  discountAmount   Decimal       @default(0)
   paymentMethod String        @default("CASH")
   status        String        @default("PAID")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime
-  InvoiceItem   InvoiceItem[]
+  items         InvoiceItem[]
+  admissionId   String?
+  admission     Admission?    @relation(fields: [admissionId], references: [id])
 }
 
 model InvoiceItem {
@@ -204,7 +210,7 @@ model InvoiceItem {
   mrp        Decimal
   gstRate    Decimal
   amount     Decimal
-  Invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice    Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
@@ -227,4 +233,87 @@ enum UserRole {
   doctor
   staff
   patient
+}
+
+model Admission {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         Profile  @relation("PatientAdmissions", fields: [patientId], references: [id])
+  
+  admissionDate   DateTime @default(now())
+  dischargeDate   DateTime?
+  status          String   @default("admitted") // admitted, discharged
+  
+  bedNumber       String?
+  ward            String?
+  
+  doctorId        String?
+  primaryDoctor   Profile?  @relation("AdmissionDoctor", fields: [doctorId], references: [id])
+  
+  charges         HospitalCharge[]
+  labRecords      LabRecord[]
+  surgeries       Surgery[]
+  clinicalNotes   ClinicalNote[]
+  pharmacyInvoices Invoice[]
+
+  // Discharge Summary Fields
+  diagnoses           String?   @db.Text
+  presentingSymptoms  String?   @db.Text
+  physicalFindings    String?   @db.Text
+  investigations      String?   @db.Text
+  hospitalCourse      String?   @db.Text
+  dischargeMedication String?   @db.Text
+  dischargeCondition  String?
+  dischargeAdvice     String?   @db.Text
+  noteAndReview       String?   @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model HospitalCharge {
+  id              String   @id @default(uuid())
+  admissionId     String
+  admission       Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  
+  description     String
+  amount          Decimal
+  type            String   // e.g., 'bed', 'nursing', 'operating_theatre', 'other', 'medicine'
+  
+  date            DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model LabRecord {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  testName      String
+  result        String?
+  fileUrl       String?   // For uploaded reports
+  recordedAt    DateTime  @default(now())
+}
+
+model Surgery {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  surgeryName   String
+  surgeonName   String
+  surgeryDate   DateTime
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now())
+}
+
+model ClinicalNote {
+  id            String    @id @default(uuid())
+  admissionId   String
+  admission     Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  doctorName    String
+  note          String    @db.Text
+  type          String    @default("suggestion") // suggestion, daily_note, instruction
+  fileUrl       String?   // For suggestion files/reports
+  createdAt     DateTime  @default(now())
 }
