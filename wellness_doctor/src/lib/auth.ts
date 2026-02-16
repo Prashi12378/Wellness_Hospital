@@ -24,8 +24,6 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                console.log("[Auth] Authorize called for:", credentials?.email);
-
                 if (!credentials?.email || !credentials?.password) {
                     console.error("[Auth] Missing credentials");
                     return null;
@@ -35,7 +33,6 @@ export const authOptions: NextAuthOptions = {
                 const lowerEmail = originalEmail.toLowerCase();
 
                 try {
-                    console.log("[Auth] Looking up user by email:", originalEmail);
                     // 1. Check if user exists (trying both original and lowercase)
                     let user = await prisma.user.findUnique({
                         where: { email: originalEmail },
@@ -100,12 +97,12 @@ export const authOptions: NextAuthOptions = {
     ],
     cookies: {
         sessionToken: {
-            name: `${cookiePrefix}wellness-doctor.session-token`,
+            name: `next-auth.session-token`,
             options: {
                 httpOnly: true,
                 sameSite: "lax",
                 path: "/",
-                secure: useSecureCookies,
+                secure: useSecureCookies, // Keep false for HTTP LAN access
             },
         },
     },

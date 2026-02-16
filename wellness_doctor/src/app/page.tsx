@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
-import { Stethoscope, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
-import Logo from '../../public/doctor-logo.png';
+import { Stethoscope, Lock, Mail, ArrowRight, Activity, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
     const { data: session, status } = useSession();
@@ -23,23 +21,10 @@ export default function LoginPage() {
         }
     }, [status, router]);
 
-    // Handle URL error parameters (e.g. from middleware redirects)
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const errorParam = urlParams.get('error');
-        if (errorParam) {
-            setError('Authentication failed. Please check your credentials and try again.');
-            // Clean up URL
-            window.history.replaceState({}, '', '/');
-        }
-    }, []);
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError(''); // Reset error on new attempt
-
-        console.log("[Login] Attempting sign-in for:", email);
+        setError('');
 
         try {
             const result = await signIn('credentials', {
@@ -48,140 +33,120 @@ export default function LoginPage() {
                 redirect: false,
             });
 
-            console.log("[Login] Sign-in result:", result);
-
             if (result?.error) {
-                console.error("[Login] Sign-in error:", result.error);
-                setError('Invalid email or password. Please try again.');
-                setLoading(false); // Ensure loading stops
+                setError('Invalid credentials. Please check your email and password.');
+                setLoading(false);
             } else if (result?.ok) {
-                console.log("[Login] Sign-in successful, redirecting...");
-                // Don't stop loading here, let the redirect happen
                 router.push('/dashboard');
             } else {
-                console.error("[Login] Sign-in failed with no specific error");
-                setError('An unexpected error occurred. Please try again.');
+                setError('Login failed. Please try again.');
                 setLoading(false);
             }
         } catch (err) {
-            console.error("[Login] Exception during sign-in:", err);
-            setError('An unexpected error occurred. Do not refresh. Contact support if persists.');
+            setError('Connection error. Please check your network.');
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0f172a] p-4 font-sans overflow-hidden relative">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full -mr-64 -mt-64"></div>
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full -ml-64 -mb-64"></div>
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+                {/* Header Section */}
+                <div className="bg-[#0077B6] p-8 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#0077B6] to-[#005f92]"></div>
+                    {/* Decorative circles */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
 
-            <div className="w-full max-w-md z-10">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8 md:p-10">
-                    <div className="text-center mb-8">
-                        <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-white/10 rotate-3 transform transition-transform hover:rotate-0 overflow-hidden p-3">
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4 shadow-lg ring-1 ring-white/30 p-2">
                             <Image
-                                src={Logo}
-                                alt="Logo"
-                                width={64}
-                                height={64}
+                                src="/hospital-logo.png"
+                                alt="Wellness Hospital"
+                                width={80}
+                                height={80}
                                 className="object-contain"
                                 priority
-                                unoptimized
                             />
                         </div>
-                        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Doctor Portal</h1>
-                        <p className="text-slate-400">Secure Consultation Access</p>
+                        <h1 className="text-2xl font-bold text-white mb-1">Doctor Portal</h1>
+                        <p className="text-blue-100 text-sm">Wellness Hospital</p>
+                    </div>
+                </div>
+
+                {/* Form Section */}
+                <div className="p-8">
+                    <div className="mb-6 text-center">
+                        <p className="text-slate-500 text-sm">
+                            Please sign in using the credentials provided by the Hospital Administrator.
+                        </p>
                     </div>
 
                     {error && (
-                        <div role="alert" className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3 animate-shake">
-                            <AlertCircle className="w-5 h-5 shrink-0" />
-                            <p className="text-sm font-medium">{error}</p>
+                        <div className="mb-6 bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 shrink-0" />
+                            {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm font-medium text-slate-300 ml-1">Work Email</label>
-                            <div className="relative group">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-slate-700 ml-1">Email Address</label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
-                                    id="email"
-                                    name="email"
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-slate-900/50 border border-slate-800 text-white pl-12 pr-4 py-3.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-slate-600"
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0077B6]/20 focus:border-[#0077B6] transition-all text-slate-800 placeholder:text-slate-400"
                                     placeholder="doctor@wellness.com"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label htmlFor="password" className="text-sm font-medium text-slate-300 ml-1">Password</label>
-                            <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-slate-700 ml-1">Password</label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
-                                    id="password"
-                                    name="password"
                                     type="password"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-slate-900/50 border border-slate-800 text-white pl-12 pr-4 py-3.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all placeholder:text-slate-600"
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0077B6]/20 focus:border-[#0077B6] transition-all text-slate-800 placeholder:text-slate-400"
                                     placeholder="••••••••"
                                 />
                             </div>
                         </div>
 
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
-                            >
-                                {loading ? (
-                                    <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                ) : (
-                                    <>
-                                        Sign In to Portal
-                                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-[#0077B6] hover:bg-[#005f92] text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-[#0077B6]/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    Sign In <ArrowRight className="w-4 h-4" />
+                                </>
+                            )}
+                        </button>
                     </form>
-
-                    <div className="mt-8 text-center space-y-4">
-                        <div className="flex items-center gap-3 justify-center text-slate-500 text-xs">
-                            <div className="h-[1px] w-8 bg-slate-800"></div>
-                            <span>Hospital IT Security</span>
-                            <div className="h-[1px] w-8 bg-slate-800"></div>
-                        </div>
-                    </div>
                 </div>
 
-                <div className="mt-8 text-center">
-                    <img
-                        src="/doctor-logo.png"
-                        alt="Wellness Hospital"
-                        className="h-8 mx-auto opacity-50 grayscale hover:opacity-100 transition-all cursor-pointer"
-                    />
+                {/* Footer */}
+                <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
+                    <p className="text-xs text-slate-400">
+                        Authorized Personnel Only • Secure Connection
+                    </p>
                 </div>
             </div>
 
-            <style jsx global>{`
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    25% { transform: translateX(-4px); }
-                    75% { transform: translateX(4px); }
-                }
-                .animate-shake {
-                    animation: shake 0.2s ease-in-out 0s 2;
-                }
-            `}</style>
+            <div className="mt-8 text-center text-slate-400 text-xs">
+                &copy; {new Date().getFullYear()} Wellness Hospital Group
+            </div>
         </div>
     );
 }
