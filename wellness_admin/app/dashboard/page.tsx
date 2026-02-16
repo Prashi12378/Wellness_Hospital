@@ -7,8 +7,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardOverview() {
     // Fetch real-time stats
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Fetch real-time stats
+    const now = new Date();
+    // Adjust to IST (UTC+5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istTime = new Date(now.getTime() + istOffset);
+    istTime.setUTCHours(0, 0, 0, 0);
+    const today = new Date(istTime.getTime() - istOffset);
 
     const [doctorCount, staffCount, inventoryAlerts, ledgerAgg] = await Promise.all([
         prisma.profile.count({ where: { role: 'doctor' } }),
