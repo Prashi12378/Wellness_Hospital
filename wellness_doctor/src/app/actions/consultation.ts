@@ -183,7 +183,9 @@ export async function requestLabTest(data: {
 }) {
     try {
         const session = await getServerSession(authOptions);
-        if (!(session?.user as any)?.id) return { error: 'Not authenticated' };
+        if (!session || !session.user || !(session.user as any).id) {
+            return { error: 'Not authenticated' };
+        }
 
         const userId = (session.user as any).id;
         const userName = session.user.name || "Doctor";
