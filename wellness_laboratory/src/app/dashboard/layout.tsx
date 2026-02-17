@@ -4,14 +4,12 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-    FlaskConical,
     LogOut,
     Menu,
     X,
     LayoutDashboard,
     ClipboardList,
     History,
-    Settings,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -30,7 +28,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: "Clinical Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { name: "Active Diagnostics", href: "/dashboard/requests", icon: ClipboardList },
         { name: "Results Archive", href: "/dashboard/history", icon: History },
-        { name: "Lab Configuration", href: "/dashboard/settings", icon: Settings },
     ];
 
     return (
@@ -59,22 +56,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </span>
                 </div>
 
-                <div className="px-5 py-6 border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary/20 border border-primary/30 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner">
-                            <FlaskConical className="w-5 h-5 text-primary animate-pulse" />
-                        </div>
-                        <div className={cn(
-                            "overflow-hidden transition-all duration-300 whitespace-nowrap",
-                            isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
-                        )}>
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-tight">Lab Portal</p>
-                            <p className="font-black text-sm truncate text-white uppercase tracking-tighter">
-                                {session?.user?.name || "Technician"}
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
                 <nav className="px-3 py-6 space-y-2 flex-1 scrollbar-hide">
                     {navItems.map((item) => {

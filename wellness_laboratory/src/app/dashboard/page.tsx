@@ -3,20 +3,22 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
+    LayoutDashboard,
+    ClipboardList,
+    History,
+    Timer,
+    Microscope,
+    ClipboardCheck,
+    ShieldAlert,
     Search,
     Filter,
     ArrowRight,
-    FlaskConical,
-    Clock,
-    CheckCircle2,
-    AlertCircle,
     Plus,
     Loader2,
     Check,
     X,
     User as UserIcon,
     FileText,
-    History,
     Printer,
     Download
 } from "lucide-react";
@@ -69,10 +71,10 @@ export default function LabDashboardPage() {
     });
 
     const stats = [
-        { label: "Pending Tests", value: requests.filter(r => r.status === 'pending').length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-        { label: "Processing", value: requests.filter(r => r.status === 'processing').length.toString(), icon: FlaskConical, color: "text-blue-600", bg: "bg-blue-50" },
-        { label: "Completed Today", value: requests.filter(r => r.status === 'completed' && format(new Date(r.updatedAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).length.toString(), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-        { label: "Critical Results", value: requests.filter(r => r.priority === 'urgent' && r.status !== 'completed').length.toString(), icon: AlertCircle, color: "text-red-600", bg: "bg-red-50" },
+        { label: "Pending Tests", value: requests.filter(r => r.status === 'pending').length.toString(), icon: Timer, color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-100" },
+        { label: "Processing", value: requests.filter(r => r.status === 'processing').length.toString(), icon: Microscope, color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-100" },
+        { label: "Completed Today", value: requests.filter(r => r.status === 'completed' && format(new Date(r.updatedAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).length.toString(), icon: ClipboardCheck, color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-100" },
+        { label: "Critical Results", value: requests.filter(r => r.priority === 'urgent' && r.status !== 'completed').length.toString(), icon: ShieldAlert, color: "text-red-700", bg: "bg-red-50", border: "border-red-100" },
     ];
 
     return (
@@ -105,7 +107,7 @@ export default function LabDashboardPage() {
                 {stats.map((stat, i) => (
                     <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all group">
                         <div className="flex items-center justify-between mb-4">
-                            <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110", stat.bg)}>
+                            <div className={cn("p-3 rounded-2xl border transition-all group-hover:scale-110", stat.bg, stat.border)}>
                                 <stat.icon className={cn("w-6 h-6", stat.color)} />
                             </div>
                             <span className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</span>
@@ -241,7 +243,7 @@ export default function LabDashboardPage() {
                                                     className="p-3 bg-slate-50 text-slate-400 hover:text-primary hover:bg-white hover:shadow-md hover:border-primary/20 border border-transparent rounded-2xl transition-all group-hover:scale-105"
                                                     title="Record Result"
                                                 >
-                                                    <FlaskConical className="w-5 h-5" />
+                                                    <Microscope className="w-5 h-5" />
                                                 </button>
                                             )}
                                             {req.status === 'completed' && (
