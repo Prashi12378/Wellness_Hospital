@@ -290,10 +290,14 @@ model LabRequest {
   patientId       String
   patientName     String
   testName        String
+  department      String   @default("General")
   priority        String   @default("normal")
   status          String   @default("pending") // pending, processing, completed, cancelled
   result          String?
+  parameters      Json?    // Structured results: [{name, result, unit, refRange}]
   reportUrl       String?
+  technicianName  String?
+  consultantName  String?
   requestedById   String?
   requestedByName String?
   createdAt       DateTime @default(now())

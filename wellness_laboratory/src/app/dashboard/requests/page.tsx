@@ -4,32 +4,22 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     Search,
-    Filter,
     ArrowRight,
     FlaskConical,
     Clock,
-    CheckCircle2,
-    AlertCircle,
     Plus,
     Loader2,
-    Check,
-    X,
     User as UserIcon,
-    FileText,
-    History,
-    Printer,
-    Download
+    Printer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getLabRequests, updateLabRequestStatus } from "@/app/actions/lab";
-import { format } from "date-fns";
 import ManualEntryModal from "@/components/modals/ManualEntryModal";
 import ResultEntryModal from "@/components/modals/ResultEntryModal";
 
-export default function LabDashboardPage() {
+export default function ActiveDiagnosticsPage() {
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("all");
     const [search, setSearch] = useState("");
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -46,7 +36,9 @@ export default function LabDashboardPage() {
         setLoading(true);
         const res = await getLabRequests();
         if (res.success) {
-            setRequests(res.data || []);
+            // Filter only pending and processing
+            const active = (res.data || []).filter((r: any) => r.status === 'pending' || r.status === 'processing');
+            setRequests(active);
         }
         setLoading(false);
     };
@@ -61,26 +53,18 @@ export default function LabDashboardPage() {
     };
 
     const filteredRequests = requests.filter(req => {
-        const matchesFilter = filter === "all" || req.status === filter;
         const matchesSearch = req.patientName.toLowerCase().includes(search.toLowerCase()) ||
             req.testName.toLowerCase().includes(search.toLowerCase()) ||
             req.patient?.uhid?.toLowerCase().includes(search.toLowerCase());
-        return matchesFilter && matchesSearch;
+        return matchesSearch;
     });
-
-    const stats = [
-        { label: "Pending Tests", value: requests.filter(r => r.status === 'pending').length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-        { label: "Processing", value: requests.filter(r => r.status === 'processing').length.toString(), icon: FlaskConical, color: "text-blue-600", bg: "bg-blue-50" },
-        { label: "Completed Today", value: requests.filter(r => r.status === 'completed' && format(new Date(r.updatedAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).length.toString(), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-        { label: "Critical Results", value: requests.filter(r => r.priority === 'urgent' && r.status !== 'completed').length.toString(), icon: AlertCircle, color: "text-red-600", bg: "bg-red-50" },
-    ];
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Clinical Dashboard</h1>
-                    <p className="text-slate-500 font-medium">Monitoring and processing clinical diagnostic requests.</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Active Diagnostics</h1>
+                    <p className="text-slate-500 font-medium">Manage and process ongoing clinical tests.</p>
                 </div>
                 <div className="flex gap-3">
                     <button
@@ -100,21 +84,6 @@ export default function LabDashboardPage() {
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110", stat.bg)}>
-                                <stat.icon className={cn("w-6 h-6", stat.color)} />
-                            </div>
-                            <span className="text-3xl font-black text-slate-900 tracking-tighter">{stat.value}</span>
-                        </div>
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                    </div>
-                ))}
-            </div>
-
             {/* Main Worklist Area */}
             <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden min-h-[500px]">
                 <div className="p-8 border-b border-slate-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -124,25 +93,9 @@ export default function LabDashboardPage() {
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by Patient Name, ID or Test type..."
+                            placeholder="Search active requests..."
                             className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all text-sm font-bold"
                         />
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                            {["all", "pending", "processing", "completed"].map((f) => (
-                                <button
-                                    key={f}
-                                    onClick={() => setFilter(f)}
-                                    className={cn(
-                                        "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                        filter === f ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
-                                    )}
-                                >
-                                    {f}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
@@ -163,14 +116,14 @@ export default function LabDashboardPage() {
                                     <td colSpan={5} className="p-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Accessing Worklist...</p>
+                                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Loading Active Cases...</p>
                                         </div>
                                     </td>
                                 </tr>
                             ) : filteredRequests.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="p-20 text-center text-slate-400 font-bold italic">
-                                        No requests found matching your criteria.
+                                        No active diagnostics found.
                                     </td>
                                 </tr>
                             ) : filteredRequests.map((req) => (
@@ -225,34 +178,22 @@ export default function LabDashboardPage() {
                                                     <option value="pending">Pending</option>
                                                     <option value="processing">Processing</option>
                                                     <option value="completed">Completed</option>
-                                                    <option value="cancelled">Cancelled</option>
                                                 </select>
                                             )}
                                         </div>
                                     </td>
                                     <td className="px-8 py-6 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            {req.status !== 'completed' && (
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedRequest(req);
-                                                        setIsResultEntryOpen(true);
-                                                    }}
-                                                    className="p-3 bg-slate-50 text-slate-400 hover:text-primary hover:bg-white hover:shadow-md hover:border-primary/20 border border-transparent rounded-2xl transition-all group-hover:scale-105"
-                                                    title="Record Result"
-                                                >
-                                                    <FlaskConical className="w-5 h-5" />
-                                                </button>
-                                            )}
-                                            {req.status === 'completed' && (
-                                                <Link
-                                                    href={`/dashboard/report/${req.id}`}
-                                                    className="p-3 bg-slate-50 text-slate-400 hover:text-emerald-500 hover:bg-white hover:shadow-md hover:border-emerald-200 border border-transparent rounded-2xl transition-all group-hover:scale-105"
-                                                    title="View Report"
-                                                >
-                                                    <Printer className="w-5 h-5" />
-                                                </Link>
-                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedRequest(req);
+                                                    setIsResultEntryOpen(true);
+                                                }}
+                                                className="p-3 bg-slate-50 text-slate-400 hover:text-primary hover:bg-white hover:shadow-md hover:border-primary/20 border border-transparent rounded-2xl transition-all group-hover:scale-105"
+                                                title="Record Result"
+                                            >
+                                                <FlaskConical className="w-5 h-5" />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
