@@ -21,8 +21,12 @@ export default function ResultEntryModal({ isOpen, onClose, onSuccess, requestDa
 
     useEffect(() => {
         if (isOpen && requestData) {
-            if (requestData.parameters && Array.isArray(requestData.parameters)) {
-                setParameters(requestData.parameters);
+            const existingParams = Array.isArray(requestData.parameters)
+                ? requestData.parameters
+                : requestData.parameters?.parameters;
+
+            if (existingParams && Array.isArray(existingParams)) {
+                setParameters(existingParams);
             } else {
                 setParameters([{ name: "", result: "", unit: "", refRange: "" }]);
             }

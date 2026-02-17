@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Mail, Phone, Stethoscope, UserRound, Clock, IndianRupee, Award, Briefcase, Upload, X, Pencil, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Trash2, Mail, Phone, Stethoscope, UserRound, Clock, IndianRupee, Award, Briefcase, Upload, X, Pencil } from 'lucide-react';
 
 // Define Timing type
 type TimingSlot = {
@@ -32,7 +32,7 @@ export default function DoctorManagementPage() {
         bio: '',
         avatar_url: ''
     });
-    const [showPassword, setShowPassword] = useState(false);
+
 
     // Timings State
     const [timings, setTimings] = useState<TimingSlot[]>([]);
@@ -525,23 +525,14 @@ export default function DoctorManagementPage() {
                                             <label className="text-sm font-medium text-slate-700">
                                                 {isEditing ? 'Reset Password (Optional)' : 'Password'}
                                             </label>
-                                            <div className="relative">
-                                                <input
-                                                    type={showPassword ? "text" : "password"}
-                                                    required={!isEditing}
-                                                    className={`w-full h-10 pl-3 pr-10 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all`}
-                                                    placeholder={isEditing ? "Leave blank to keep same" : "••••••••"}
-                                                    value={formData.password}
-                                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                                >
-                                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                </button>
-                                            </div>
+                                            <input
+                                                type="password"
+                                                required={!isEditing}
+                                                className={`w-full h-10 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all`}
+                                                placeholder={isEditing ? "Leave blank to keep same" : "••••••••"}
+                                                value={formData.password}
+                                                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium text-slate-700">Phone</label>

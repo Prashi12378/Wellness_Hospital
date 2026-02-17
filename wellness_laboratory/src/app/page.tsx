@@ -43,11 +43,11 @@ export default function LoginPage() {
                 <div className="bg-primary p-8 text-center relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary to-primary/80"></div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4 shadow-lg ring-1 ring-white/30">
-                            <FlaskConical className="w-10 h-10 text-white" />
+                        <div className="w-20 h-20 bg-white p-2 rounded-xl flex items-center justify-center mb-4 shadow-lg ring-1 ring-white/30">
+                            <Image src="/hospital-logo.png" alt="Wellness Hospital Logo" width={64} height={64} className="object-contain" />
                         </div>
                         <h1 className="text-2xl font-bold text-white mb-1">Laboratory Portal</h1>
-                        <p className="text-blue-100 text-sm tracking-wide">Wellness Hospital Group</p>
+                        <p className="text-blue-100 text-sm tracking-wide">Wellness Hospital</p>
                     </div>
                 </div>
 

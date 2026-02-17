@@ -74,7 +74,7 @@ export async function updateLabRequestStatus(requestId: string, status: string, 
                 status,
                 result: result ?? undefined,
                 reportUrl: reportUrl ?? undefined,
-                parameters: (parameters || null) as any,
+                parameters: (parameters?.parameters || parameters || null) as any,
                 technicianName: (parameters as any)?.technicianName || undefined,
                 consultantName: (parameters as any)?.consultantName || undefined,
                 updatedAt: new Date()

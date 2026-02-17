@@ -199,37 +199,45 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                     </div>
 
                     <div className="space-y-4">
-                        {request.parameters && Array.isArray(request.parameters) && request.parameters.length > 0 ? (
-                            request.parameters.map((param: any, idx: number) => {
-                                // Split parameter name if it contains sub-info (e.g. "Method: ...")
-                                const parts = param.name.split('\n');
-                                const mainName = parts[0];
-                                const subInfo = parts.slice(1);
+                        {(() => {
+                            const paramsArr = Array.isArray(request.parameters)
+                                ? request.parameters
+                                : request.parameters?.parameters;
 
-                                return (
-                                    <div key={idx} className="grid grid-cols-[2fr_100px_100px_150px] gap-16 items-start py-2">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-slate-700 leading-tight">{mainName}</span>
-                                            {subInfo.length > 0 && (
-                                                <div className="flex flex-col pl-3 mt-0.5">
-                                                    {subInfo.map((info: string, i: number) => (
-                                                        <span key={i} className="text-[9px] text-slate-500 font-medium leading-tight">{info.trim()}</span>
-                                                    ))}
-                                                </div>
-                                            )}
+                            if (paramsArr && Array.isArray(paramsArr) && paramsArr.length > 0) {
+                                return paramsArr.map((param: any, idx: number) => {
+                                    // Split parameter name if it contains sub-info (e.g. "Method: ...")
+                                    const parts = param.name.split('\n');
+                                    const mainName = parts[0];
+                                    const subInfo = parts.slice(1);
+
+                                    return (
+                                        <div key={idx} className="grid grid-cols-[2fr_100px_100px_150px] gap-16 items-start py-2">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold text-slate-700 leading-tight">{mainName}</span>
+                                                {subInfo.length > 0 && (
+                                                    <div className="flex flex-col pl-3 mt-0.5">
+                                                        {subInfo.map((info: string, i: number) => (
+                                                            <span key={i} className="text-[9px] text-slate-500 font-medium leading-tight">{info.trim()}</span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-[11px] font-black text-slate-900 text-center">{param.result}</div>
+                                            <div className="text-[10px] font-bold text-slate-500 text-center">{param.unit}</div>
+                                            <div className="text-[10px] font-bold text-slate-900 text-right">{param.refRange}</div>
                                         </div>
-                                        <div className="text-[11px] font-black text-slate-900 text-center">{param.result}</div>
-                                        <div className="text-[10px] font-bold text-slate-500 text-center">{param.unit}</div>
-                                        <div className="text-[10px] font-bold text-slate-900 text-right">{param.refRange}</div>
-                                    </div>
-                                );
-                            })
-                        ) : (
-                            /* Fallback for legacy simple string results */
-                            <div className="text-[10px] font-medium text-slate-600 leading-normal italic border-l-2 border-blue-100 pl-6 h-full bg-slate-50/20 p-4 rounded-r-xl">
-                                {request.result || "Clinical analysis within normal physiological limits. No significant abnormalities detected."}
-                            </div>
-                        )}
+                                    );
+                                });
+                            }
+
+                            return (
+                                /* Fallback for legacy simple string results */
+                                <div className="text-[10px] font-medium text-slate-600 leading-normal italic border-l-2 border-blue-100 pl-6 h-full bg-slate-50/20 p-4 rounded-r-xl">
+                                    {request.result || "Clinical analysis within normal physiological limits. No significant abnormalities detected."}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
 
