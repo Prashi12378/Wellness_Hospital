@@ -32,7 +32,8 @@ import {
     addSurgery,
     addClinicalNote,
     dischargePatient,
-    generateAIDischargeSummary
+    generateAIDischargeSummary,
+    updateAdmissionDates
 } from '@/app/actions/ipd';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ export default function AdmissionDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [isAILoading, setIsAILoading] = useState(false);
+    const [editingDate, setEditingDate] = useState<'admission' | 'discharge' | null>(null);
 
     // Modals
     const [modalType, setModalType] = useState<string | null>(null);
@@ -121,8 +123,66 @@ export default function AdmissionDetailPage() {
                             </span>
                             <span className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4 text-primary" />
-                                Adm: {format(new Date(admission.admissionDate), 'MMM dd, yyyy')}
+                                {editingDate === 'admission' ? (
+                                    <input
+                                        type="date"
+                                        autoFocus
+                                        defaultValue={format(new Date(admission.admissionDate), 'yyyy-MM-dd')}
+                                        onBlur={async (e) => {
+                                            if (e.target.value) {
+                                                await updateAdmissionDates(id, { admissionDate: e.target.value });
+                                                fetchDetails();
+                                            }
+                                            setEditingDate(null);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                            if (e.key === 'Escape') setEditingDate(null);
+                                        }}
+                                        className="px-2 py-1 bg-primary/5 border border-primary/20 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                                    />
+                                ) : (
+                                    <button
+                                        onClick={() => setEditingDate('admission')}
+                                        className="hover:text-primary hover:underline transition-colors cursor-pointer"
+                                        title="Click to edit admission date"
+                                    >
+                                        Adm: {format(new Date(admission.admissionDate), 'MMM dd, yyyy')}
+                                    </button>
+                                )}
                             </span>
+                            {admission.dischargeDate && (
+                                <span className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-red-400" />
+                                    {editingDate === 'discharge' ? (
+                                        <input
+                                            type="date"
+                                            autoFocus
+                                            defaultValue={format(new Date(admission.dischargeDate), 'yyyy-MM-dd')}
+                                            onBlur={async (e) => {
+                                                if (e.target.value) {
+                                                    await updateAdmissionDates(id, { dischargeDate: e.target.value });
+                                                    fetchDetails();
+                                                }
+                                                setEditingDate(null);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                                if (e.key === 'Escape') setEditingDate(null);
+                                            }}
+                                            className="px-2 py-1 bg-red-50 border border-red-200 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-red-200"
+                                        />
+                                    ) : (
+                                        <button
+                                            onClick={() => setEditingDate('discharge')}
+                                            className="hover:text-red-500 hover:underline transition-colors cursor-pointer"
+                                            title="Click to edit discharge date"
+                                        >
+                                            Disc: {format(new Date(admission.dischargeDate), 'MMM dd, yyyy')}
+                                        </button>
+                                    )}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>

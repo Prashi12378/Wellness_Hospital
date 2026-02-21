@@ -14,7 +14,7 @@ import {
     ClipboardList,
     Stethoscope
 } from 'lucide-react';
-import { getAdmittedPatients, admitPatient } from '@/app/actions/ipd';
+import { getAdmittedPatients, admitPatient, updateAdmissionDates } from '@/app/actions/ipd';
 import { getDoctors, searchPatients } from '@/app/actions/appointments';
 import { format } from 'date-fns';
 import { useDebounce } from 'use-debounce';
@@ -40,9 +40,11 @@ export default function IPDDashboard() {
     const [formData, setFormData] = useState({
         doctorId: '',
         bedNumber: '',
-        ward: ''
+        ward: '',
+        admissionDate: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingDate, setEditingDate] = useState<{ id: string, type: 'admission' | 'discharge' } | null>(null);
 
     useEffect(() => {
         fetchAdmissions();
@@ -87,14 +89,15 @@ export default function IPDDashboard() {
             patientId: selectedPatient.id,
             doctorId: formData.doctorId || undefined,
             bedNumber: formData.bedNumber,
-            ward: formData.ward
+            ward: formData.ward,
+            admissionDate: formData.admissionDate || undefined
         });
 
         if (res.success) {
             setShowAdmitModal(false);
             setSelectedPatient(null);
             setSearchTerm('');
-            setFormData({ doctorId: '', bedNumber: '', ward: '' });
+            setFormData({ doctorId: '', bedNumber: '', ward: '', admissionDate: '' });
             fetchAdmissions();
         }
         setIsSubmitting(false);
@@ -210,7 +213,7 @@ export default function IPDDashboard() {
                                     <th className="px-6 py-4">Patient Profile</th>
                                     <th className="px-6 py-4">Status & Location</th>
                                     <th className="px-6 py-4">Primary Doctor</th>
-                                    <th className="px-6 py-4">{view === 'active' ? 'Admission Date' : 'Discharge Date'}</th>
+                                    <th className="px-6 py-4">Dates</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -276,12 +279,72 @@ export default function IPDDashboard() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-6">
-                                                <p className="text-sm font-black text-slate-800">
-                                                    {format(new Date(adm.status === 'admitted' ? adm.admissionDate : adm.dischargeDate), 'MMM dd, yyyy')}
-                                                </p>
-                                                <p className="text-xs font-bold text-slate-400 tracking-wider">
-                                                    {adm.status === 'admitted' ? 'Entry Date' : 'Exit Date'}
-                                                </p>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        {editingDate?.id === adm.id && editingDate?.type === 'admission' ? (
+                                                            <input
+                                                                type="date"
+                                                                autoFocus
+                                                                defaultValue={format(new Date(adm.admissionDate), 'yyyy-MM-dd')}
+                                                                onBlur={async (e) => {
+                                                                    if (e.target.value) {
+                                                                        await updateAdmissionDates(adm.id, { admissionDate: e.target.value });
+                                                                        fetchAdmissions();
+                                                                    }
+                                                                    setEditingDate(null);
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                                                    if (e.key === 'Escape') setEditingDate(null);
+                                                                }}
+                                                                className="px-2 py-1 bg-primary/5 border border-primary/20 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                                                            />
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => setEditingDate({ id: adm.id, type: 'admission' })}
+                                                                className="text-sm font-black text-slate-800 hover:text-primary hover:underline transition-colors"
+                                                                title="Click to edit admission date"
+                                                            >
+                                                                {format(new Date(adm.admissionDate), 'MMM dd, yyyy')}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[10px] font-bold text-slate-400 tracking-wider">Check-In</p>
+                                                    {adm.dischargeDate && (
+                                                        <>
+                                                            <div className="flex items-center gap-1.5 mt-1">
+                                                                {editingDate?.id === adm.id && editingDate?.type === 'discharge' ? (
+                                                                    <input
+                                                                        type="date"
+                                                                        autoFocus
+                                                                        defaultValue={format(new Date(adm.dischargeDate), 'yyyy-MM-dd')}
+                                                                        onBlur={async (e) => {
+                                                                            if (e.target.value) {
+                                                                                await updateAdmissionDates(adm.id, { dischargeDate: e.target.value });
+                                                                                fetchAdmissions();
+                                                                            }
+                                                                            setEditingDate(null);
+                                                                        }}
+                                                                        onKeyDown={(e) => {
+                                                                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                                                                            if (e.key === 'Escape') setEditingDate(null);
+                                                                        }}
+                                                                        className="px-2 py-1 bg-red-50 border border-red-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-red-200"
+                                                                    />
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => setEditingDate({ id: adm.id, type: 'discharge' })}
+                                                                        className="text-sm font-black text-red-600 hover:text-red-500 hover:underline transition-colors"
+                                                                        title="Click to edit discharge date"
+                                                                    >
+                                                                        {format(new Date(adm.dischargeDate), 'MMM dd, yyyy')}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[10px] font-bold text-red-400 tracking-wider">Check-Out</p>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-6 text-right">
                                                 <Link
@@ -408,6 +471,16 @@ export default function IPDDashboard() {
                                     value={formData.bedNumber}
                                     onChange={(e) => setFormData({ ...formData, bedNumber: e.target.value })}
                                     placeholder="e.g. B-102"
+                                    className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-bold"
+                                />
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">5. Admission Date <span className="text-slate-300 normal-case">(defaults to today)</span></label>
+                                <input
+                                    type="date"
+                                    value={formData.admissionDate}
+                                    onChange={(e) => setFormData({ ...formData, admissionDate: e.target.value })}
                                     className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-bold"
                                 />
                             </div>

@@ -90,7 +90,7 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                             <div className="flex items-center gap-3">
                                 <h2 className="text-lg font-bold text-blue-600 uppercase tracking-[0.15em] leading-none">Laboratory Report</h2>
                             </div>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mt-3 italic">Professional Diagnostic Services</p>
+
                         </div>
                     </div>
 
@@ -182,50 +182,58 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
 
                 {/* Results Table Header */}
                 <div className="border-t border-slate-900 pt-2 mb-4">
-                    <div className="grid grid-cols-[2fr_100px_100px_150px] gap-16 px-4">
+                    <div className="grid grid-cols-[2fr_100px_150px_100px] gap-16 px-4">
                         <span className="text-[10px] font-black text-slate-900">Test Name</span>
                         <span className="text-[10px] font-black text-slate-900 text-center">Result</span>
-                        <span className="text-[10px] font-black text-slate-900 text-center">Unit</span>
-                        <span className="text-[10px] font-black text-slate-900 text-right">Bio. Ref. Range</span>
+                        <span className="text-[10px] font-black text-slate-900 text-center">Bio. Ref. Range</span>
+                        <span className="text-[10px] font-black text-slate-900 text-right">Unit</span>
                     </div>
                 </div>
 
                 {/* Results Content */}
                 <div className="flex-1 px-4">
                     {/* Primary Test Heading and Sample Type */}
-                    <div className="mb-6">
+                    <div className="mb-4">
                         <h4 className="text-[11px] font-black text-slate-900 uppercase mb-0.5">{request.testName}</h4>
                         <p className="text-[10px] font-bold text-slate-600">Sample Type : Serum</p>
                     </div>
 
-                    <div className="space-y-4">
+                    <div>
                         {(() => {
                             const paramsArr = Array.isArray(request.parameters)
                                 ? request.parameters
                                 : request.parameters?.parameters;
 
                             if (paramsArr && Array.isArray(paramsArr) && paramsArr.length > 0) {
+                                let lastGroup: string | null = null;
                                 return paramsArr.map((param: any, idx: number) => {
-                                    // Split parameter name if it contains sub-info (e.g. "Method: ...")
                                     const parts = param.name.split('\n');
                                     const mainName = parts[0];
-                                    const subInfo = parts.slice(1);
+                                    const hasGroup = param.group && param.group !== lastGroup;
+                                    if (param.group) lastGroup = param.group;
+                                    const isGrouped = !!param.group;
 
                                     return (
-                                        <div key={idx} className="grid grid-cols-[2fr_100px_100px_150px] gap-16 items-start py-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-bold text-slate-700 leading-tight">{mainName}</span>
-                                                {subInfo.length > 0 && (
-                                                    <div className="flex flex-col pl-3 mt-0.5">
-                                                        {subInfo.map((info: string, i: number) => (
-                                                            <span key={i} className="text-[9px] text-slate-500 font-medium leading-tight">{info.trim()}</span>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                        <div key={idx}>
+                                            {/* Group header row */}
+                                            {hasGroup && (
+                                                <div className="grid grid-cols-[2fr_100px_150px_100px] gap-16 items-center pt-3 pb-1">
+                                                    <span className="text-[10px] font-black text-slate-800 uppercase">{param.group}</span>
+                                                    <span></span>
+                                                    <span></span>
+                                                    <span></span>
+                                                </div>
+                                            )}
+                                            {/* Parameter row (indented if grouped) */}
+                                            <div className="grid grid-cols-[2fr_100px_150px_100px] gap-16 items-start py-1">
+                                                <span className={cn(
+                                                    "text-[10px] font-bold text-slate-700 leading-tight",
+                                                    isGrouped && "pl-6"
+                                                )}>{mainName}</span>
+                                                <div className="text-[11px] font-black text-slate-900 text-center">{param.result}</div>
+                                                <div className="text-[10px] font-bold text-slate-900 text-center">{param.refRange}</div>
+                                                <div className="text-[10px] font-bold text-slate-500 text-right">{param.unit}</div>
                                             </div>
-                                            <div className="text-[11px] font-black text-slate-900 text-center">{param.result}</div>
-                                            <div className="text-[10px] font-bold text-slate-500 text-center">{param.unit}</div>
-                                            <div className="text-[10px] font-bold text-slate-900 text-right">{param.refRange}</div>
                                         </div>
                                     );
                                 });

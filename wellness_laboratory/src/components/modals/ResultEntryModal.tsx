@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Loader2, User, CheckCircle2, Upload, FlaskConical, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updateLabRequestStatus } from "@/app/actions/lab";
+import { searchLabTests, SearchResult, LAB_TEST_PROFILES } from "@/lib/labTests";
 
 interface ResultEntryModalProps {
     isOpen: boolean;
@@ -19,16 +20,38 @@ export default function ResultEntryModal({ isOpen, onClose, onSuccess, requestDa
     const [consultantName, setConsultantName] = useState("Dr. Somashekar K.");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Autocomplete state
+    const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
+    const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
+    const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
+    const dropdownRefs = useRef<(HTMLDivElement | null)[]>([]);
+
     useEffect(() => {
         if (isOpen && requestData) {
             const existingParams = Array.isArray(requestData.parameters)
                 ? requestData.parameters
                 : requestData.parameters?.parameters;
 
-            if (existingParams && Array.isArray(existingParams)) {
+            if (existingParams && Array.isArray(existingParams) && existingParams.length > 0 && existingParams[0]?.name) {
                 setParameters(existingParams);
             } else {
-                setParameters([{ name: "", result: "", unit: "", refRange: "" }]);
+                // Auto-populate from matching profile based on diagnostic test name
+                const testName = (requestData.testName || "").toLowerCase().trim();
+                const matchedProfile = LAB_TEST_PROFILES.find(profile =>
+                    profile.name.toLowerCase().includes(testName) ||
+                    profile.keywords.some(kw => kw === testName || testName.includes(kw) || kw.includes(testName))
+                );
+                if (matchedProfile) {
+                    setParameters(matchedProfile.parameters.map(p => ({
+                        name: p.name,
+                        result: "",
+                        unit: p.unit,
+                        refRange: p.refRange,
+                        ...(p.group ? { group: p.group } : {}),
+                    })));
+                } else {
+                    setParameters([{ name: "", result: "", unit: "", refRange: "" }]);
+                }
             }
             setReportUrl(requestData.reportUrl || "");
             setTechnicianName(requestData.technicianName || "NAVEENA");
@@ -49,6 +72,94 @@ export default function ResultEntryModal({ isOpen, onClose, onSuccess, requestDa
         newParameters[index] = { ...newParameters[index], [field]: value };
         setParameters(newParameters);
     };
+
+    // Autocomplete handlers
+    const handleNameChange = (index: number, value: string) => {
+        updateParameter(index, "name", value);
+        if (value.trim().length > 0) {
+            const results = searchLabTests(value);
+            setSuggestions(results);
+            setActiveDropdownIndex(index);
+            setHighlightedSuggestion(-1);
+        } else {
+            setSuggestions([]);
+            setActiveDropdownIndex(null);
+        }
+    };
+
+    const selectSuggestion = (index: number, result: SearchResult) => {
+        if (result.type === "profile" && result.profile) {
+            // Profile selected — replace current row with all profile parameters
+            const profileParams = result.profile.parameters.map(p => ({
+                name: p.name,
+                result: "",
+                unit: p.unit,
+                refRange: p.refRange,
+                ...(p.group ? { group: p.group } : {}),
+            }));
+            const newParameters = [...parameters];
+            // Replace the current row, insert the rest after it
+            newParameters.splice(index, 1, ...profileParams);
+            setParameters(newParameters);
+            setSuggestions([]);
+            setActiveDropdownIndex(null);
+            setHighlightedSuggestion(-1);
+            // Focus first result input of the profile
+            setTimeout(() => {
+                const resultInput = document.getElementById(`result-input-${index}`);
+                resultInput?.focus();
+            }, 50);
+        } else if (result.type === "test" && result.test) {
+            // Single test selected
+            const newParameters = [...parameters];
+            newParameters[index] = {
+                ...newParameters[index],
+                name: result.test.name,
+                unit: result.test.unit,
+                refRange: result.test.refRange,
+            };
+            setParameters(newParameters);
+            setSuggestions([]);
+            setActiveDropdownIndex(null);
+            setHighlightedSuggestion(-1);
+            setTimeout(() => {
+                const resultInput = document.getElementById(`result-input-${index}`);
+                resultInput?.focus();
+            }, 50);
+        }
+    };
+
+    const handleNameKeyDown = (e: React.KeyboardEvent, index: number) => {
+        if (activeDropdownIndex !== index || suggestions.length === 0) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlightedSuggestion(prev => Math.min(prev + 1, suggestions.length - 1));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlightedSuggestion(prev => Math.max(prev - 1, 0));
+        } else if (e.key === "Enter" && highlightedSuggestion >= 0) {
+            e.preventDefault();
+            selectSuggestion(index, suggestions[highlightedSuggestion]);
+        } else if (e.key === "Escape") {
+            setSuggestions([]);
+            setActiveDropdownIndex(null);
+        }
+    };
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (activeDropdownIndex !== null) {
+                const ref = dropdownRefs.current[activeDropdownIndex];
+                if (ref && !ref.contains(e.target as Node)) {
+                    setActiveDropdownIndex(null);
+                    setSuggestions([]);
+                }
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [activeDropdownIndex]);
 
     const handleSubmit = async () => {
         if (!requestData) return;
@@ -161,34 +272,72 @@ export default function ResultEntryModal({ isOpen, onClose, onSuccess, requestDa
 
                             <div className="space-y-4">
                                 {parameters.map((param, index) => (
-                                    <div key={index} className="grid grid-cols-[1fr_120px_100px_1fr_40px] gap-4 items-end bg-slate-50/50 p-6 rounded-[28px] border border-slate-100/50 animate-in slide-in-from-right-4 duration-300">
-                                        <div className="space-y-2">
+                                    <div key={index} className="grid grid-cols-[1fr_120px_1fr_100px_40px] gap-4 items-end bg-slate-50/50 p-6 rounded-[28px] border border-slate-100/50 animate-in slide-in-from-right-4 duration-300">
+                                        <div className="space-y-2 relative" ref={(el) => { dropdownRefs.current[index] = el; }}>
                                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Parameter Name</label>
                                             <input
                                                 type="text"
                                                 value={param.name}
-                                                onChange={(e) => updateParameter(index, "name", e.target.value)}
+                                                onChange={(e) => handleNameChange(index, e.target.value)}
+                                                onKeyDown={(e) => handleNameKeyDown(e, index)}
+                                                onFocus={() => {
+                                                    if (param.name.trim().length > 0) {
+                                                        const results = searchLabTests(param.name);
+                                                        setSuggestions(results);
+                                                        setActiveDropdownIndex(index);
+                                                    }
+                                                }}
                                                 placeholder="e.g. Haemoglobin"
                                                 className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm"
+                                                autoComplete="off"
                                             />
+                                            {/* Autocomplete Dropdown */}
+                                            {activeDropdownIndex === index && suggestions.length > 0 && (
+                                                <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 max-h-72 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    {suggestions.map((item, sIdx) => (
+                                                        <button
+                                                            key={`${item.type}-${item.name}`}
+                                                            type="button"
+                                                            onClick={() => selectSuggestion(index, item)}
+                                                            className={cn(
+                                                                "w-full text-left px-4 py-3 flex items-center justify-between gap-2 transition-all text-sm",
+                                                                "hover:bg-blue-50 cursor-pointer",
+                                                                sIdx === highlightedSuggestion && "bg-blue-50",
+                                                                sIdx === 0 && "rounded-t-2xl",
+                                                                sIdx === suggestions.length - 1 && "rounded-b-2xl",
+                                                                item.type === "profile" && "border-b border-blue-100"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                {item.type === "profile" && (
+                                                                    <span className="text-[9px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-500 to-indigo-500 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                                        PANEL
+                                                                    </span>
+                                                                )}
+                                                                <span className={cn("font-bold", item.type === "profile" ? "text-blue-700" : "text-slate-800")}>{item.name}</span>
+                                                                {item.type === "profile" && item.profile && (
+                                                                    <span className="text-[10px] text-blue-400 font-semibold">({item.profile.parameters.length} parameters)</span>
+                                                                )}
+                                                                {item.type === "test" && item.test && (
+                                                                    <span className="text-xs text-slate-400">{item.test.unit !== "-" ? item.test.unit : ""}</span>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                                {item.category}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Result</label>
                                             <input
+                                                id={`result-input-${index}`}
                                                 type="text"
                                                 value={param.result}
                                                 onChange={(e) => updateParameter(index, "result", e.target.value)}
                                                 placeholder="Value"
-                                                className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm text-center"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Unit</label>
-                                            <input
-                                                type="text"
-                                                value={param.unit}
-                                                onChange={(e) => updateParameter(index, "unit", e.target.value)}
-                                                placeholder="g/dL"
                                                 className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm text-center"
                                             />
                                         </div>
@@ -200,6 +349,16 @@ export default function ResultEntryModal({ isOpen, onClose, onSuccess, requestDa
                                                 onChange={(e) => updateParameter(index, "refRange", e.target.value)}
                                                 placeholder="13.0 - 17.0"
                                                 className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Unit</label>
+                                            <input
+                                                type="text"
+                                                value={param.unit}
+                                                onChange={(e) => updateParameter(index, "unit", e.target.value)}
+                                                placeholder="g/dL"
+                                                className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm text-center"
                                             />
                                         </div>
                                         {parameters.length > 1 && (

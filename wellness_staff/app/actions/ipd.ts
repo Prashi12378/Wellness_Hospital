@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { model } from "@/lib/gemini";
 import { serializeData, formatMedicalDate } from "@/lib/serialization";
+import { randomUUID } from "crypto";
 
 async function safeRevalidatePath(path: string) {
     try {
@@ -37,13 +38,25 @@ export async function getAdmissionDetails(id: string) {
             include: {
                 patient: true,
                 primaryDoctor: true,
-                charges: { orderBy: { date: 'desc' } },
-                labRecords: { orderBy: { recordedAt: 'desc' } },
-                surgeries: { orderBy: { surgeryDate: 'desc' } },
-                clinicalNotes: { orderBy: { createdAt: 'desc' } }
+                HospitalCharge: { orderBy: { date: 'desc' } },
+                LabRecord: { orderBy: { recordedAt: 'desc' } },
+                Surgery: { orderBy: { surgeryDate: 'desc' } },
+                ClinicalNote: { orderBy: { createdAt: 'desc' } }
             }
         });
-        return { success: true, admission: serializeData(admission) };
+
+        if (!admission) return { success: false, error: "Admission not found" };
+
+        // Remap PascalCase relation names to camelCase for the frontend
+        const mapped = {
+            ...admission,
+            charges: admission.HospitalCharge,
+            labRecords: admission.LabRecord,
+            surgeries: admission.Surgery,
+            clinicalNotes: admission.ClinicalNote
+        };
+
+        return { success: true, admission: serializeData(mapped) };
     } catch (error) {
         console.error("Failed to fetch admission details:", error);
         return { success: false, error: "Failed to fetch admission details" };
@@ -55,17 +68,21 @@ export async function admitPatient(formData: {
     doctorId?: string;
     bedNumber?: string;
     ward?: string;
+    admissionDate?: string;
 }) {
     try {
-        const { patientId, doctorId, bedNumber, ward } = formData;
+        const { patientId, doctorId, bedNumber, ward, admissionDate } = formData;
 
         const admission = await prisma.admission.create({
             data: {
+                id: randomUUID(),
                 patientId,
                 doctorId,
                 bedNumber,
                 ward,
-                status: 'admitted'
+                status: 'admitted',
+                admissionDate: admissionDate ? new Date(admissionDate) : new Date(),
+                updatedAt: new Date()
             }
         });
 
@@ -74,6 +91,29 @@ export async function admitPatient(formData: {
     } catch (error) {
         console.error("Failed to admit patient:", error);
         return { success: false, error: "Failed to admit patient" };
+    }
+}
+
+export async function updateAdmissionDates(admissionId: string, data: {
+    admissionDate?: string;
+    dischargeDate?: string;
+}) {
+    try {
+        const updateData: any = { updatedAt: new Date() };
+        if (data.admissionDate) updateData.admissionDate = new Date(data.admissionDate);
+        if (data.dischargeDate) updateData.dischargeDate = new Date(data.dischargeDate);
+
+        const admission = await prisma.admission.update({
+            where: { id: admissionId },
+            data: updateData
+        });
+
+        await safeRevalidatePath('/dashboard/ipd');
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        return { success: true, admission: serializeData(admission) };
+    } catch (error) {
+        console.error("Failed to update admission dates:", error);
+        return { success: false, error: "Failed to update dates" };
     }
 }
 
@@ -86,10 +126,12 @@ export async function addHospitalCharge(formData: {
     try {
         const charge = await prisma.hospitalCharge.create({
             data: {
+                id: randomUUID(),
                 admissionId: formData.admissionId,
                 description: formData.description,
                 amount: formData.amount,
-                type: formData.type
+                type: formData.type,
+                updatedAt: new Date()
             }
         });
 
@@ -110,6 +152,7 @@ export async function addLabRecord(formData: {
     try {
         const record = await prisma.labRecord.create({
             data: {
+                id: randomUUID(),
                 admissionId: formData.admissionId,
                 testName: formData.testName,
                 result: formData.result,
@@ -135,6 +178,7 @@ export async function addSurgery(formData: {
     try {
         const surgery = await prisma.surgery.create({
             data: {
+                id: randomUUID(),
                 admissionId: formData.admissionId,
                 surgeryName: formData.surgeryName,
                 surgeonName: formData.surgeonName,
@@ -161,6 +205,7 @@ export async function addClinicalNote(formData: {
     try {
         const clinicalNote = await prisma.clinicalNote.create({
             data: {
+                id: randomUUID(),
                 admissionId: formData.admissionId,
                 doctorName: formData.doctorName,
                 note: formData.note,
@@ -194,6 +239,7 @@ export async function dischargePatient(admissionId: string, data?: {
             data: {
                 status: 'discharged',
                 dischargeDate: new Date(),
+                updatedAt: new Date(),
                 ...data
             }
         });
@@ -214,9 +260,9 @@ export async function generateAIDischargeSummary(admissionId: string) {
             include: {
                 patient: true,
                 primaryDoctor: true,
-                clinicalNotes: true,
-                labRecords: true,
-                surgeries: true
+                ClinicalNote: true,
+                LabRecord: true,
+                Surgery: true
             }
         });
 
@@ -227,13 +273,13 @@ export async function generateAIDischargeSummary(admissionId: string) {
             Age/Gender: ${admission.patient.dob ? (new Date().getFullYear() - new Date(admission.patient.dob).getFullYear()) : '--'}/${admission.patient.gender}
             
             Clinical Notes:
-            ${admission.clinicalNotes.map(n => `- [${n.type}] ${n.note}`).join('\n')}
+            ${admission.ClinicalNote.map((n: any) => `- [${n.type}] ${n.note}`).join('\n')}
             
             Lab Records:
-            ${admission.labRecords.map(l => `- ${l.testName}: ${l.result || 'Analyzed'}`).join('\n')}
+            ${admission.LabRecord.map((l: any) => `- ${l.testName}: ${l.result || 'Analyzed'}`).join('\n')}
             
             Surgeries:
-            ${admission.surgeries.map(s => `- ${s.surgeryName} by ${s.surgeonName} on ${formatMedicalDate(s.surgeryDate, 'dd/MM/yyyy')}`).join('\n')}
+            ${admission.Surgery.map((s: any) => `- ${s.surgeryName} by ${s.surgeonName} on ${formatMedicalDate(s.surgeryDate, 'dd/MM/yyyy')}`).join('\n')}
         `;
 
         const prompt = `
