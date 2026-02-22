@@ -1,19 +1,44 @@
+'use client';
+
 import { getAdmissionDetails } from '@/app/actions/ipd';
 import { format } from 'date-fns';
-import { Printer, ArrowLeft, Hospital, Activity } from 'lucide-react';
+import { Printer, ArrowLeft, Hospital, Activity, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { useState, useEffect, use } from 'react';
 
-export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    const result = await getAdmissionDetails(id);
+export default function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
+    const [loading, setLoading] = useState(true);
+    const [admission, setAdmission] = useState<any>(null);
+    const [billDate, setBillDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-    if (!result.success || !result.admission) {
+    useEffect(() => {
+        const fetchData = async () => {
+            const result = await getAdmissionDetails(id);
+            if (result.success && result.admission) {
+                setAdmission(result.admission);
+            }
+            setLoading(false);
+        };
+        fetchData();
+    }, [id]);
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <p className="text-slate-500 font-bold animate-pulse">Loading Invoice...</p>
+        </div>;
+    }
+
+    if (!admission) {
         notFound();
     }
 
-    const { admission } = result;
     const totalBill = admission.charges?.reduce((acc: number, c: any) => acc + Number(c.amount), 0) || 0;
+
+    const handlePrint = () => {
+        window.print();
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0 print:m-0">
@@ -23,19 +48,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                     <ArrowLeft className="w-5 h-5" /> Back to Dashboard
                 </Link>
                 <button
-                    id="print-btn"
+                    onClick={handlePrint}
                     className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all"
                 >
                     <Printer className="w-5 h-5" /> Print Invoice
                 </button>
             </div>
-
-            <script dangerouslySetInnerHTML={{
-                __html: `
-                document.getElementById('print-btn').onclick = function() {
-                    window.print();
-                }
-            ` }} />
 
             {/* Invoice Document */}
             <div className="max-w-[800px] mx-auto bg-white shadow-2xl rounded-[40px] overflow-hidden border border-slate-100 print:shadow-none print:border-none print:rounded-none">
@@ -69,7 +87,22 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                         </div>
                         <div className="text-right space-y-1">
                             <p className="text-[11px] font-black text-slate-900 uppercase">Bill No: <span className="font-sans text-primary">IPD-{admission.id.slice(-6).toUpperCase()}</span></p>
-                            <p className="text-[11px] font-black text-slate-900 uppercase">Date: {format(new Date(), 'dd-MM-yy')}</p>
+
+                            <div className="flex items-center justify-end gap-2 group">
+                                <p className="text-[11px] font-black text-slate-900 uppercase">Date:</p>
+                                <div className="relative inline-block">
+                                    <input
+                                        type="date"
+                                        value={billDate}
+                                        onChange={(e) => setBillDate(e.target.value)}
+                                        className="text-[11px] font-black text-slate-900 uppercase bg-transparent border-b border-dashed border-slate-300 focus:border-primary focus:outline-none cursor-pointer print:hidden p-0 m-0"
+                                    />
+                                    <span className="hidden print:inline text-[11px] font-black text-slate-900 uppercase">
+                                        {format(new Date(billDate), 'dd-MM-yy')}
+                                    </span>
+                                </div>
+                            </div>
+
                             <p className="text-[11px] font-black text-slate-900 uppercase">IP No: {admission.id.slice(0, 8).toUpperCase()}</p>
                         </div>
                     </div>
@@ -85,7 +118,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                         </div>
                         <div className="text-right">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Admission Date</p>
-                            <p className="text-sm font-bold text-slate-900">{format(new Date(admission.admissionDate), 'dd MMM yyyy')}</p>
+                            <p className="text-sm font-bold text-slate-900">{admission.admissionDate ? format(new Date(admission.admissionDate), 'dd MMM yyyy') : '---'}</p>
                         </div>
                     </div>
 
