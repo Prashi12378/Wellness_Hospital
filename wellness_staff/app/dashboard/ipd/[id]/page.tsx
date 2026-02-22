@@ -34,11 +34,16 @@ import {
     dischargePatient,
     generateAIDischargeSummary,
     updateAdmissionDates,
-    updateDischargeSummary
+    updateDischargeSummary,
+    updateHospitalCharge,
+    updateLabRecord,
+    updateSurgery,
+    updateClinicalNote
 } from '@/app/actions/ipd';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Pencil } from 'lucide-react';
 
 type TabType = 'overview' | 'billing' | 'clinical' | 'files';
 
@@ -54,6 +59,7 @@ export default function AdmissionDetailPage() {
 
     // Modals
     const [modalType, setModalType] = useState<string | null>(null);
+    const [editingItem, setEditingItem] = useState<any>(null);
 
     useEffect(() => {
         fetchDetails();
@@ -78,6 +84,7 @@ export default function AdmissionDetailPage() {
         const res = await action();
         if (res.success) {
             setModalType(null);
+            setEditingItem(null);
             fetchDetails();
         }
         setIsActionLoading(false);
@@ -346,7 +353,10 @@ export default function AdmissionDetailPage() {
                                     Print Bill
                                 </Link>
                                 <button
-                                    onClick={() => setModalType('charge')}
+                                    onClick={() => {
+                                        setEditingItem(null);
+                                        setModalType('charge');
+                                    }}
                                     className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-primary transition-all active:scale-95"
                                 >
                                     <Plus className="w-5 h-5 text-primary" />
@@ -363,6 +373,7 @@ export default function AdmissionDetailPage() {
                                         <th className="px-6 py-4">Description</th>
                                         <th className="px-6 py-4">Category</th>
                                         <th className="px-6 py-4 text-right">Amount</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -376,16 +387,28 @@ export default function AdmissionDetailPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-5 text-right text-base font-black text-slate-900">₹{Number(c.amount).toLocaleString()}</td>
+                                            <td className="px-6 py-5 text-right">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingItem(c);
+                                                        setModalType('charge');
+                                                    }}
+                                                    className="p-2 hover:bg-white rounded-xl text-slate-300 hover:text-primary transition-all"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                     {admission.charges?.length === 0 && (
-                                        <tr><td colSpan={4} className="p-20 text-center text-slate-400 font-bold italic">No charges recorded yet.</td></tr>
+                                        <tr><td colSpan={5} className="p-20 text-center text-slate-400 font-bold italic">No charges recorded yet.</td></tr>
                                     )}
                                 </tbody>
                                 <tfoot>
                                     <tr className="bg-slate-900 text-white rounded-2xl overflow-hidden">
                                         <td colSpan={3} className="px-6 py-5 text-lg font-black tracking-tight text-slate-400 lowercase">T O T A L   B I L L</td>
                                         <td className="px-6 py-5 text-right text-2xl font-black">₹{totalBill.toLocaleString()}</td>
+                                        <td className="px-6 py-5"></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -402,7 +425,13 @@ export default function AdmissionDetailPage() {
                                     <Stethoscope className="w-6 h-6 text-primary" />
                                     Clinical Notes
                                 </h3>
-                                <button onClick={() => setModalType('note')} className="p-2 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all">
+                                <button
+                                    onClick={() => {
+                                        setEditingItem(null);
+                                        setModalType('note');
+                                    }}
+                                    className="p-2 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all"
+                                >
                                     <Plus className="w-5 h-5" />
                                 </button>
                             </div>
@@ -416,6 +445,15 @@ export default function AdmissionDetailPage() {
                                             <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">
                                                 {format(new Date(note.createdAt), 'MMM dd, HH:mm')}
                                             </span>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingItem(note);
+                                                    setModalType('note');
+                                                }}
+                                                className="p-1.5 hover:bg-white rounded-lg text-slate-300 hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
                                         <p className="text-sm font-bold text-slate-700 leading-relaxed mb-4">{note.note}</p>
                                         <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
@@ -437,7 +475,13 @@ export default function AdmissionDetailPage() {
                                         <FlaskConical className="w-6 h-6 text-purple-500" />
                                         Lab Records
                                     </h3>
-                                    <button onClick={() => setModalType('lab')} className="p-2 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-500 hover:text-white transition-all">
+                                    <button
+                                        onClick={() => {
+                                            setEditingItem(null);
+                                            setModalType('lab');
+                                        }}
+                                        className="p-2 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-500 hover:text-white transition-all"
+                                    >
                                         <Plus className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -453,7 +497,18 @@ export default function AdmissionDetailPage() {
                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{format(new Date(lab.recordedAt), 'MMM dd, yyyy')}</p>
                                                 </div>
                                             </div>
-                                            <span className="text-sm font-black text-purple-600 bg-purple-50 px-3 py-1 rounded-lg">{lab.result || "Pending"}</span>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingItem(lab);
+                                                        setModalType('lab');
+                                                    }}
+                                                    className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-purple-500 transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <span className="text-sm font-black text-purple-600 bg-purple-50 px-3 py-1 rounded-lg">{lab.result || "Pending"}</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -466,7 +521,13 @@ export default function AdmissionDetailPage() {
                                         <Scissors className="w-6 h-6 text-emerald-500" />
                                         Surgery Log
                                     </h3>
-                                    <button onClick={() => setModalType('surgery')} className="p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-500 hover:text-white transition-all">
+                                    <button
+                                        onClick={() => {
+                                            setEditingItem(null);
+                                            setModalType('surgery');
+                                        }}
+                                        className="p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-500 hover:text-white transition-all"
+                                    >
                                         <Plus className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -478,6 +539,17 @@ export default function AdmissionDetailPage() {
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{format(new Date(sur.surgeryDate), 'MMM dd, yyyy')}</p>
                                             </div>
                                             <p className="text-xs font-bold text-slate-500 leading-relaxed italic">By {sur.surgeonName}</p>
+                                            <div className="flex justify-end pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingItem(sur);
+                                                        setModalType('surgery');
+                                                    }}
+                                                    className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-emerald-500 transition-all"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -588,25 +660,26 @@ export default function AdmissionDetailPage() {
                             <form className="p-8 space-y-6" onSubmit={(e) => {
                                 e.preventDefault();
                                 const fd = new FormData(e.currentTarget);
-                                handleAction(() => addHospitalCharge({
+                                const data = {
                                     admissionId: id,
                                     description: fd.get('description') as string,
                                     amount: Number(fd.get('amount')),
                                     type: fd.get('type') as string
-                                }));
+                                };
+                                handleAction(() => editingItem ? updateHospitalCharge(editingItem.id, data) : addHospitalCharge(data));
                             }}>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Description</label>
-                                    <input name="description" required placeholder="e.g., Bed Charge (Day 1)" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input name="description" required defaultValue={editingItem?.description} placeholder="e.g., Bed Charge (Day 1)" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Amount (₹)</label>
-                                        <input name="amount" type="number" required placeholder="1500" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                        <input name="amount" type="number" required defaultValue={editingItem?.amount} placeholder="1500" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Type</label>
-                                        <select name="type" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold appearance-none">
+                                        <select name="type" defaultValue={editingItem?.type || "bed"} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold appearance-none">
                                             <option value="bed">Bed Charge</option>
                                             <option value="nursing">Nursing</option>
                                             <option value="consultation">Consultation</option>
@@ -617,7 +690,7 @@ export default function AdmissionDetailPage() {
                                     </div>
                                 </div>
                                 <button disabled={isActionLoading} className="w-full py-4 bg-primary text-white rounded-3xl font-black shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
-                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Save Transaction"}
+                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : (editingItem ? "Update Transaction" : "Save Transaction")}
                                 </button>
                             </form>
                         )}
@@ -626,31 +699,32 @@ export default function AdmissionDetailPage() {
                             <form className="p-8 space-y-6" onSubmit={(e) => {
                                 e.preventDefault();
                                 const fd = new FormData(e.currentTarget);
-                                handleAction(() => addClinicalNote({
+                                const data = {
                                     admissionId: id,
                                     doctorName: fd.get('doctorName') as string,
                                     note: fd.get('note') as string,
                                     type: fd.get('type') as string
-                                }));
+                                };
+                                handleAction(() => editingItem ? updateClinicalNote(editingItem.id, data) : addClinicalNote(data));
                             }}>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Physician Name</label>
-                                    <input name="doctorName" required placeholder="Dr. Smith" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input name="doctorName" required defaultValue={editingItem?.doctorName} placeholder="Dr. Smith" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clinical Note / Suggestion</label>
-                                    <textarea name="note" required rows={4} placeholder="Detailed medical summary..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
+                                    <textarea name="note" required rows={4} defaultValue={editingItem?.note} placeholder="Detailed medical summary..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Note Priority</label>
-                                    <select name="type" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold appearance-none">
+                                    <select name="type" defaultValue={editingItem?.type || "suggestion"} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold appearance-none">
                                         <option value="suggestion">Regular Suggestion</option>
                                         <option value="daily_note">Daily Condition Update</option>
                                         <option value="instruction">Critical Instruction</option>
                                     </select>
                                 </div>
                                 <button disabled={isActionLoading} className="w-full py-4 bg-slate-900 text-white rounded-3xl font-black shadow-xl flex items-center justify-center gap-2">
-                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Publish Record"}
+                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : (editingItem ? "Update Record" : "Publish Record")}
                                 </button>
                             </form>
                         )}
@@ -659,22 +733,23 @@ export default function AdmissionDetailPage() {
                             <form className="p-8 space-y-6" onSubmit={(e) => {
                                 e.preventDefault();
                                 const fd = new FormData(e.currentTarget);
-                                handleAction(() => addLabRecord({
+                                const data = {
                                     admissionId: id,
                                     testName: fd.get('testName') as string,
                                     result: fd.get('result') as string
-                                }));
+                                };
+                                handleAction(() => editingItem ? updateLabRecord(editingItem.id, data) : addLabRecord(data));
                             }}>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Test Name</label>
-                                    <input name="testName" required placeholder="Full Blood Count" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
+                                    <input name="testName" required defaultValue={editingItem?.testName} placeholder="Full Blood Count" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Test Result Summary</label>
-                                    <input name="result" placeholder="e.g., Stable / Normal" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
+                                    <input name="result" defaultValue={editingItem?.result} placeholder="e.g., Stable / Normal" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
                                 </div>
                                 <button disabled={isActionLoading} className="w-full py-4 bg-purple-600 text-white rounded-3xl font-black shadow-xl shadow-purple-200 flex items-center justify-center gap-2">
-                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Record Lab Result"}
+                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : (editingItem ? "Update Lab Result" : "Record Lab Result")}
                                 </button>
                             </form>
                         )}
@@ -683,34 +758,35 @@ export default function AdmissionDetailPage() {
                             <form className="p-8 space-y-6" onSubmit={(e) => {
                                 e.preventDefault();
                                 const fd = new FormData(e.currentTarget);
-                                handleAction(() => addSurgery({
+                                const data = {
                                     admissionId: id,
                                     surgeryName: fd.get('surgeryName') as string,
                                     surgeonName: fd.get('surgeonName') as string,
                                     surgeryDate: new Date(fd.get('surgeryDate') as string),
                                     notes: fd.get('notes') as string
-                                }));
+                                };
+                                handleAction(() => editingItem ? updateSurgery(editingItem.id, data) : addSurgery(data));
                             }}>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Operation / Surgery Name</label>
-                                    <input name="surgeryName" required placeholder="Appendectomy" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
+                                    <input name="surgeryName" required defaultValue={editingItem?.surgeryName} placeholder="Appendectomy" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Surgeon Name</label>
-                                        <input name="surgeonName" required placeholder="Dr. Doe" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
+                                        <input name="surgeonName" required defaultValue={editingItem?.surgeonName} placeholder="Dr. Doe" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Operation Date</label>
-                                        <input name="surgeryDate" type="date" required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
+                                        <input name="surgeryDate" type="date" required defaultValue={editingItem?.surgeryDate ? format(new Date(editingItem.surgeryDate), 'yyyy-MM-dd') : ''} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Procedure Notes</label>
-                                    <textarea name="notes" rows={3} placeholder="Key details of the procedure..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold resize-none" />
+                                    <textarea name="notes" rows={3} defaultValue={editingItem?.notes} placeholder="Key details of the procedure..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold resize-none" />
                                 </div>
                                 <button disabled={isActionLoading} className="w-full py-4 bg-emerald-600 text-white rounded-3xl font-black shadow-xl shadow-emerald-200 flex items-center justify-center gap-2">
-                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Finalize Surgery Entry"}
+                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : (editingItem ? "Update Surgery Log" : "Finalize Surgery Entry")}
                                 </button>
                             </form>
                         )}

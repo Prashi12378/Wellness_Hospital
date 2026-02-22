@@ -143,6 +143,31 @@ export async function addHospitalCharge(formData: {
     }
 }
 
+export async function updateHospitalCharge(id: string, formData: {
+    description: string;
+    amount: number;
+    type: string;
+    admissionId: string;
+}) {
+    try {
+        const charge = await prisma.hospitalCharge.update({
+            where: { id },
+            data: {
+                description: formData.description,
+                amount: formData.amount,
+                type: formData.type,
+                updatedAt: new Date()
+            }
+        });
+
+        revalidatePath(`/dashboard/ipd/${formData.admissionId}`);
+        return { success: true, charge: serializeData(charge) };
+    } catch (error) {
+        console.error("Failed to update charge:", error);
+        return { success: false, error: "Failed to update charge" };
+    }
+}
+
 export async function addLabRecord(formData: {
     admissionId: string;
     testName: string;
@@ -165,6 +190,28 @@ export async function addLabRecord(formData: {
     } catch (error) {
         console.error("Failed to add lab record:", error);
         return { success: false, error: "Failed to add lab record" };
+    }
+}
+
+export async function updateLabRecord(id: string, formData: {
+    admissionId: string;
+    testName: string;
+    result?: string;
+}) {
+    try {
+        const record = await prisma.labRecord.update({
+            where: { id },
+            data: {
+                testName: formData.testName,
+                result: formData.result
+            }
+        });
+
+        revalidatePath(`/dashboard/ipd/${formData.admissionId}`);
+        return { success: true, record: serializeData(record) };
+    } catch (error) {
+        console.error("Failed to update lab record:", error);
+        return { success: false, error: "Failed to update lab record" };
     }
 }
 
@@ -195,6 +242,32 @@ export async function addSurgery(formData: {
     }
 }
 
+export async function updateSurgery(id: string, formData: {
+    admissionId: string;
+    surgeryName: string;
+    surgeonName: string;
+    surgeryDate: Date;
+    notes?: string;
+}) {
+    try {
+        const surgery = await prisma.surgery.update({
+            where: { id },
+            data: {
+                surgeryName: formData.surgeryName,
+                surgeonName: formData.surgeonName,
+                surgeryDate: formData.surgeryDate,
+                notes: formData.notes
+            }
+        });
+
+        revalidatePath(`/dashboard/ipd/${formData.admissionId}`);
+        return { success: true, surgery: serializeData(surgery) };
+    } catch (error) {
+        console.error("Failed to update surgery:", error);
+        return { success: false, error: "Failed to update surgery" };
+    }
+}
+
 export async function addClinicalNote(formData: {
     admissionId: string;
     doctorName: string;
@@ -219,6 +292,30 @@ export async function addClinicalNote(formData: {
     } catch (error) {
         console.error("Failed to add clinical note:", error);
         return { success: false, error: "Failed to add clinical note" };
+    }
+}
+
+export async function updateClinicalNote(id: string, formData: {
+    admissionId: string;
+    doctorName: string;
+    note: string;
+    type: string;
+}) {
+    try {
+        const clinicalNote = await prisma.clinicalNote.update({
+            where: { id },
+            data: {
+                doctorName: formData.doctorName,
+                note: formData.note,
+                type: formData.type
+            }
+        });
+
+        revalidatePath(`/dashboard/ipd/${formData.admissionId}`);
+        return { success: true, clinicalNote: serializeData(clinicalNote) };
+    } catch (error) {
+        console.error("Failed to update clinical note:", error);
+        return { success: false, error: "Failed to update clinical note" };
     }
 }
 
