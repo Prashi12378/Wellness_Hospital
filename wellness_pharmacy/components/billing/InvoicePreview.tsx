@@ -81,43 +81,51 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 size: A5 portrait;
                                 margin: 0;
                             }
-                            body {
-                                margin: 0;
-                                padding: 0;
+                            html, body {
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                height: 100vh !important;
+                                overflow: hidden !important;
                                 -webkit-print-color-adjust: exact;
-                                overflow: visible !important;
-                                height: auto !important;
                             }
-                            /* Hide everything by default */
-                            body > * { display: none !important; }
-                            
-                            /* Show only the modal and the print area */
-                            .invoice-modal-overlay { 
-                                display: block !important; 
-                                position: static !important;
+                            body * {
+                                visibility: hidden;
+                            }
+                            .invoice-modal-overlay,
+                            .invoice-modal-overlay *,
+                            .invoice-modal-container,
+                            .invoice-modal-container *,
+                            #print-area,
+                            #print-area * {
+                                visibility: visible !important;
+                            }
+                            .invoice-modal-overlay {
+                                position: fixed !important;
+                                top: 0 !important;
+                                left: 0 !important;
+                                width: 100% !important;
+                                height: 100% !important;
+                                z-index: 99999 !important;
+                                background: white !important;
                                 padding: 0 !important;
                                 margin: 0 !important;
-                                background: none !important;
-                                backdrop-filter: none !important;
+                                display: block !important;
                             }
                             .invoice-modal-container {
-                                display: block !important;
+                                width: 100% !important;
+                                height: 100% !important;
                                 max-width: none !important;
                                 max-height: none !important;
-                                width: 100% !important;
-                                height: auto !important;
                                 border: none !important;
-                                border-radius: 0 !important;
                                 box-shadow: none !important;
-                                margin: 0 !important;
                                 padding: 0 !important;
+                                margin: 0 !important;
                             }
-                            #print-area { 
-                                display: block !important;
-                                width: 148mm; 
-                                height: 210mm;
-                                padding: 0 !important;
+                            #print-area {
+                                width: 148mm !important;
+                                height: 210mm !important;
                                 margin: 0 !important;
+                                padding: 0 !important;
                                 overflow: hidden !important;
                             }
                             .no-print { display: none !important; }
