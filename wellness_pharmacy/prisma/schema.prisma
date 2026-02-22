@@ -325,3 +325,39 @@ enum UserRole {
   patient
   lab
 }
+
+model AmbulanceRequest {
+  id          String   @id @default(cuid())
+  patientName String
+  phone       String
+  location    String
+  serviceType String
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BloodCollectionRequest {
+  id             String   @id @default(cuid())
+  patientName    String
+  phone          String
+  address        String
+  collectionDate String
+  collectionTime String
+  selectedTests  Json
+  totalPrice     Decimal
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String?
+  email     String
+  subject   String?
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

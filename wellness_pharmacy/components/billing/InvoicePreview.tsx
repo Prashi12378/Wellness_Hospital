@@ -50,8 +50,8 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
     }, {});
 
     return (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 invoice-modal-overlay">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col invoice-modal-container">
                 {/* Modal Header */}
                 <div className="p-4 border-b flex items-center justify-between no-print">
                     <h3 className="text-lg font-bold">Invoice Preview</h3>
@@ -73,7 +73,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                 </div>
 
                 {/* Print Area */}
-                <div ref={printRef} className="flex-1 overflow-auto p-8 bg-white print:p-0" id="print-area">
+                <div ref={printRef} className="flex-1 overflow-auto p-8 bg-white print:p-0 print:overflow-visible" id="print-area">
                     <style dangerouslySetInnerHTML={{
                         __html: `
                         @media print {
@@ -85,18 +85,40 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 margin: 0;
                                 padding: 0;
                                 -webkit-print-color-adjust: exact;
+                                overflow: visible !important;
+                                height: auto !important;
                             }
-                            body * { visibility: hidden; }
-                            #print-area, #print-area * { visibility: visible; }
+                            /* Hide everything by default */
+                            body > * { display: none !important; }
+                            
+                            /* Show only the modal and the print area */
+                            .invoice-modal-overlay { 
+                                display: block !important; 
+                                position: static !important;
+                                padding: 0 !important;
+                                margin: 0 !important;
+                                background: none !important;
+                                backdrop-filter: none !important;
+                            }
+                            .invoice-modal-container {
+                                display: block !important;
+                                max-width: none !important;
+                                max-height: none !important;
+                                width: 100% !important;
+                                height: auto !important;
+                                border: none !important;
+                                border-radius: 0 !important;
+                                box-shadow: none !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                            }
                             #print-area { 
-                                position: absolute; 
-                                left: 0; 
-                                top: 0; 
+                                display: block !important;
                                 width: 148mm; 
                                 height: 210mm;
                                 padding: 0 !important;
                                 margin: 0 !important;
-                                overflow: hidden;
+                                overflow: hidden !important;
                             }
                             .no-print { display: none !important; }
                             
@@ -106,7 +128,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 box-shadow: none !important;
                                 width: 148mm !important;
                                 height: 210mm !important;
-                                padding: 10mm !important;
+                                padding: 8mm !important;
                                 margin: 0 !important;
                                 display: flex;
                                 flex-direction: column;
@@ -117,9 +139,6 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                             h2 { font-size: 12pt !important; }
                             p, span, td, th { font-size: 8pt !important; line-height: 1.2 !important; }
                             .tax-table th, .tax-table td { font-size: 7pt !important; }
-                            
-                            /* Ensure table doesn't overflow */
-                            table { page-break-inside: avoid; }
                         }
                     `}} />
 
