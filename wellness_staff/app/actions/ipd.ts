@@ -246,10 +246,41 @@ export async function dischargePatient(admissionId: string, data?: {
 
         await safeRevalidatePath('/dashboard/ipd');
         await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}/discharge-summary`);
         return { success: true, admission: serializeData(admission) };
     } catch (error) {
         console.error("Failed to discharge patient:", error);
         return { success: false, error: "Failed to discharge patient" };
+    }
+}
+
+export async function updateDischargeSummary(admissionId: string, data: {
+    diagnoses?: string;
+    presentingSymptoms?: string;
+    physicalFindings?: string;
+    investigations?: string;
+    hospitalCourse?: string;
+    dischargeMedication?: string;
+    dischargeCondition?: string;
+    dischargeAdvice?: string;
+    noteAndReview?: string;
+}) {
+    try {
+        const admission = await prisma.admission.update({
+            where: { id: admissionId },
+            data: {
+                ...data,
+                updatedAt: new Date()
+            }
+        });
+
+        await safeRevalidatePath('/dashboard/ipd');
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}/discharge-summary`);
+        return { success: true, admission: serializeData(admission) };
+    } catch (error) {
+        console.error("Failed to update discharge summary:", error);
+        return { success: false, error: "Failed to update discharge summary" };
     }
 }
 

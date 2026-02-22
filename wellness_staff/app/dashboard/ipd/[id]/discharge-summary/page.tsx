@@ -62,6 +62,13 @@ export default function DischargeSummaryPage() {
                 </button>
                 <div className="flex items-center gap-3">
                     <button
+                        onClick={() => router.push(`/dashboard/ipd/${id}?edit=true`)}
+                        className="px-6 py-3 bg-slate-900 text-white rounded-[20px] font-black shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                    >
+                        <Activity className="w-5 h-5 text-primary" />
+                        Edit Summary
+                    </button>
+                    <button
                         onClick={() => window.print()}
                         className="px-8 py-3 bg-primary text-white rounded-[20px] font-black shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
                     >

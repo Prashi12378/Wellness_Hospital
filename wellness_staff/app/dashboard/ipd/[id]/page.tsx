@@ -33,7 +33,8 @@ import {
     addClinicalNote,
     dischargePatient,
     generateAIDischargeSummary,
-    updateAdmissionDates
+    updateAdmissionDates,
+    updateDischargeSummary
 } from '@/app/actions/ipd';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,13 @@ export default function AdmissionDetailPage() {
 
     useEffect(() => {
         fetchDetails();
+        // Check for edit query param
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get('edit') === 'true') {
+            setModalType('edit_discharge');
+            // Clean URL
+            window.history.replaceState({}, '', window.location.pathname);
+        }
     }, [id]);
 
     const fetchDetails = async () => {
@@ -194,13 +202,22 @@ export default function AdmissionDetailPage() {
                         Initiate Discharge
                     </button>
                 ) : (
-                    <Link
-                        href={`/dashboard/ipd/${id}/discharge-summary`}
-                        className="px-8 py-4 bg-primary text-white rounded-3xl font-black shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
-                    >
-                        <FileText className="w-5 h-5" />
-                        Discharge Summary
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setModalType('edit_discharge')}
+                            className="px-6 py-4 bg-slate-900 text-white rounded-3xl font-black shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <FileSearch className="w-5 h-5" />
+                            Edit Summary
+                        </button>
+                        <Link
+                            href={`/dashboard/ipd/${id}/discharge-summary`}
+                            className="px-8 py-4 bg-primary text-white rounded-3xl font-black shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <FileText className="w-5 h-5" />
+                            Discharge Summary
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -796,6 +813,77 @@ export default function AdmissionDetailPage() {
                                 </div>
                                 <button disabled={isActionLoading} className="w-full py-4 bg-red-600 text-white rounded-3xl font-black shadow-xl shadow-red-200 flex items-center justify-center gap-2 mt-4">
                                     {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Confirm Patient Discharge"}
+                                </button>
+                            </form>
+                        )}
+
+                        {modalType === 'edit_discharge' && (
+                            <form className="p-8 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar" onSubmit={(e) => {
+                                e.preventDefault();
+                                const fd = new FormData(e.currentTarget);
+                                const data = {
+                                    diagnoses: fd.get('diagnoses') as string,
+                                    presentingSymptoms: fd.get('presentingSymptoms') as string,
+                                    physicalFindings: fd.get('physicalFindings') as string,
+                                    investigations: fd.get('investigations') as string,
+                                    hospitalCourse: fd.get('hospitalCourse') as string,
+                                    dischargeMedication: fd.get('dischargeMedication') as string,
+                                    dischargeCondition: fd.get('dischargeCondition') as string,
+                                    dischargeAdvice: fd.get('dischargeAdvice') as string,
+                                    noteAndReview: fd.get('noteAndReview') as string,
+                                };
+                                handleAction(() => updateDischargeSummary(id, data));
+                            }}>
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-black text-primary uppercase tracking-widest border-b border-primary/10 pb-2">Edit Discharge Summary</h4>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Final Diagnoses</label>
+                                        <textarea name="diagnoses" required rows={3} defaultValue={admission.diagnoses} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Presenting Symptoms</label>
+                                        <textarea name="presentingSymptoms" rows={2} defaultValue={admission.presentingSymptoms} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Physical Findings</label>
+                                        <textarea name="physicalFindings" rows={3} defaultValue={admission.physicalFindings} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Investigations Summary</label>
+                                        <textarea name="investigations" rows={2} defaultValue={admission.investigations} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Course in the Hospital</label>
+                                        <textarea name="hospitalCourse" rows={4} defaultValue={admission.hospitalCourse} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Discharge Medication</label>
+                                        <textarea name="dischargeMedication" rows={3} defaultValue={admission.dischargeMedication} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Condition on Discharge</label>
+                                        <input name="dischargeCondition" defaultValue={admission.dischargeCondition} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Advice on Discharge</label>
+                                        <textarea name="dischargeAdvice" rows={2} defaultValue={admission.dischargeAdvice} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Note and Review</label>
+                                        <textarea name="noteAndReview" rows={2} defaultValue={admission.noteAndReview} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                                    </div>
+                                </div>
+                                <button disabled={isActionLoading} className="w-full py-4 bg-slate-900 text-white rounded-3xl font-black shadow-xl flex items-center justify-center gap-2 mt-4">
+                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Update Summary Changes"}
                                 </button>
                             </form>
                         )}
