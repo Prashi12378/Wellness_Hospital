@@ -3,11 +3,10 @@
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -21,14 +20,14 @@ export default function LoginPage() {
         try {
             const result = await signIn('credentials', {
                 redirect: false,
-                email,
+                username,
                 password,
             });
 
             if (result?.ok) {
                 router.push('/dashboard');
             } else {
-                setError('Invalid admin credentials');
+                setError('Invalid username or password');
                 setLoading(false);
             }
         } catch (err) {
@@ -56,13 +55,13 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700">Email</label>
+                        <label className="block text-sm font-medium text-slate-700">Username</label>
                         <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 p-2 border"
-                            placeholder="admin@wellness.com"
+                            placeholder="wellness_admin"
                             required
                         />
                     </div>

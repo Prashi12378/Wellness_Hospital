@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -20,13 +20,13 @@ export default function LoginPage() {
 
         try {
             const result = await signIn('credentials', {
-                email,
+                username,
                 password,
                 redirect: false,
             });
 
             if (result?.error) {
-                setError('Invalid email or password');
+                setError('Invalid username or password');
             } else if (result?.ok) {
                 router.push('/dashboard');
             }
@@ -60,14 +60,14 @@ export default function LoginPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Email Address
+                            Username
                         </label>
                         <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                            placeholder="pharmacist@wellnesshospital.com"
+                            placeholder="pharma_user"
                             required
                         />
                     </div>

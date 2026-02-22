@@ -16,30 +16,30 @@ export const authOptions: NextAuthOptions = {
         CredentialsProvider({
             name: "Credentials",
             credentials: {
-                email: { label: "Email", type: "email" },
+                username: { label: "Username", type: "text" },
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                console.log("Authorize called with:", credentials?.email);
+                console.log("Authorize called with:", credentials?.username);
 
-                if (!credentials?.email || !credentials?.password) {
+                if (!credentials?.username || !credentials?.password) {
                     console.log("Missing credentials");
                     return null;
                 }
 
                 // SECURITY: Strictly restrict admin portal access to the authorized account only
-                if (credentials.email !== "wellnesshospital8383@gmail.com") {
-                    console.log(`Unauthorized login attempt blocked for: ${credentials.email}`);
+                if (credentials.username !== "wellness_admin") {
+                    console.log(`Unauthorized login attempt blocked for: ${credentials.username}`);
                     return null;
                 }
 
                 const user = await prisma.user.findUnique({
-                    where: { email: credentials.email },
+                    where: { username: credentials.username },
                     include: { profile: true }
                 });
 
                 if (!user) {
-                    console.log("Authorized admin user not found in database");
+                    console.log("Admin user not found in database");
                     return null;
                 }
 
@@ -56,20 +56,12 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                const userRole = user.profile?.role?.toString().toLowerCase();
-                console.log(`User role from DB: ${userRole}`);
-
-                if (userRole !== "admin") {
-                    console.log(`User found but role is "${userRole}", not "admin"`);
-                    return null;
-                }
-
                 return {
                     id: user.id,
                     email: user.email,
                     name: user.name,
                     image: user.image,
-                    role: userRole
+                    role: "admin"
                 };
             }
         })

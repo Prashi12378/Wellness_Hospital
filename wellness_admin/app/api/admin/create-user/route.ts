@@ -25,7 +25,8 @@ export async function POST(req: Request) {
             fee,
             timings,
             bio,
-            avatar_url
+            avatar_url,
+            username
         } = body;
 
         if (!email || !password || !fullName || !role) {
@@ -40,6 +41,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "User already exists" }, { status: 409 });
         }
 
+        // Check if username is already taken
+        if (username) {
+            const existingUsername = await prisma.user.findUnique({
+                where: { username }
+            });
+            if (existingUsername) {
+                return NextResponse.json({ error: "Username already taken" }, { status: 409 });
+            }
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Transaction to create User and Profile
@@ -47,6 +58,7 @@ export async function POST(req: Request) {
             const user = await tx.user.create({
                 data: {
                     email,
+                    username: username || undefined,
                     password: hashedPassword,
                     name: fullName,
                     image: avatar_url

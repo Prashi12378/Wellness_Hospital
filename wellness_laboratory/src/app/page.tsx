@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FlaskConical, Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
+import { Lock, User, ArrowRight, AlertCircle } from "lucide-react";
 import Image from "next/image";
 
 export default function LoginPage() {
     const router = useRouter();
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -20,13 +20,13 @@ export default function LoginPage() {
 
         try {
             const result = await signIn("credentials", {
-                email,
+                username,
                 password,
                 redirect: false,
             });
 
             if (result?.error) {
-                setError("Invalid credentials. Please check your email and password.");
+                setError("Invalid credentials. Please check your username and password.");
                 setLoading(false);
             } else {
                 router.push("/dashboard");
@@ -67,16 +67,16 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-700 ml-1">Email Address</label>
+                            <label className="text-sm font-semibold text-slate-700 ml-1">Username</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
-                                    type="email"
+                                    type="text"
                                     required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-800"
-                                    placeholder="wellnesshospital8383@gmail.com"
+                                    placeholder="lab_tech"
                                 />
                             </div>
                         </div>
