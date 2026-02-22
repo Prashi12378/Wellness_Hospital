@@ -822,6 +822,7 @@ export default function AdmissionDetailPage() {
                                     dischargeCondition: fd.get('dischargeCondition') as string,
                                     dischargeAdvice: fd.get('dischargeAdvice') as string,
                                     noteAndReview: fd.get('noteAndReview') as string,
+                                    doctorDesignation: fd.get('doctorDesignation') as string,
                                 };
                                 handleAction(() => dischargePatient(id, data));
                             }}>
@@ -887,10 +888,14 @@ export default function AdmissionDetailPage() {
                                         <textarea name="dischargeMedication" rows={3} placeholder="List medications with dosage/frequency..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-200 font-bold resize-none uppercase" />
                                     </div>
 
-                                    <div className="grid grid-cols-1 gap-4">
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Condition on Discharge</label>
                                             <input name="dischargeCondition" placeholder="e.g., Satisfactory / Improved" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-200 font-bold uppercase" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attending Doctor Designation</label>
+                                            <input name="doctorDesignation" placeholder="e.g., CONSULTANT AYURVEDA" defaultValue={admission.primaryDoctor?.specialization || "CONSULTANT AYURVEDA"} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-200 font-bold uppercase" />
                                         </div>
                                     </div>
 
@@ -924,6 +929,7 @@ export default function AdmissionDetailPage() {
                                     dischargeCondition: fd.get('dischargeCondition') as string,
                                     dischargeAdvice: fd.get('dischargeAdvice') as string,
                                     noteAndReview: fd.get('noteAndReview') as string,
+                                    doctorDesignation: fd.get('doctorDesignation') as string,
                                 };
                                 handleAction(() => updateDischargeSummary(id, data));
                             }}>
@@ -960,9 +966,15 @@ export default function AdmissionDetailPage() {
                                         <textarea name="dischargeMedication" rows={3} defaultValue={admission.dischargeMedication} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
                                     </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Condition on Discharge</label>
-                                        <input name="dischargeCondition" defaultValue={admission.dischargeCondition} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold uppercase" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Condition on Discharge</label>
+                                            <input name="dischargeCondition" defaultValue={admission.dischargeCondition} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold uppercase" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attending Doctor Designation</label>
+                                            <input name="doctorDesignation" defaultValue={admission.doctorDesignation || admission.primaryDoctor?.specialization || "CONSULTANT AYURVEDA"} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold uppercase" />
+                                        </div>
                                     </div>
 
                                     <div className="space-y-1.5">

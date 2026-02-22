@@ -239,7 +239,7 @@ export default function DischargeSummaryPage() {
                     <div className="flex justify-end mt-12 mb-8">
                         <div className="text-right border-t border-slate-900 pt-2 min-w-[200px]">
                             <p className="font-black uppercase text-sm">Dr. {admission.primaryDoctor?.firstName} {admission.primaryDoctor?.lastName}</p>
-                            <p className="text-[10px] uppercase font-bold text-slate-600">CONSULTANT AYURVEDA</p>
+                            <p className="text-[10px] uppercase font-bold text-slate-600">{admission.doctorDesignation || admission.primaryDoctor?.specialization || "CONSULTANT AYURVEDA"}</p>
                         </div>
                     </div>
 

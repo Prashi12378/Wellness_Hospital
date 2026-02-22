@@ -341,6 +341,7 @@ export async function dischargePatient(admissionId: string, data?: {
     dischargeCondition?: string;
     dischargeAdvice?: string;
     noteAndReview?: string;
+    doctorDesignation?: string;
 }) {
     try {
         const admission = await prisma.admission.update({
@@ -373,6 +374,7 @@ export async function updateDischargeSummary(admissionId: string, data: {
     dischargeCondition?: string;
     dischargeAdvice?: string;
     noteAndReview?: string;
+    doctorDesignation?: string;
 }) {
     try {
         const admission = await prisma.admission.update({
