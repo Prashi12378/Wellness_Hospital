@@ -122,6 +122,7 @@ export async function addHospitalCharge(formData: {
     description: string;
     amount: number;
     type: string;
+    date?: string;
 }) {
     try {
         const charge = await prisma.hospitalCharge.create({
@@ -131,6 +132,7 @@ export async function addHospitalCharge(formData: {
                 description: formData.description,
                 amount: formData.amount,
                 type: formData.type,
+                date: formData.date ? new Date(formData.date) : new Date(),
                 updatedAt: new Date()
             }
         });
@@ -148,6 +150,7 @@ export async function updateHospitalCharge(id: string, formData: {
     amount: number;
     type: string;
     admissionId: string;
+    date?: string;
 }) {
     try {
         const charge = await prisma.hospitalCharge.update({
@@ -156,6 +159,7 @@ export async function updateHospitalCharge(id: string, formData: {
                 description: formData.description,
                 amount: formData.amount,
                 type: formData.type,
+                date: formData.date ? new Date(formData.date) : undefined,
                 updatedAt: new Date()
             }
         });
@@ -173,6 +177,7 @@ export async function addLabRecord(formData: {
     testName: string;
     result?: string;
     fileUrl?: string;
+    recordedAt?: string;
 }) {
     try {
         const record = await prisma.labRecord.create({
@@ -181,7 +186,8 @@ export async function addLabRecord(formData: {
                 admissionId: formData.admissionId,
                 testName: formData.testName,
                 result: formData.result,
-                fileUrl: formData.fileUrl
+                fileUrl: formData.fileUrl,
+                recordedAt: formData.recordedAt ? new Date(formData.recordedAt) : new Date()
             }
         });
 
@@ -197,13 +203,15 @@ export async function updateLabRecord(id: string, formData: {
     admissionId: string;
     testName: string;
     result?: string;
+    recordedAt?: string;
 }) {
     try {
         const record = await prisma.labRecord.update({
             where: { id },
             data: {
                 testName: formData.testName,
-                result: formData.result
+                result: formData.result,
+                recordedAt: formData.recordedAt ? new Date(formData.recordedAt) : undefined
             }
         });
 
@@ -274,6 +282,7 @@ export async function addClinicalNote(formData: {
     note: string;
     type: string;
     fileUrl?: string;
+    createdAt?: string;
 }) {
     try {
         const clinicalNote = await prisma.clinicalNote.create({
@@ -283,7 +292,8 @@ export async function addClinicalNote(formData: {
                 doctorName: formData.doctorName,
                 note: formData.note,
                 type: formData.type,
-                fileUrl: formData.fileUrl
+                fileUrl: formData.fileUrl,
+                createdAt: formData.createdAt ? new Date(formData.createdAt) : new Date()
             }
         });
 
@@ -300,6 +310,7 @@ export async function updateClinicalNote(id: string, formData: {
     doctorName: string;
     note: string;
     type: string;
+    createdAt?: string;
 }) {
     try {
         const clinicalNote = await prisma.clinicalNote.update({
@@ -307,7 +318,8 @@ export async function updateClinicalNote(id: string, formData: {
             data: {
                 doctorName: formData.doctorName,
                 note: formData.note,
-                type: formData.type
+                type: formData.type,
+                createdAt: formData.createdAt ? new Date(formData.createdAt) : undefined
             }
         });
 

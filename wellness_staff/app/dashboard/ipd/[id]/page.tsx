@@ -664,21 +664,18 @@ export default function AdmissionDetailPage() {
                                     admissionId: id,
                                     description: fd.get('description') as string,
                                     amount: Number(fd.get('amount')),
-                                    type: fd.get('type') as string
+                                    type: fd.get('type') as string,
+                                    date: fd.get('date') as string
                                 };
                                 handleAction(() => editingItem ? updateHospitalCharge(editingItem.id, data) : addHospitalCharge(data));
                             }}>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Description</label>
-                                    <input name="description" required defaultValue={editingItem?.description} placeholder="e.g., Bed Charge (Day 1)" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
-                                </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Amount (₹)</label>
-                                        <input name="amount" type="number" required defaultValue={editingItem?.amount} placeholder="1500" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Transaction Date</label>
+                                        <input name="date" type="datetime-local" defaultValue={editingItem?.date ? format(new Date(editingItem.date), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Type</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Category</label>
                                         <select name="type" defaultValue={editingItem?.type || "bed"} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold appearance-none">
                                             <option value="bed">Bed Charge</option>
                                             <option value="nursing">Nursing</option>
@@ -688,6 +685,14 @@ export default function AdmissionDetailPage() {
                                             <option value="other">Other</option>
                                         </select>
                                     </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Description</label>
+                                    <input name="description" required defaultValue={editingItem?.description} placeholder="e.g., Bed Charge (Day 1)" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Amount (₹)</label>
+                                    <input name="amount" type="number" required defaultValue={editingItem?.amount} placeholder="1500" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <button disabled={isActionLoading} className="w-full py-4 bg-primary text-white rounded-3xl font-black shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
                                     {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : (editingItem ? "Update Transaction" : "Save Transaction")}
@@ -703,13 +708,20 @@ export default function AdmissionDetailPage() {
                                     admissionId: id,
                                     doctorName: fd.get('doctorName') as string,
                                     note: fd.get('note') as string,
-                                    type: fd.get('type') as string
+                                    type: fd.get('type') as string,
+                                    createdAt: fd.get('createdAt') as string
                                 };
                                 handleAction(() => editingItem ? updateClinicalNote(editingItem.id, data) : addClinicalNote(data));
                             }}>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Physician Name</label>
-                                    <input name="doctorName" required defaultValue={editingItem?.doctorName} placeholder="Dr. Smith" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Note Date & Time</label>
+                                        <input name="createdAt" type="datetime-local" defaultValue={editingItem?.createdAt ? format(new Date(editingItem.createdAt), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Physician Name</label>
+                                        <input name="doctorName" required defaultValue={editingItem?.doctorName} placeholder="Dr. Smith" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    </div>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Clinical Note / Suggestion</label>
@@ -736,10 +748,15 @@ export default function AdmissionDetailPage() {
                                 const data = {
                                     admissionId: id,
                                     testName: fd.get('testName') as string,
-                                    result: fd.get('result') as string
+                                    result: fd.get('result') as string,
+                                    recordedAt: fd.get('recordedAt') as string
                                 };
                                 handleAction(() => editingItem ? updateLabRecord(editingItem.id, data) : addLabRecord(data));
                             }}>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Recording Date & Time</label>
+                                    <input name="recordedAt" type="datetime-local" defaultValue={editingItem?.recordedAt ? format(new Date(editingItem.recordedAt), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
+                                </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Test Name</label>
                                     <input name="testName" required defaultValue={editingItem?.testName} placeholder="Full Blood Count" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
@@ -777,8 +794,8 @@ export default function AdmissionDetailPage() {
                                         <input name="surgeonName" required defaultValue={editingItem?.surgeonName} placeholder="Dr. Doe" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Operation Date</label>
-                                        <input name="surgeryDate" type="date" required defaultValue={editingItem?.surgeryDate ? format(new Date(editingItem.surgeryDate), 'yyyy-MM-dd') : ''} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Surgery Date & Time</label>
+                                        <input name="surgeryDate" type="datetime-local" required defaultValue={editingItem?.surgeryDate ? format(new Date(editingItem.surgeryDate), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
