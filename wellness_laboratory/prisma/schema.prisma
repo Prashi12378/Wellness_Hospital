@@ -134,7 +134,7 @@ model HealthPackage {
 }
 
 model Otp {
-  id        String   @id
+  id        String   @id @default(cuid())
   phone     String   @unique
   code      String
   expiresAt DateTime
@@ -142,7 +142,7 @@ model Otp {
 }
 
 model PharmacyInventory {
-  id               String    @id
+  id               String    @id @default(cuid())
   name             String
   batchNo          String?   @map("batch_no")
   expiryDate       DateTime? @map("expiry_date")
@@ -171,7 +171,7 @@ model Ledger {
 }
 
 model Invoice {
-  id             String        @id
+  id             String        @id @default(cuid())
   billNo         String        @unique
   date           DateTime      @default(now())
   patientName    String
@@ -185,7 +185,7 @@ model Invoice {
   paymentMethod  String        @default("CASH")
   status         String        @default("PAID")
   createdAt      DateTime      @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime      @updatedAt
   discountAmount Decimal       @default(0)
   discountRate   Decimal       @default(0)
   items          InvoiceItem[]
@@ -194,7 +194,7 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id         String    @id
+  id         String    @id @default(cuid())
   invoiceId  String
   medicineId String
   name       String
@@ -209,23 +209,23 @@ model InvoiceItem {
 }
 
 model Notification {
-  id        String   @id
+  id        String   @id @default(cuid())
   title     String
   message   String
   type      String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model PharmacySettings {
   id             String   @id @default("default")
   defaultGstRate Decimal  @default(5)
-  updatedAt      DateTime
+  updatedAt      DateTime @updatedAt
 }
 
 model Admission {
-  id                                   String           @id
+  id                                   String           @id @default(cuid())
   patientId                            String
   admissionDate                        DateTime         @default(now())
   dischargeDate                        DateTime?
@@ -233,7 +233,7 @@ model Admission {
   bedNumber                            String?
   ward                                 String?
   createdAt                            DateTime         @default(now())
-  updatedAt                            DateTime
+  updatedAt                            DateTime         @updatedAt
   doctorId                             String?
   diagnoses                            String?
   dischargeAdvice                      String?
@@ -254,7 +254,7 @@ model Admission {
 }
 
 model ClinicalNote {
-  id          String    @id
+  id          String    @id @default(cuid())
   admissionId String
   doctorName  String
   note        String
@@ -265,19 +265,19 @@ model ClinicalNote {
 }
 
 model HospitalCharge {
-  id          String    @id
+  id          String    @id @default(cuid())
   admissionId String
   description String
   amount      Decimal
   type        String
   date        DateTime  @default(now())
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime  @updatedAt
   Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 }
 
 model LabRecord {
-  id          String    @id
+  id          String    @id @default(cuid())
   admissionId String
   testName    String
   result      String?
@@ -307,7 +307,7 @@ model LabRequest {
 }
 
 model Surgery {
-  id          String    @id
+  id          String    @id @default(cuid())
   admissionId String
   surgeryName String
   surgeonName String
