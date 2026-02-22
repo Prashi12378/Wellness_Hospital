@@ -91,7 +91,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         @media print {
                             @page {
                                 size: A5 portrait;
-                                margin: 0;
+                                margin: 5mm;
                             }
                             
                             /* 1. HIDE ALL BACKGROUND CONTENT */
@@ -104,7 +104,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 margin: 0 !important;
                                 padding: 0 !important;
                                 height: auto !important;
-                                width: auto !important; /* Allow natural browser width */
+                                width: 100% !important;
                                 background: white !important;
                                 overflow: visible !important;
                                 -webkit-print-color-adjust: exact !important;
@@ -113,15 +113,12 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
 
                             /* 3. ISOLATE INVOICE MODAL */
                             .invoice-modal-overlay {
-                                position: absolute !important;
-                                top: 0 !important;
-                                left: 0 !important;
+                                position: static !important; /* Allow natural page flow */
                                 width: 100% !important;
                                 display: block !important;
                                 background: white !important;
                                 padding: 0 !important;
                                 margin: 0 !important;
-                                z-index: auto !important;
                                 overflow: visible !important;
                             }
 
@@ -151,17 +148,23 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 display: none !important;
                             }
 
-                            /* 4. INVOICE CONTENT LAYOUT */
+                            /* 4. COMPACT INVOICE CONTENT */
                             .invoice-container {
-                                width: 148mm !important; /* Fixed width for A5 content */
+                                width: 100% !important;
+                                max-width: 148mm !important;
                                 margin: 0 auto !important;
-                                padding: 8mm !important;
+                                padding: 5mm !important;
                                 border: none !important;
                                 box-shadow: none !important;
                                 background: white !important;
                                 display: block !important;
                                 height: auto !important;
-                                min-height: auto !important;
+                            }
+
+                            /* Fix Table Row Spacing */
+                            table tr td, table tr th {
+                                padding-top: 4px !important;
+                                padding-bottom: 4px !important;
                             }
 
                             /* Table Pagination */
@@ -178,20 +181,32 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 display: table-header-group !important;
                             }
 
+                            /* Footer Fix: Prevent Split */
+                            .footer-section {
+                                page-break-inside: avoid !important;
+                                display: block !important;
+                                width: 100% !important;
+                            }
+
                             /* Font Scaling */
-                            h1 { font-size: 14pt !important; }
-                            h2 { font-size: 12pt !important; }
-                            p, span, td, th { font-size: 8pt !important; line-height: 1.2 !important; }
-                            .tax-table th, .tax-table td { font-size: 7pt !important; }
+                            h1 { font-size: 12pt !important; margin-bottom: 2px !important; }
+                            h2 { font-size: 10pt !important; margin-bottom: 2px !important; }
+                            p, span, td, th { font-size: 7.5pt !important; line-height: 1.1 !important; }
+                            .tax-table th, .tax-table td { font-size: 6.5pt !important; padding: 2px !important; }
+                            
+                            .header-logo { width: 48px !important; height: 48px !important; }
+                            .header-container { margin-bottom: 8px !important; padding-bottom: 8px !important; }
+                            .patient-info { margin-bottom: 8px !important; }
+                            .items-table { margin-bottom: 8px !important; }
                         }
                     `}} />
 
                     {/* Invoice Paper Design */}
                     <div className="invoice-container max-w-[800px] mx-auto text-slate-800 font-sans border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none bg-white">
                         {/* Hospital Header */}
-                        <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-6">
+                        <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-6 header-container">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 relative grayscale print:grayscale-0">
+                                <div className="w-16 h-16 relative grayscale print:grayscale-0 header-logo">
                                     <Image src="/logo.png" alt="Logo" width={64} height={64} className="object-contain" />
                                 </div>
                                 <div>
@@ -206,7 +221,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                             </div>
                             <div className="text-right">
                                 <h2 className="text-xl font-bold uppercase mb-1">GST Invoice</h2>
-                                <div className="text-4xl font-black text-slate-400 opacity-20 select-none">24/7</div>
+                                <div className="text-4xl font-black text-slate-400 opacity-20 select-none no-print">24/7</div>
                                 <div className="mt-4 text-sm font-medium">
                                     <p>Bill No : <span className="font-bold">{invoice.billNo}</span></p>
                                     <p>Date : <span className="font-bold">{format(new Date(invoice.date), 'dd-MM-yy')}</span></p>
@@ -215,7 +230,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         </div>
 
                         {/* Patient Info */}
-                        <div className="grid grid-cols-2 gap-x-12 gap-y-2 mb-6 text-sm">
+                        <div className="grid grid-cols-2 gap-x-12 gap-y-2 mb-6 text-sm patient-info">
                             <div className="flex gap-2">
                                 <span className="font-bold uppercase w-20">Patient:</span>
                                 <span>{invoice.patientName}</span>
@@ -231,7 +246,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         </div>
 
                         {/* Items Table */}
-                        <table className="w-full border-collapse mb-8 text-xs">
+                        <table className="w-full border-collapse mb-8 text-xs items-table">
                             <thead className="bg-slate-50 border-y-2 border-slate-900">
                                 <tr>
                                     <th className="py-2 px-2 text-left w-10">S.No</th>
@@ -261,70 +276,72 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         </table>
 
                         {/* Footer Section */}
-                        <div className="grid grid-cols-2 gap-8 pt-4">
-                            {/* Tax Summary Table */}
-                            <div>
-                                <table className="tax-table w-full text-[10px] border border-slate-300">
-                                    <thead className="bg-slate-50">
-                                        <tr className="border-b border-slate-300">
-                                            <th className="px-1 py-1 text-left">TAX</th>
-                                            <th className="px-1 py-1 text-right">TAXABLE</th>
-                                            <th className="px-1 py-1 text-right">CGST</th>
-                                            <th className="px-1 py-1 text-right">SGST</th>
-                                            <th className="px-1 py-1 text-right">TOTAL</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {Object.entries(taxGroups).map(([rate, vals]: [string, any]) => (
-                                            <tr key={rate} className="border-b border-slate-200">
-                                                <td className="px-1 py-1 font-bold">{rate}%</td>
-                                                <td className="px-1 py-1 text-right">{vals.taxable.toFixed(2)}</td>
-                                                <td className="px-1 py-1 text-right">{vals.cgst.toFixed(2)}</td>
-                                                <td className="px-1 py-1 text-right">{vals.sgst.toFixed(2)}</td>
-                                                <td className="px-1 py-1 text-right font-bold">{vals.total.toFixed(2)}</td>
+                        <div className="footer-section pt-4">
+                            <div className="flex justify-between items-start gap-8">
+                                {/* Tax Summary Table */}
+                                <div className="w-1/2">
+                                    <table className="tax-table w-full text-[10px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="px-1 py-1 text-left">TAX</th>
+                                                <th className="px-1 py-1 text-right">TAXABLE</th>
+                                                <th className="px-1 py-1 text-right">CGST</th>
+                                                <th className="px-1 py-1 text-right">SGST</th>
+                                                <th className="px-1 py-1 text-right">TOTAL</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                <div className="mt-4 text-[10px] leading-tight opacity-70">
-                                    <p>1. All Major Credit / Debit Cards / Digital Payments accepted.</p>
-                                    <p>2. E & O E Goods Once Sold Cannot Be Taken Back Or Exchanged.</p>
+                                        </thead>
+                                        <tbody>
+                                            {Object.entries(taxGroups).map(([rate, vals]: [string, any]) => (
+                                                <tr key={rate} className="border-b border-slate-200">
+                                                    <td className="px-1 py-1 font-bold">{rate}%</td>
+                                                    <td className="px-1 py-1 text-right">{vals.taxable.toFixed(2)}</td>
+                                                    <td className="px-1 py-1 text-right">{vals.cgst.toFixed(2)}</td>
+                                                    <td className="px-1 py-1 text-right">{vals.sgst.toFixed(2)}</td>
+                                                    <td className="px-1 py-1 text-right font-bold">{vals.total.toFixed(2)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    <div className="mt-2 text-[9px] leading-tight opacity-70">
+                                        <p>1. Major Credit/Debit/Digital Cards accepted.</p>
+                                        <p>2. E & O E Goods Once Sold Cannot Be Exchanged.</p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Totals & Signature */}
-                            <div className="flex flex-col items-end">
-                                <div className="w-full space-y-1 text-sm border-t-2 border-slate-900 pt-2 mb-8">
-                                    <div className="flex justify-between">
-                                        <span>Sub Total :</span>
-                                        <span className="font-bold">{invoice.subTotal.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Total Items :</span>
-                                        <span className="font-bold">{invoice.items.length}</span>
-                                    </div>
-                                    {Number(invoice.discountAmount || 0) > 0 && (
-                                        <div className="flex justify-between text-red-600 font-bold">
-                                            <span>Discount ({invoice.discountRate}%):</span>
-                                            <span>-₹{Number(invoice.discountAmount).toFixed(2)}</span>
+                                {/* Totals & Signature */}
+                                <div className="w-1/2 flex flex-col items-end">
+                                    <div className="w-full space-y-0.5 text-sm border-t-2 border-slate-900 pt-1 mb-4">
+                                        <div className="flex justify-between">
+                                            <span>Sub Total :</span>
+                                            <span className="font-bold">{invoice.subTotal.toFixed(2)}</span>
                                         </div>
-                                    )}
-                                    <div className="flex justify-between text-2xl font-black mt-4 border-t border-slate-200 pt-2">
-                                        <span>Total :</span>
-                                        <span>₹{invoice.grandTotal.toFixed(2)}</span>
+                                        <div className="flex justify-between">
+                                            <span>Total Items :</span>
+                                            <span className="font-bold">{invoice.items.length}</span>
+                                        </div>
+                                        {Number(invoice.discountAmount || 0) > 0 && (
+                                            <div className="flex justify-between text-red-600 font-bold">
+                                                <span>Discount ({invoice.discountRate}%):</span>
+                                                <span>-₹{Number(invoice.discountAmount).toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between text-xl font-black mt-2 border-t border-slate-200 pt-1">
+                                            <span>Total :</span>
+                                            <span>₹{invoice.grandTotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-[10px] font-bold text-slate-500 mt-1 uppercase">
+                                            <span>Mode :</span>
+                                            <span>{invoice.paymentMethod}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between text-xs font-bold text-slate-500 mt-2 uppercase">
-                                        <span>Mode :</span>
-                                        <span>{invoice.paymentMethod}</span>
-                                    </div>
-                                </div>
 
-                                <div className="text-center mt-auto w-full max-w-[200px]">
-                                    <div className="h-12 border-b border-slate-400 mb-2 italic text-slate-300 pointer-events-none">
-                                        {/* Signature Placeholder */}
+                                    <div className="text-center mt-2 w-full max-w-[150px]">
+                                        <div className="h-10 border-b border-slate-400 mb-1 italic text-slate-300 pointer-events-none">
+                                            {/* Signature Placeholder */}
+                                        </div>
+                                        <p className="text-[10px] font-bold uppercase">Signature</p>
+                                        <p className="text-[8px] text-slate-500 uppercase">Registered Pharmacist</p>
                                     </div>
-                                    <p className="text-xs font-bold uppercase">Signature</p>
-                                    <p className="text-[10px] text-slate-500 uppercase">Registered Pharmacist</p>
                                 </div>
                             </div>
                         </div>
