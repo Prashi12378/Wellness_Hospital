@@ -95,25 +95,23 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                             }
                             
                             /* 1. HIDE ALL BACKGROUND CONTENT */
-                            /* We target every direct child of body except our modal portal */
                             body > *:not(.invoice-modal-overlay) {
                                 display: none !important;
                             }
 
-                            /* 2. RESET BODY FOR PRINT */
+                            /* 2. RESET BODY & HTML */
                             html, body {
                                 margin: 0 !important;
                                 padding: 0 !important;
                                 height: auto !important;
-                                width: 148mm !important; /* Force A5 Width */
-                                min-height: 100% !important;
+                                width: auto !important; /* Allow natural browser width */
                                 background: white !important;
                                 overflow: visible !important;
                                 -webkit-print-color-adjust: exact !important;
                                 print-color-adjust: exact !important;
                             }
 
-                            /* 3. POSITION MODAL FOR PRINT */
+                            /* 3. ISOLATE INVOICE MODAL */
                             .invoice-modal-overlay {
                                 position: absolute !important;
                                 top: 0 !important;
@@ -124,16 +122,21 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 padding: 0 !important;
                                 margin: 0 !important;
                                 z-index: auto !important;
+                                overflow: visible !important;
                             }
 
                             .invoice-modal-container {
                                 width: 100% !important;
+                                max-width: none !important;
+                                max-height: none !important;
+                                height: auto !important;
                                 border: none !important;
                                 border-radius: 0 !important;
                                 box-shadow: none !important;
                                 margin: 0 !important;
                                 padding: 0 !important;
                                 display: block !important;
+                                overflow: visible !important;
                             }
 
                             #print-area {
@@ -141,26 +144,30 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 margin: 0 !important;
                                 width: 100% !important;
                                 display: block !important;
+                                overflow: visible !important;
                             }
 
                             .no-print {
                                 display: none !important;
                             }
 
-                            /* 4. INVOICE LAYOUT FIXES */
+                            /* 4. INVOICE CONTENT LAYOUT */
                             .invoice-container {
-                                width: 148mm !important;
-                                height: auto !important; /* Let it flow naturally */
-                                min-height: 210mm !important;
-                                padding: 10mm !important;
-                                margin: 0 !important;
+                                width: 148mm !important; /* Fixed width for A5 content */
+                                margin: 0 auto !important;
+                                padding: 8mm !important;
                                 border: none !important;
                                 box-shadow: none !important;
                                 background: white !important;
+                                display: block !important;
+                                height: auto !important;
+                                min-height: auto !important;
                             }
 
-                            /* Table Print Optimizations */
+                            /* Table Pagination */
                             table {
+                                width: 100% !important;
+                                border-collapse: collapse !important;
                                 page-break-inside: auto !important;
                             }
                             tr {
@@ -171,10 +178,10 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 display: table-header-group !important;
                             }
 
-                            /* Font Scaling for A5 */
+                            /* Font Scaling */
                             h1 { font-size: 14pt !important; }
                             h2 { font-size: 12pt !important; }
-                            p, span, td, th { font-size: 8pt !important; }
+                            p, span, td, th { font-size: 8pt !important; line-height: 1.2 !important; }
                             .tax-table th, .tax-table td { font-size: 7pt !important; }
                         }
                     `}} />
