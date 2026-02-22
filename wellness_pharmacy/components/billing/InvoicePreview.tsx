@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Printer } from 'lucide-react';
@@ -27,6 +28,14 @@ interface InvoicePreviewProps {
 
 export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
     const printRef = useRef<HTMLDivElement>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    if (!mounted) return null;
 
     const handlePrint = () => {
         window.print();
@@ -49,23 +58,26 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
         return acc;
     }, {});
 
-    return (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 invoice-modal-overlay">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col invoice-modal-container">
+    const modalContent = (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 invoice-modal-overlay">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col invoice-modal-container relative">
                 {/* Modal Header */}
                 <div className="p-4 border-b flex items-center justify-between no-print">
-                    <h3 className="text-lg font-bold">Invoice Preview</h3>
+                    <div className="flex flex-col">
+                        <h3 className="text-lg font-bold">Invoice Preview</h3>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pharmacy Billing System</p>
+                    </div>
                     <div className="flex gap-2">
                         <button
                             onClick={handlePrint}
-                            className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-dark transition-all"
+                            className="bg-primary text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all font-bold text-sm"
                         >
                             <Printer className="w-4 h-4" />
-                            Print Invoice
+                            Print Now
                         </button>
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all"
+                            className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-all font-bold text-sm"
                         >
                             Close
                         </button>
@@ -81,71 +93,88 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 size: A5 portrait;
                                 margin: 0;
                             }
+                            
+                            /* 1. HIDE ALL BACKGROUND CONTENT */
+                            /* We target every direct child of body except our modal portal */
+                            body > *:not(.invoice-modal-overlay) {
+                                display: none !important;
+                            }
+
+                            /* 2. RESET BODY FOR PRINT */
                             html, body {
                                 margin: 0 !important;
                                 padding: 0 !important;
-                                height: 100vh !important;
-                                overflow: hidden !important;
-                                -webkit-print-color-adjust: exact;
+                                height: auto !important;
+                                width: 148mm !important; /* Force A5 Width */
+                                min-height: 100% !important;
+                                background: white !important;
+                                overflow: visible !important;
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
                             }
-                            body * {
-                                visibility: hidden;
-                            }
-                            .invoice-modal-overlay,
-                            .invoice-modal-overlay *,
-                            .invoice-modal-container,
-                            .invoice-modal-container *,
-                            #print-area,
-                            #print-area * {
-                                visibility: visible !important;
-                            }
+
+                            /* 3. POSITION MODAL FOR PRINT */
                             .invoice-modal-overlay {
-                                position: fixed !important;
+                                position: absolute !important;
                                 top: 0 !important;
                                 left: 0 !important;
                                 width: 100% !important;
-                                height: 100% !important;
-                                z-index: 99999 !important;
+                                display: block !important;
                                 background: white !important;
                                 padding: 0 !important;
                                 margin: 0 !important;
-                                display: block !important;
+                                z-index: auto !important;
                             }
+
                             .invoice-modal-container {
                                 width: 100% !important;
-                                height: 100% !important;
-                                max-width: none !important;
-                                max-height: none !important;
                                 border: none !important;
+                                border-radius: 0 !important;
                                 box-shadow: none !important;
-                                padding: 0 !important;
                                 margin: 0 !important;
+                                padding: 0 !important;
+                                display: block !important;
                             }
+
                             #print-area {
-                                width: 148mm !important;
-                                height: 210mm !important;
-                                margin: 0 !important;
                                 padding: 0 !important;
-                                overflow: hidden !important;
+                                margin: 0 !important;
+                                width: 100% !important;
+                                display: block !important;
                             }
-                            .no-print { display: none !important; }
-                            
-                            /* Ensure content fits exactly on A5 / Half-A4 */
+
+                            .no-print {
+                                display: none !important;
+                            }
+
+                            /* 4. INVOICE LAYOUT FIXES */
                             .invoice-container {
+                                width: 148mm !important;
+                                height: auto !important; /* Let it flow naturally */
+                                min-height: 210mm !important;
+                                padding: 10mm !important;
+                                margin: 0 !important;
                                 border: none !important;
                                 box-shadow: none !important;
-                                width: 148mm !important;
-                                height: 210mm !important;
-                                padding: 8mm !important;
-                                margin: 0 !important;
-                                display: flex;
-                                flex-direction: column;
+                                background: white !important;
                             }
-                            
-                            /* Adjust font sizes for smaller paper */
+
+                            /* Table Print Optimizations */
+                            table {
+                                page-break-inside: auto !important;
+                            }
+                            tr {
+                                page-break-inside: avoid !important;
+                                page-break-after: auto !important;
+                            }
+                            thead {
+                                display: table-header-group !important;
+                            }
+
+                            /* Font Scaling for A5 */
                             h1 { font-size: 14pt !important; }
                             h2 { font-size: 12pt !important; }
-                            p, span, td, th { font-size: 8pt !important; line-height: 1.2 !important; }
+                            p, span, td, th { font-size: 8pt !important; }
                             .tax-table th, .tax-table td { font-size: 7pt !important; }
                         }
                     `}} />
@@ -297,4 +326,6 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
