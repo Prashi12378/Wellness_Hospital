@@ -20,6 +20,7 @@ interface PrescriptionPDFButtonProps {
     regNo: string;
     followUp: string;
     fileName?: string;
+    date?: string;
 }
 
 const PrescriptionPDFButton: React.FC<PrescriptionPDFButtonProps> = (props) => {

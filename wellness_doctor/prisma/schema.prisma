@@ -112,6 +112,7 @@ model Prescription {
   doctorName      String
   medicines       Json
   additionalNotes String?
+  date            DateTime    @default(now())
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   appointment     Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
@@ -251,6 +252,7 @@ model Admission {
   LabRecord                            LabRecord[]
   Surgery                              Surgery[]
   pharmacyInvoices                     Invoice[]
+  doctorDesignation                    String?
 }
 
 model ClinicalNote {
@@ -299,6 +301,10 @@ model LabRequest {
   requestedByName String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  department      String   @default("General")
+  parameters      Json?
+  consultantName  String?
+  technicianName  String?
   patient         Profile  @relation("PatientLabRequests", fields: [patientId], references: [id])
 }
 

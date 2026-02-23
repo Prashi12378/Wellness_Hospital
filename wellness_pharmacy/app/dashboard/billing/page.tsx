@@ -20,6 +20,7 @@ export default function BillingPage() {
         doctor: '',
         insurance: '',
     });
+    const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0]);
     const [paymentMethod, setPaymentMethod] = useState('CASH');
 
     // UI State
@@ -227,7 +228,8 @@ export default function BillingPage() {
             paymentMethod: isIpdEnabled ? 'CREDIT' : paymentMethod,
             items: cart,
             discountRate,
-            discountAmount
+            discountAmount,
+            date: billDate
         });
 
         if (result.success && result.invoice) {
@@ -414,6 +416,15 @@ export default function BillingPage() {
                                     onChange={(e) => setPatientInfo({ ...patientInfo, insurance: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                     readOnly={isIpdEnabled}
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Bill Date</label>
+                                <input
+                                    type="date"
+                                    value={billDate}
+                                    onChange={(e) => setBillDate(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 />
                             </div>
                         </div>

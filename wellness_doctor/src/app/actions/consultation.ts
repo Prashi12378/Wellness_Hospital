@@ -86,15 +86,17 @@ export async function savePrescription(data: any) {
                 medicines: data.medicines,
                 additionalNotes: data.additional_notes,
                 doctorName: doctorName,
+                date: data.date ? new Date(data.date) : new Date(),
                 updatedAt: new Date()
             },
             create: {
                 appointmentId: data.appointment_id,
-                doctorId: userProfile.id, // Use the proper Profile ID
+                doctorId: userProfile.id,
                 patientId: data.patient_id,
                 doctorName: doctorName,
                 medicines: data.medicines,
-                additionalNotes: data.additional_notes
+                additionalNotes: data.additional_notes,
+                date: data.date ? new Date(data.date) : new Date()
             }
         });
 

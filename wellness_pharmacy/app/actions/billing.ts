@@ -69,6 +69,7 @@ export async function createInvoice(data: {
     paymentMethod: string;
     discountRate?: number;
     discountAmount?: number;
+    date?: Date | string;
 }) {
     try {
         const session = await getServerSession(authOptions);
@@ -136,7 +137,8 @@ export async function createInvoice(data: {
                     patientPhone: data.patientPhone,
                     doctorName: data.doctorName,
                     insuranceNo: data.insuranceNo,
-                    admissionId: data.admissionId, // Link to IPD Admission
+                    admissionId: data.admissionId,
+                    date: data.date ? new Date(data.date) : new Date(),
                     subTotal: subTotal,
                     totalGst: totalGst,
                     grandTotal: grandTotal,

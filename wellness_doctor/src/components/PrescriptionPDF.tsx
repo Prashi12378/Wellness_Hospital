@@ -189,6 +189,7 @@ interface PrescriptionPDFProps {
     speciality: string;
     regNo: string;
     followUp: string;
+    date?: string;
 }
 
 const PrescriptionPDF: React.FC<PrescriptionPDFProps> = ({
@@ -204,7 +205,8 @@ const PrescriptionPDF: React.FC<PrescriptionPDFProps> = ({
     qualification,
     speciality,
     regNo,
-    followUp
+    followUp,
+    date
 }) => (
     <Document>
         <Page size="A4" style={styles.page}>
@@ -269,7 +271,9 @@ const PrescriptionPDF: React.FC<PrescriptionPDFProps> = ({
                     </View>
                     <View style={styles.row}>
                         <Text style={styles.label}>Date/Time:</Text>
-                        <Text style={styles.value}>{format(new Date(), 'dd-MMM-yyyy (HH:mm)')}</Text>
+                        <Text style={styles.value}>
+                            {date ? format(new Date(date), 'dd-MMM-yyyy') : format(new Date(), 'dd-MMM-yyyy (HH:mm)')}
+                        </Text>
                     </View>
                 </View>
             </View>

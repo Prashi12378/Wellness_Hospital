@@ -170,7 +170,8 @@ export default function ConsultationPage({ params }: PageProps) {
 
     const [diagnosis, setDiagnosis] = useState('');
     const [adviceLines, setAdviceLines] = useState<string[]>(['']);
-    const [visitDate, setVisitDate] = useState(format(new Date(), 'dd-MMM-yyyy (HH:mm)'));
+    const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]); // Use YYYY-MM-DD for input
+    const [visitDateDisplay, setVisitDateDisplay] = useState(format(new Date(), 'dd-MMM-yyyy (HH:mm)')); // Keep display for PDF? No, use the editable date.
 
     // Legacy/Unused for now but kept for compatibility logic
     // Updated to include height
@@ -262,6 +263,9 @@ export default function ConsultationPage({ params }: PageProps) {
                         height: parsed.vitals?.height || '',
                     });
 
+                    if (rx.date) {
+                        setVisitDate(new Date(rx.date).toISOString().split('T')[0]);
+                    }
                 } else {
                     setAdviceLines(rx.additionalNotes ? rx.additionalNotes.split('\n') : ['']);
                 }
@@ -330,7 +334,8 @@ export default function ConsultationPage({ params }: PageProps) {
                 appointment_id: id,
                 patient_id: appointment.user_id,
                 medicines: validMedicines,
-                additional_notes: serializedNotes
+                additional_notes: serializedNotes,
+                date: visitDate
             };
 
             const result = await savePrescription(prescriptionData);
@@ -396,6 +401,7 @@ export default function ConsultationPage({ params }: PageProps) {
                         regNo={existingPrescription?.doctor_reg_no || ''}
                         followUp={followUp}
                         fileName={`${patientName.replace(/\s+/g, '_')}_Prescription.pdf`}
+                        date={visitDate}
                     />
 
                     <button
@@ -439,7 +445,15 @@ export default function ConsultationPage({ params }: PageProps) {
                         </div>
                         <div className="p-2 flex items-center">
                             <span className="font-bold w-24">Date:</span>
-                            <span className="font-medium">{visitDate}</span>
+                            <input
+                                type="date"
+                                value={visitDate}
+                                onChange={(e) => setVisitDate(e.target.value)}
+                                className="font-medium focus:outline-none bg-transparent cursor-pointer print:hidden"
+                            />
+                            <span className="hidden print:inline font-medium">
+                                {format(new Date(visitDate), 'dd-MMM-yyyy')}
+                            </span>
                         </div>
                     </div>
 
