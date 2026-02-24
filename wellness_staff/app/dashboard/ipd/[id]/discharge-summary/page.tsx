@@ -16,10 +16,10 @@ import {
     ShieldCheck,
     Phone,
     MapPin,
-    Building2,
-    Activity
+    Activity,
+    RotateCcw
 } from 'lucide-react';
-import { getAdmissionDetails } from '@/app/actions/ipd';
+import { getAdmissionDetails, undoDischarge } from '@/app/actions/ipd';
 import { format } from 'date-fns';
 
 export default function DischargeSummaryPage() {
@@ -81,6 +81,19 @@ export default function DischargeSummaryPage() {
     );
 
     const totalBill = admission.charges?.reduce((acc: number, c: any) => acc + Number(c.amount), 0) || 0;
+
+    const handleUndoDischarge = async () => {
+        if (!confirm("Are you sure you want to DELETE this discharge summary and REVERT the patient's status to 'admitted'? This will clear all discharge fields.")) return;
+
+        setIsLoading(true);
+        const res = await undoDischarge(id);
+        if (res.success) {
+            router.push(`/dashboard/ipd/${id}`);
+        } else {
+            alert(res.error || "Failed to undo discharge");
+            setIsLoading(false);
+        }
+    };
 
     // Helper to format clinical text based on user preferences
     const formatClinicalText = (text: string | null) => {
@@ -157,6 +170,13 @@ export default function DischargeSummaryPage() {
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleUndoDischarge}
+                        className="px-6 py-3 bg-red-50 text-red-600 rounded-[20px] font-black hover:bg-red-100 transition-all active:scale-95 flex items-center gap-2 border border-red-100"
+                    >
+                        <RotateCcw className="w-5 h-5" />
+                        Undo Discharge
+                    </button>
                     <button
                         onClick={() => router.push(`/dashboard/ipd/${id}?edit=true`)}
                         className="px-6 py-3 bg-slate-900 text-white rounded-[20px] font-black shadow-lg transition-all active:scale-95 flex items-center gap-2"

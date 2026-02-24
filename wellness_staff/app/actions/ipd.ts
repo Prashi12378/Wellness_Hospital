@@ -457,3 +457,55 @@ export async function generateAIDischargeSummary(admissionId: string) {
         return { success: false, error: "AI failed to generate summary" };
     }
 }
+
+export async function deleteAdmission(admissionId: string) {
+    try {
+        // First, unlink any invoices that might be associated with this admission
+        await prisma.invoice.updateMany({
+            where: { admissionId },
+            data: { admissionId: null }
+        });
+
+        // Delete the admission record. 
+        // Note: ClinicalNote, HospitalCharge, LabRecord, Surgery have onDelete: Cascade in Prisma schema
+        await prisma.admission.delete({
+            where: { id: admissionId }
+        });
+
+        await safeRevalidatePath('/dashboard/ipd');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete admission:", error);
+        return { success: false, error: "Failed to delete IPD record" };
+    }
+}
+
+export async function undoDischarge(admissionId: string) {
+    try {
+        await prisma.admission.update({
+            where: { id: admissionId },
+            data: {
+                status: 'admitted',
+                dischargeDate: null,
+                diagnoses: null,
+                dischargeAdvice: null,
+                dischargeCondition: null,
+                dischargeMedication: null,
+                hospitalCourse: null,
+                investigations: null,
+                noteAndReview: null,
+                physicalFindings: null,
+                presentingSymptoms: null,
+                updatedAt: new Date()
+            }
+        });
+
+        await safeRevalidatePath('/dashboard/ipd');
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}/discharge-summary`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to undo discharge:", error);
+        return { success: false, error: "Failed to undo discharge" };
+    }
+}

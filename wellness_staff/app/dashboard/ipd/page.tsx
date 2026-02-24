@@ -12,9 +12,10 @@ import {
     Plus,
     X,
     ClipboardList,
-    Stethoscope
+    Stethoscope,
+    Trash2
 } from 'lucide-react';
-import { getAdmittedPatients, admitPatient, updateAdmissionDates } from '@/app/actions/ipd';
+import { getAdmittedPatients, admitPatient, updateAdmissionDates, deleteAdmission } from '@/app/actions/ipd';
 import { getDoctors, searchPatients } from '@/app/actions/appointments';
 import { format } from 'date-fns';
 import { useDebounce } from 'use-debounce';
@@ -101,6 +102,19 @@ export default function IPDDashboard() {
             fetchAdmissions();
         }
         setIsSubmitting(false);
+    };
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete the IPD record for ${name}? This action cannot be undone.`)) return;
+
+        setIsLoading(true);
+        const res = await deleteAdmission(id);
+        if (res.success) {
+            fetchAdmissions();
+        } else {
+            alert(res.error || "Failed to delete record");
+        }
+        setIsLoading(false);
     };
 
     return (

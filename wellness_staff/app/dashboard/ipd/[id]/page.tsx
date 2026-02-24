@@ -23,7 +23,8 @@ import {
     Printer,
     FileSearch,
     Sparkles,
-    Wand2
+    Wand2,
+    Trash2
 } from 'lucide-react';
 import {
     getAdmissionDetails,
@@ -38,7 +39,8 @@ import {
     updateHospitalCharge,
     updateLabRecord,
     updateSurgery,
-    updateClinicalNote
+    updateClinicalNote,
+    deleteAdmission
 } from '@/app/actions/ipd';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -88,6 +90,19 @@ export default function AdmissionDetailPage() {
             fetchDetails();
         }
         setIsActionLoading(false);
+    };
+
+    const handleDelete = async () => {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete the IPD record for ${admission.patient.firstName} ${admission.patient.lastName}? This action cannot be undone.`)) return;
+
+        setIsActionLoading(true);
+        const res = await deleteAdmission(id);
+        if (res.success) {
+            router.push('/dashboard/ipd');
+        } else {
+            alert(res.error || "Failed to delete record");
+            setIsActionLoading(false);
+        }
     };
 
     if (isLoading) return (
@@ -201,31 +216,41 @@ export default function AdmissionDetailPage() {
                         </div>
                     </div>
                 </div>
-                {admission.status === 'admitted' ? (
+                <div className="flex items-center gap-3">
                     <button
-                        onClick={() => setModalType('discharge')}
-                        className="px-8 py-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-3xl font-black shadow-sm transition-all active:scale-95 border border-red-100"
+                        onClick={handleDelete}
+                        disabled={isActionLoading}
+                        className="p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-3xl transition-all border border-transparent hover:border-red-100"
+                        title="Delete IPD Record"
                     >
-                        Initiate Discharge
+                        <Trash2 className="w-6 h-6" />
                     </button>
-                ) : (
-                    <div className="flex items-center gap-3">
+                    {admission.status === 'admitted' ? (
                         <button
-                            onClick={() => setModalType('edit_discharge')}
-                            className="px-6 py-4 bg-slate-900 text-white rounded-3xl font-black shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                            onClick={() => setModalType('discharge')}
+                            className="px-8 py-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-3xl font-black shadow-sm transition-all active:scale-95 border border-red-100"
                         >
-                            <FileSearch className="w-5 h-5" />
-                            Edit Summary
+                            Initiate Discharge
                         </button>
-                        <Link
-                            href={`/dashboard/ipd/${id}/discharge-summary`}
-                            className="px-8 py-4 bg-primary text-white rounded-3xl font-black shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
-                        >
-                            <FileText className="w-5 h-5" />
-                            Discharge Summary
-                        </Link>
-                    </div>
-                )}
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setModalType('edit_discharge')}
+                                className="px-6 py-4 bg-slate-900 text-white rounded-3xl font-black shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <FileSearch className="w-5 h-5" />
+                                Edit Summary
+                            </button>
+                            <Link
+                                href={`/dashboard/ipd/${id}/discharge-summary`}
+                                className="px-8 py-4 bg-primary text-white rounded-3xl font-black shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <FileText className="w-5 h-5" />
+                                Discharge Summary
+                            </Link>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Navigation Tabs */}
