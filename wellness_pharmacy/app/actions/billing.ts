@@ -79,8 +79,14 @@ export async function createInvoice(data: {
 
         // Generate Bill No (S-XXXXX format as per image)
         const lastInvoice = await db.invoice.findFirst({
+            where: {
+                billNo: {
+                    startsWith: 'S-'
+                }
+            },
             orderBy: { createdAt: 'desc' },
         });
+
 
         let nextBillNo = 'S-10001';
         if (lastInvoice && lastInvoice.billNo.startsWith('S-')) {
