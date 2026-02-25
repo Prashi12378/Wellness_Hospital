@@ -1,7 +1,7 @@
 
 import { prisma } from "@/lib/db";
 import { format } from "date-fns";
-import { BadgeCheck, Clock, XCircle, Plus } from "lucide-react";
+import { BadgeCheck, Clock, XCircle, Plus, ReceiptText } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +68,7 @@ export default async function AppointmentsPage() {
                                     <th className="p-4 font-semibold">Patient</th>
                                     <th className="p-4 font-semibold">Doctor</th>
                                     <th className="p-4 font-semibold">Reason</th>
-                                    <th className="p-4 font-semibold">Status</th>
+                                    <th className="p-4 font-semibold">Status & Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -114,10 +114,22 @@ export default async function AppointmentsPage() {
                                             </td>
                                             <td className="p-4 text-slate-600">{apt.reason || "General Checkup"}</td>
                                             <td className="p-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-                                                    <StatusIcon className="w-3.5 h-3.5" />
-                                                    {apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                                                        <StatusIcon className="w-3.5 h-3.5" />
+                                                        {apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}
+                                                    </span>
+                                                    {apt.status !== 'cancelled' && (
+                                                        <a
+                                                            href={`/dashboard/appointments/${apt.id}/billing`}
+                                                            className="p-2 hover:bg-slate-100 rounded-lg text-primary transition-colors flex items-center gap-1 text-xs font-bold"
+                                                            title="Billing"
+                                                        >
+                                                            <ReceiptText className="w-4 h-4" />
+                                                            Billing
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     );

@@ -102,6 +102,8 @@ model Appointment {
   doctor          Profile?      @relation("DoctorAppointments", fields: [doctorId], references: [id])
   patient         Profile       @relation("PatientAppointments", fields: [patientId], references: [id])
   prescription    Prescription?
+  HospitalCharge  HospitalCharge[]
+  Invoice         Invoice[]
 }
 
 model Prescription {
@@ -190,7 +192,9 @@ model Invoice {
   discountAmount Decimal       @default(0)
   discountRate   Decimal       @default(0)
   admissionId    String?
+  appointmentId  String?
   admission      Admission?    @relation(fields: [admissionId], references: [id])
+  appointment    Appointment?  @relation(fields: [appointmentId], references: [id])
   items          InvoiceItem[]
 }
 
@@ -268,14 +272,16 @@ model ClinicalNote {
 
 model HospitalCharge {
   id          String    @id @default(cuid())
-  admissionId String
+  admissionId String?
   description String
   amount      Decimal
   type        String
   date        DateTime  @default(now())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  Admission   Admission? @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 }
 
 model LabRecord {

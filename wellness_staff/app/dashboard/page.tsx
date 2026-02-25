@@ -1,6 +1,7 @@
 import { Calendar, Users, Clock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
+import BackfillLedgerButton from '@/components/BackfillLedgerButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -115,6 +116,9 @@ export default async function DashboardPage() {
                     </Link>
                 </div>
             </div>
+
+            {/* Ledger Backfill */}
+            <BackfillLedgerButton />
         </div>
     );
 }

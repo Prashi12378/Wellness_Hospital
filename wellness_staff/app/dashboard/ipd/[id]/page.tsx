@@ -848,6 +848,7 @@ export default function AdmissionDetailPage() {
                                     dischargeAdvice: fd.get('dischargeAdvice') as string,
                                     noteAndReview: fd.get('noteAndReview') as string,
                                     doctorDesignation: fd.get('doctorDesignation') as string,
+                                    paymentMethod: fd.get('paymentMethod') as string,
                                 };
                                 handleAction(() => dischargePatient(id, data));
                             }}>
@@ -930,12 +931,17 @@ export default function AdmissionDetailPage() {
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Note and Review</label>
-                                        <textarea name="noteAndReview" rows={2} placeholder="Follow-up schedule..." className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-200 font-bold resize-none uppercase" />
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Mode (Bill Settlement)</label>
+                                        <select name="paymentMethod" required className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-red-200 font-bold uppercase">
+                                            <option value="CASH">CASH</option>
+                                            <option value="UPI">UPI / QR CODE</option>
+                                            <option value="CARD">DEBIT / CREDIT CARD</option>
+                                            <option value="TRANSFER">BANK TRANSFER</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <button disabled={isActionLoading} className="w-full py-4 bg-red-600 text-white rounded-3xl font-black shadow-xl shadow-red-200 flex items-center justify-center gap-2 mt-4">
-                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Confirm Patient Discharge"}
+                                    {isActionLoading ? <Loader2 className="animate-spin w-6 h-6" /> : "Confirm Patient Discharge & Finalize Bill"}
                                 </button>
                             </form>
                         )}

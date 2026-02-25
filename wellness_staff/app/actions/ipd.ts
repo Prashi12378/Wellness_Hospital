@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { model } from "@/lib/gemini";
 import { serializeData, formatMedicalDate } from "@/lib/serialization";
 import { randomUUID } from "crypto";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]/route";
 
 async function safeRevalidatePath(path: string) {
     try {
@@ -342,17 +344,63 @@ export async function dischargePatient(admissionId: string, data?: {
     dischargeAdvice?: string;
     noteAndReview?: string;
     doctorDesignation?: string;
+    paymentMethod?: string;
 }) {
     try {
-        const admission = await prisma.admission.update({
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        // 1. Get admission and patient info for ledger description
+        const admissionWithPatient = await prisma.admission.findUnique({
             where: { id: admissionId },
-            data: {
-                status: 'discharged',
-                dischargeDate: new Date(),
-                updatedAt: new Date(),
-                ...data
+            include: {
+                patient: true,
+                HospitalCharge: true
             }
         });
+
+        if (!admissionWithPatient) {
+            return { success: false, error: "Admission not found" };
+        }
+
+        // 2. Calculate Total Bill
+        const totalAmount = admissionWithPatient.HospitalCharge.reduce((sum, charge) => sum + Number(charge.amount), 0);
+        const paymentMethod = data?.paymentMethod || 'CASH';
+
+        // 3. Perform atomic update and ledger recording
+        const [admission] = await prisma.$transaction([
+            prisma.admission.update({
+                where: { id: admissionId },
+                data: {
+                    status: 'discharged',
+                    dischargeDate: new Date(),
+                    updatedAt: new Date(),
+                    diagnoses: data?.diagnoses,
+                    presentingSymptoms: data?.presentingSymptoms,
+                    physicalFindings: data?.physicalFindings,
+                    investigations: data?.investigations,
+                    hospitalCourse: data?.hospitalCourse,
+                    dischargeMedication: data?.dischargeMedication,
+                    dischargeCondition: data?.dischargeCondition,
+                    dischargeAdvice: data?.dischargeAdvice,
+                    noteAndReview: data?.noteAndReview,
+                    doctorDesignation: data?.doctorDesignation
+                }
+            }),
+            prisma.ledger.create({
+                data: {
+                    transactionType: 'income',
+                    category: 'staff',
+                    description: `IPD Discharge - Bill for ${admissionWithPatient.patient.firstName} ${admissionWithPatient.patient.lastName} (IP-${admissionId.slice(-6).toUpperCase()})`,
+                    amount: totalAmount,
+                    paymentMethod: paymentMethod,
+                    transactionDate: new Date(),
+                    recordedBy: (session.user as any).id
+                }
+            })
+        ]);
 
         await safeRevalidatePath('/dashboard/ipd');
         await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
