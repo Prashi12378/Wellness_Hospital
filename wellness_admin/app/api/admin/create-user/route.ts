@@ -5,6 +5,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import bcrypt from "bcryptjs";
 
+const normalizeDoctorName = (name: string) => {
+    return name.replace(/^dr\.?\s*/i, 'Dr. ');
+};
+
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -68,7 +72,8 @@ export async function POST(req: Request) {
             // Map role string to enum
             const roleEnum = (["admin", "doctor", "staff", "patient"].includes(role)) ? role : "patient";
 
-            const nameParts = fullName.trim().split(/\s+/);
+            const normalizedFullName = normalizeDoctorName(fullName);
+            const nameParts = normalizedFullName.trim().split(/\s+/);
             const firstName = nameParts[0] || "";
             const lastName = nameParts.slice(1).join(" ") || "";
 
@@ -88,6 +93,13 @@ export async function POST(req: Request) {
                     bio,
                 }
             });
+
+            if (user) {
+                await tx.user.update({
+                    where: { id: user.id },
+                    data: { name: normalizedFullName }
+                });
+            }
 
             return { user, profile };
         });

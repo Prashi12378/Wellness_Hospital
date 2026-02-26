@@ -27,7 +27,10 @@ export async function GET(req: Request) {
         const mappedDoctors = doctors.map(profile => {
             const firstName = profile.firstName || "";
             const lastName = profile.lastName || "";
-            const fullName = [firstName, lastName].filter(Boolean).join(" ") || profile.user?.name || "Unknown";
+            let fullName = [firstName, lastName].filter(Boolean).join(" ") || profile.user?.name || "Unknown";
+
+            // Normalize "Dr." prefix (fix DR -> Dr, add dot/space if missing)
+            fullName = fullName.replace(/^dr\.?\s*/i, 'Dr. ');
 
             return {
                 ...profile,

@@ -5,6 +5,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import bcrypt from "bcryptjs";
 
+const normalizeDoctorName = (name: string) => {
+    return name.replace(/^dr\.?\s*/i, 'Dr. ');
+};
+
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -33,7 +37,8 @@ export async function POST(req: Request) {
         }
 
         const result = await prisma.$transaction(async (tx) => {
-            const nameParts = fullName.trim().split(/\s+/);
+            const normalizedFullName = normalizeDoctorName(fullName);
+            const nameParts = normalizedFullName.trim().split(/\s+/);
             const firstName = nameParts[0] || "";
             const lastName = nameParts.slice(1).join(" ") || "";
 
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
 
             if (profile.userId) {
                 const userData: any = {
-                    name: fullName,
+                    name: normalizedFullName,
                     email: email || undefined, // Keep email in sync
                     image: avatar_url
                 };
