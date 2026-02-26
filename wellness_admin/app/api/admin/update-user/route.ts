@@ -33,11 +33,15 @@ export async function POST(req: Request) {
         }
 
         const result = await prisma.$transaction(async (tx) => {
+            const nameParts = fullName.trim().split(/\s+/);
+            const firstName = nameParts[0] || "";
+            const lastName = nameParts.slice(1).join(" ") || "";
+
             const profile = await tx.profile.update({
                 where: { id: id },
                 data: {
-                    firstName: fullName.split(' ')[0],
-                    lastName: fullName.split(' ').slice(1).join(' '),
+                    firstName,
+                    lastName,
                     email: email || undefined, // Keep email in sync
                     phone,
                     specialization,

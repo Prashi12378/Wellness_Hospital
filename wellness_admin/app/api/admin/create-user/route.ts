@@ -68,19 +68,23 @@ export async function POST(req: Request) {
             // Map role string to enum
             const roleEnum = (["admin", "doctor", "staff", "patient"].includes(role)) ? role : "patient";
 
+            const nameParts = fullName.trim().split(/\s+/);
+            const firstName = nameParts[0] || "";
+            const lastName = nameParts.slice(1).join(" ") || "";
+
             const profile = await tx.profile.create({
                 data: {
                     userId: user.id,
                     email,
-                    firstName: fullName.split(' ')[0],
-                    lastName: fullName.split(' ').slice(1).join(' '), // Approximate split
+                    firstName,
+                    lastName,
                     role: roleEnum,
                     phone,
                     specialization,
                     qualifications: qualification,
                     experience: experience ? parseInt(experience) : undefined,
                     consultationFee: fee ? parseFloat(fee) : undefined,
-                    availableTimings: timings, // JSON
+                    availableTimings: timings,
                     bio,
                 }
             });

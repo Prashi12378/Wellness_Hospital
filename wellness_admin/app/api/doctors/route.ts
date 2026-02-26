@@ -24,17 +24,21 @@ export async function GET(req: Request) {
         });
 
         // Map Prisma camelCase fields to snake_case fields expected by frontend
-        const mappedDoctors = doctors.map(doctor => ({
-            ...doctor,
-            full_name: doctor.firstName && doctor.lastName
-                ? `${doctor.firstName} ${doctor.lastName}`
-                : doctor.firstName || doctor.lastName || doctor.user?.name || 'Unknown',
-            qualification: doctor.qualifications,
-            experience_years: doctor.experience,
-            consultation_fee: doctor.consultationFee,
-            available_timings: doctor.availableTimings,
-            avatar_url: doctor.user?.image
-        }));
+        const mappedDoctors = doctors.map(profile => {
+            const firstName = profile.firstName || "";
+            const lastName = profile.lastName || "";
+            const fullName = [firstName, lastName].filter(Boolean).join(" ") || profile.user?.name || "Unknown";
+
+            return {
+                ...profile,
+                full_name: fullName,
+                qualification: profile.qualifications,
+                experience_years: profile.experience,
+                consultation_fee: profile.consultationFee,
+                available_timings: profile.availableTimings,
+                avatar_url: profile.user?.image
+            };
+        });
 
         return NextResponse.json(mappedDoctors);
     } catch (error) {
