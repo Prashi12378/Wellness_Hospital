@@ -136,8 +136,8 @@ export default function IPDBillingPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${adm.status === 'discharged'
-                                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                                : 'bg-blue-50 text-blue-600 border border-blue-100'
+                                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                            : 'bg-blue-50 text-blue-600 border border-blue-100'
                                             }`}>
                                             {adm.status.toUpperCase()}
                                         </span>
@@ -154,7 +154,7 @@ export default function IPDBillingPage() {
                                             }}
                                             className="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-medium text-sm transition-colors"
                                         >
-                                            <Receipt className="w-4 h-4" />
+                                            <FileText className="w-4 h-4" />
                                             Bill Record
                                         </button>
                                     </td>
