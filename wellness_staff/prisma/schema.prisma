@@ -85,7 +85,7 @@ model Profile {
 }
 
 model Appointment {
-  id              String        @id @default(uuid())
+  id              String           @id @default(uuid())
   patientId       String
   doctorId        String?
   patientName     String?
@@ -93,17 +93,17 @@ model Appointment {
   patientEmail    String?
   appointmentDate DateTime
   appointmentTime String
-  status          String        @default("scheduled")
+  status          String           @default("scheduled")
   reason          String?
   department      String?
-  type            String?       @default("General")
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  doctor          Profile?      @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  patient         Profile       @relation("PatientAppointments", fields: [patientId], references: [id])
-  prescription    Prescription?
+  type            String?          @default("General")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  doctor          Profile?         @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  patient         Profile          @relation("PatientAppointments", fields: [patientId], references: [id])
   HospitalCharge  HospitalCharge[]
   Invoice         Invoice[]
+  prescription    Prescription?
 }
 
 model Prescription {
@@ -114,9 +114,9 @@ model Prescription {
   doctorName      String
   medicines       Json
   additionalNotes String?
-  date            DateTime    @default(now())
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  date            DateTime    @default(now())
   appointment     Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
   doctor          Profile     @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
   patient         Profile     @relation("PatientPrescriptions", fields: [patientId], references: [id])
@@ -249,6 +249,7 @@ model Admission {
   noteAndReview       String?
   physicalFindings    String?
   presentingSymptoms  String?
+  doctorDesignation   String?
   primaryDoctor       Profile?         @relation("AdmissionDoctor", fields: [doctorId], references: [id])
   patient             Profile          @relation("PatientAdmissions", fields: [patientId], references: [id])
   ClinicalNote        ClinicalNote[]
@@ -256,7 +257,6 @@ model Admission {
   pharmacyInvoices    Invoice[]
   LabRecord           LabRecord[]
   Surgery             Surgery[]
-  doctorDesignation   String?
 }
 
 model ClinicalNote {
@@ -271,16 +271,16 @@ model ClinicalNote {
 }
 
 model HospitalCharge {
-  id          String    @id @default(cuid())
-  admissionId String?
-  description String
-  amount      Decimal
-  type        String
-  date        DateTime  @default(now())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  Admission   Admission? @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  id            String       @id @default(cuid())
+  admissionId   String?
+  description   String
+  amount        Decimal
+  type          String
+  date          DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   appointmentId String?
+  Admission     Admission?   @relation(fields: [admissionId], references: [id], onDelete: Cascade)
   appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 }
 
@@ -325,19 +325,6 @@ model Surgery {
   Admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 }
 
-enum HealthPackageType {
-  GENERAL
-  BLOOD_COLLECTION
-}
-
-enum UserRole {
-  admin
-  doctor
-  staff
-  patient
-  lab
-}
-
 model AmbulanceRequest {
   id          String   @id @default(cuid())
   patientName String
@@ -372,4 +359,17 @@ model Message {
   message   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum HealthPackageType {
+  GENERAL
+  BLOOD_COLLECTION
+}
+
+enum UserRole {
+  admin
+  doctor
+  staff
+  patient
+  lab
 }

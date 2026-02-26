@@ -16,23 +16,27 @@ export async function GET(req: Request) {
                 role: 'doctor'
             },
             include: {
-                user: true // Include user details if needed
+                user: true
             },
             orderBy: {
                 createdAt: 'desc'
             }
         });
 
-        // Transform data to match frontend expectation if needed, or update frontend to match schema
-        // The frontend expects: full_name, role, phone, etc.
-        // Our schema uses camelCase usually, but let's check what prisma returns.
-        // Prisma returns fields as defined in schema.
-        // If schema has @map("first_name"), it returns firstName in JS object? NO, it returns the model field name.
-        // Let's assume standard mapping. The frontend uses `full_name` which might be from Supabase.
-        // We might need to map it or update frontend.
-        // Let's Return as is and fix frontend mapping.
+        // Map Prisma camelCase fields to snake_case fields expected by frontend
+        const mappedDoctors = doctors.map(doctor => ({
+            ...doctor,
+            full_name: doctor.firstName && doctor.lastName
+                ? `${doctor.firstName} ${doctor.lastName}`
+                : doctor.firstName || doctor.lastName || doctor.user?.name || 'Unknown',
+            qualification: doctor.qualifications,
+            experience_years: doctor.experience,
+            consultation_fee: doctor.consultationFee,
+            available_timings: doctor.availableTimings,
+            avatar_url: doctor.user?.image
+        }));
 
-        return NextResponse.json(doctors);
+        return NextResponse.json(mappedDoctors);
     } catch (error) {
         console.error("Error fetching doctors:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
