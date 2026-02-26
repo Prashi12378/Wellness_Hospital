@@ -211,3 +211,21 @@ export async function requestLabTest(data: {
         return { error: error.message };
     }
 }
+
+export async function getMedicineOptions() {
+    try {
+        const medicines = await prisma.pharmacyInventory.findMany({
+            select: {
+                name: true
+            },
+            distinct: ['name'],
+            orderBy: {
+                name: 'asc'
+            }
+        });
+        return { medicines: medicines.map(m => m.name) };
+    } catch (error: any) {
+        console.error('Error fetching medicine options:', error);
+        return { error: error.message };
+    }
+}

@@ -201,28 +201,28 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         }
                     `}} />
 
-                    {/* Invoice Paper Design */}
-                    <div className="invoice-container max-w-[800px] mx-auto text-slate-800 font-sans border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none bg-white">
+                    {/* Invoice Paper Design for A5 */}
+                    <div className="invoice-container max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm print:border-none print:shadow-none bg-white text-xs">
                         {/* Hospital Header */}
-                        <div className="flex justify-between items-start mb-6 border-b-2 border-slate-900 pb-6 header-container">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 relative grayscale print:grayscale-0 header-logo">
-                                    <Image src="/logo.png" alt="Logo" width={64} height={64} className="object-contain" />
+                        <div className="flex justify-between items-start mb-4 border-b-2 border-slate-900 pb-4 header-container">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 relative grayscale print:grayscale-0 header-logo flex-shrink-0">
+                                    <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-contain" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">Wellness Hospital & Pharmacy</h1>
-                                    <p className="text-[10px] leading-tight max-w-[400px]">
+                                    <h1 className="text-lg font-black uppercase tracking-tight text-slate-900 leading-none mb-1">Wellness Hospital & Pharmacy</h1>
+                                    <p className="text-[9px] leading-tight max-w-[260px] text-slate-600">
                                         Beside friend function hall, Gowribidnur main road, Palanjoghalli,<br />
                                         Doddaballapur - 561203, Karnataka, India<br />
-                                        Ph: 8105666338 | Email: wellnesshospital8383@gmail.com
+                                        Ph: +91 6366662245 | wellnesshospital8383@gmail.com
                                     </p>
-                                    <p className="text-xs font-bold mt-1">GSTIN: {invoice.gstin}</p>
+                                    <p className="text-[10px] font-bold mt-1">GSTIN: {invoice.gstin}</p>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <h2 className="text-xl font-bold uppercase mb-1">GST Invoice</h2>
-                                <div className="text-4xl font-black text-slate-400 opacity-20 select-none no-print">24/7</div>
-                                <div className="mt-4 text-sm font-medium">
+                            <div className="text-right flex-shrink-0">
+                                <h2 className="text-base font-bold uppercase mb-1">GST Invoice</h2>
+                                <div className="text-2xl font-black text-slate-400 opacity-20 select-none no-print">24/7</div>
+                                <div className="mt-2 text-[10px] font-medium leading-tight">
                                     <p>Bill No : <span className="font-bold">{invoice.billNo}</span></p>
                                     <p>Date : <span className="font-bold">{format(new Date(invoice.date), 'dd-MM-yy')}</span></p>
                                 </div>
@@ -246,30 +246,30 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         </div>
 
                         {/* Items Table */}
-                        <table className="w-full border-collapse mb-8 text-xs items-table">
+                        <table className="w-full border-collapse mb-6 text-[10px] items-table">
                             <thead className="bg-slate-50 border-y-2 border-slate-900">
                                 <tr>
-                                    <th className="py-2 px-2 text-left w-10">S.No</th>
-                                    <th className="py-2 px-2 text-left">Item Name</th>
-                                    <th className="py-2 px-2 text-left">Hsn Code</th>
-                                    <th className="py-2 px-2 text-center w-10">Qty</th>
-                                    <th className="py-2 px-2 text-right">Batch</th>
-                                    <th className="py-2 px-2 text-right">MRP</th>
-                                    <th className="py-2 px-2 text-right">GST%</th>
-                                    <th className="py-2 px-2 text-right">Amount</th>
+                                    <th className="py-1 px-1 text-left w-8">S.No</th>
+                                    <th className="py-1 px-1 text-left">Item Name</th>
+                                    <th className="py-1 px-1 text-left">Hsn Code</th>
+                                    <th className="py-1 px-1 text-center w-8">Qty</th>
+                                    <th className="py-1 px-1 text-right">Batch</th>
+                                    <th className="py-1 px-1 text-right">MRP</th>
+                                    <th className="py-1 px-1 text-right">GST%</th>
+                                    <th className="py-1 px-1 text-right">Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {invoice.items.map((item, index) => (
                                     <tr key={index} className="border-b border-slate-200">
-                                        <td className="py-2 px-2">{index + 1}</td>
-                                        <td className="py-2 px-2 font-bold">{item.name}</td>
-                                        <td className="py-2 px-2">{item.hsnCode}</td>
-                                        <td className="py-2 px-2 text-center">{item.qty}</td>
-                                        <td className="py-2 px-2 uppercase text-right">{item.batchNo}</td>
-                                        <td className="py-2 px-2 text-right">{Number(item.mrp).toFixed(2)}</td>
-                                        <td className="py-2 px-2 text-right">{item.gstRate}</td>
-                                        <td className="py-2 px-2 text-right font-bold">{Number(item.amount).toFixed(2)}</td>
+                                        <td className="py-1 px-1">{index + 1}</td>
+                                        <td className="py-1 px-1 font-bold">{item.name}</td>
+                                        <td className="py-1 px-1">{item.hsnCode}</td>
+                                        <td className="py-1 px-1 text-center">{item.qty}</td>
+                                        <td className="py-1 px-1 uppercase text-right">{item.batchNo}</td>
+                                        <td className="py-1 px-1 text-right">{Number(item.mrp).toFixed(2)}</td>
+                                        <td className="py-1 px-1 text-right">{item.gstRate}</td>
+                                        <td className="py-1 px-1 text-right font-bold">{Number(item.amount).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>

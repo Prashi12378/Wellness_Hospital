@@ -1,177 +1,167 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 
 // Create styles
 const styles = StyleSheet.create({
     page: {
-        padding: '1.6cm', // ~45pt
+        padding: '1.2cm',
         fontFamily: 'Helvetica',
-        fontSize: 11,
-        lineHeight: 1.3,
-        color: '#000000',
-    },
-    accentLine: {
-        height: 1.5,
-        backgroundColor: '#0097C2',
-        marginVertical: 6,
-        width: '100%',
-    },
-    accentSeparator: {
-        height: 0.6,
-        backgroundColor: '#0097C2',
-        marginBottom: 4,
-        marginTop: 8,
-        width: '100%',
+        fontSize: 10,
+        color: '#111111',
     },
     // Header
-    headerContainer: {
+    header: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
-        paddingBottom: 10,
-        marginBottom: 10,
+        alignItems: 'center',
     },
     logo: {
         width: 60,
         height: 60,
-        marginRight: 15,
+        marginRight: 20,
     },
-    headerContent: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    hospitalName: {
-        fontSize: 22,
-        fontFamily: 'Helvetica-Bold',
-        color: '#006B95', // Darker Blue
-        textTransform: 'none',
-        marginBottom: 4,
-    },
-    hospitalAddress: {
-        fontSize: 9,
-        color: '#374151',
-        marginBottom: 2,
-    },
-    contactRow: {
-        flexDirection: 'row',
-        marginTop: 4,
-        gap: 12,
-    },
-    contactText: {
-        fontSize: 9,
-        color: '#374151',
-    },
-    // Patient/Doctor Grid
-    gridContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 10,
-    },
-    gridColumn: {
-        width: '48%',
-    },
-    sectionTitleContainer: {
-        backgroundColor: '#7EBCE6', // Light Blue bar
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        marginBottom: 8,
-        borderRadius: 2, // small radius
-    },
-    sectionTitle: {
-        fontFamily: 'Helvetica-Bold',
-        fontSize: 11,
-        color: '#FFFFFF', // White text
-    },
-    row: {
-        flexDirection: 'row',
-        marginBottom: 2,
-    },
-    label: {
-        width: 60,
-        fontSize: 10,
-    },
-    labelDoctor: {
-        width: 60, // Adjusted for Doctor labels if needed
-        fontSize: 10,
-    },
-    value: {
-        flex: 1,
-        fontFamily: 'Helvetica-Bold', // Use Bold for values as per design
-        fontSize: 10,
-    },
-    // Clinical Notes
-    contentBlock: {
-        marginBottom: 6,
-    },
-    contentLabel: {
-        fontFamily: 'Helvetica-Bold',
-        fontSize: 10,
-        marginBottom: 2,
-    },
-    contentText: {
-        fontSize: 10,
-        minHeight: 20,
-    },
-    sectionHeader: {
-        color: '#0097C2',
+    hospitalTitle: {
+        fontSize: 27, // ~36px
         fontFamily: 'Helvetica-Bold',
         textTransform: 'uppercase',
-        fontSize: 11,
-        marginTop: 4,
+    },
+    address: {
+        fontSize: 10.5, // ~14px
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
+    },
+    mainLine: {
+        borderTopWidth: 3,
+        borderTopColor: '#000000',
+        marginVertical: 15,
+    },
+    // Top Section
+    topSection: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    patientArea: {
+        width: '68%',
+    },
+    infoRow: {
+        marginBottom: 10,
+    },
+    label: {
+        fontSize: 9, // ~12px
+        fontFamily: 'Helvetica-Bold',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
         marginBottom: 2,
     },
-    // Rx Table (Borderless)
+    valueLine: {
+        height: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#aaaaaa',
+        fontSize: 10.5, // ~14px
+        fontFamily: 'Helvetica-Bold',
+        textTransform: 'uppercase',
+    },
+    vitalsCard: {
+        width: '28%',
+        borderWidth: 1,
+        borderColor: '#cccccc',
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    vitalsHeader: {
+        backgroundColor: '#eeeeee',
+        textAlign: 'center',
+        paddingVertical: 6,
+        fontSize: 9, // ~12px
+        fontFamily: 'Helvetica-Bold',
+        letterSpacing: 1,
+    },
+    vitalsBody: {
+        padding: 10,
+    },
+    vitalsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+        fontSize: 10.5, // ~14px
+    },
+    // Sections
+    sectionTitle: {
+        marginTop: 20,
+        fontSize: 12, // ~16px
+        fontFamily: 'Helvetica-Bold',
+        letterSpacing: 2,
+        textTransform: 'uppercase',
+    },
+    sectionLine: {
+        borderTopWidth: 2,
+        borderTopColor: '#000000',
+        marginTop: 4,
+        marginBottom: 8,
+    },
+    sectionContent: {
+        fontSize: 10.5, // ~14px
+        lineHeight: 1.4,
+    },
+    // Rx Table
     table: {
         width: '100%',
-        marginTop: 4,
+        marginTop: 10,
     },
     tableHeader: {
         flexDirection: 'row',
-        borderBottomColor: '#000000',
-        borderBottomWidth: 0.5,
-        alignItems: 'center',
-        minHeight: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#cccccc',
+        paddingBottom: 4,
+    },
+    headerCell: {
+        fontSize: 9,
+        fontFamily: 'Helvetica-Bold',
+        textTransform: 'uppercase',
     },
     tableRow: {
         flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: '#cccccc',
+        paddingVertical: 8,
         alignItems: 'center',
-        minHeight: 20,
-        marginBottom: 2, // Space between rows
     },
-    colNo: { width: '8%', textAlign: 'center', padding: 2 },
-    colMed: { width: '37%', padding: 2 },
-    colDose: { width: '12%', textAlign: 'center', padding: 2 },
-    colFreq: { width: '12%', textAlign: 'center', padding: 2 },
-    colDays: { width: '10%', textAlign: 'center', padding: 2 },
-    colInstr: { width: '21%', padding: 2 },
-
-    colText: { fontSize: 9 },
-    colTextBold: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
-
-    // Lists
-    listItem: {
+    cellText: {
         fontSize: 10,
-        marginLeft: 10,
-        marginBottom: 2,
     },
+    // Utility Columns
+    colNo: { width: '8%' },
+    colMed: { width: '40%' },
+    colStrength: { width: '12%' },
+    colFreq: { width: '10%' },
+    colDays: { width: '10%' },
+    colNotes: { width: '20%' },
     // Footer
     footer: {
-        marginTop: 'auto',
+        marginTop: 40,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
         alignItems: 'flex-end',
-        paddingTop: 10,
     },
-    signatureLine: {
-        width: 150,
-        borderBottomWidth: 0.5,
-        borderColor: '#000000',
-        marginBottom: 4,
+    signatureBlock: {
+        textAlign: 'right',
     },
-    docSignature: {
-        fontSize: 10,
-        textAlign: 'center',
-        width: 150,
+    signedBy: {
+        fontSize: 8,
+        color: '#888888',
+        marginBottom: 2,
+    },
+    doctorNameFull: {
+        fontSize: 16,
+        fontFamily: 'Helvetica-Bold',
+        textTransform: 'uppercase',
+    },
+    consultant: {
+        fontSize: 8,
+        fontFamily: 'Helvetica-Bold',
+        color: '#888888',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     }
 });
 
@@ -182,14 +172,16 @@ interface PrescriptionPDFProps {
     vitals: any;
     notes: string;
     diagnosis: string;
-    investigations: string;
     advice: string;
-    patientAddress: string;
     qualification: string;
     speciality: string;
     regNo: string;
-    followUp: string;
     date?: string;
+    patientName?: string;
+    patientAge?: string;
+    patientGender?: string;
+    patientId?: string;
+    doctorName?: string;
 }
 
 const PrescriptionPDF: React.FC<PrescriptionPDFProps> = ({
@@ -199,160 +191,150 @@ const PrescriptionPDF: React.FC<PrescriptionPDFProps> = ({
     vitals,
     notes,
     diagnosis,
-    investigations,
     advice,
-    patientAddress,
     qualification,
     speciality,
     regNo,
-    followUp,
-    date
+    date,
+    patientName,
+    patientAge,
+    patientGender,
+    patientId,
+    doctorName
 }) => (
     <Document>
         <Page size="A4" style={styles.page}>
-
             {/* Header */}
-            <View style={styles.headerContainer}>
-                {/* Logo */}
-                <Image src={window.location.origin + '/logo.png'} style={styles.logo} />
-
-                {/* Text Content */}
-                <View style={styles.headerContent}>
-                    <Text style={styles.hospitalName}>Wellness Hospital</Text>
-                    <Text style={styles.hospitalAddress}>Palanajoghalli, Mallathalli Post, Doddaballapura</Text>
-                    <Text style={styles.hospitalAddress}>Karnataka - 561203</Text>
-
-                    <View style={styles.contactRow}>
-                        <Text style={styles.contactText}>📞 6366662245</Text>
-                        <Text style={styles.contactText}>✉ wellnesshospital8383@gmail.com</Text>
-                    </View>
+            <View style={styles.header}>
+                <Image src={typeof window !== 'undefined' ? window.location.origin + '/logo.png' : ''} style={styles.logo} />
+                <View>
+                    <Text style={styles.hospitalTitle}>WELLNESS HOSPITAL</Text>
+                    <Text style={styles.address}>Palanajoghalli, Mallathalli Post, Doddaballapura</Text>
+                    <Text style={[styles.address, { color: '#666' }]}>Karnataka - 561203 | Ph: +91 6366662245</Text>
                 </View>
             </View>
 
-            {/* <View style={styles.accentLine} /> Removed accent line in favor of border bottom in header */}
+            <View style={styles.mainLine} />
 
-            {/* Patient / Doctor Details */}
-            <View style={styles.gridContainer}>
-                {/* Patient */}
-                <View style={styles.gridColumn}>
-                    <View style={styles.sectionTitleContainer}>
-                        <Text style={styles.sectionTitle}>Patient Details</Text>
+            {/* Top Section */}
+            <View style={styles.topSection}>
+                <View style={styles.patientArea}>
+                    <View style={[styles.infoRow, { flexDirection: 'row', gap: 15 }]}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.label}>PATIENT NAME</Text>
+                            <Text style={styles.valueLine}>{patientName || appointment?.patient_name || '___'}</Text>
+                        </View>
+                        <View style={{ width: 100 }}>
+                            <Text style={styles.label}>AGE / GEN</Text>
+                            <Text style={[styles.valueLine, { textAlign: 'center' }]}>{patientAge || '_'} / {(patientGender?.charAt(0) || '_').toUpperCase()}</Text>
+                        </View>
                     </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Name:</Text>
-                        <Text style={styles.value}>{appointment?.profiles?.first_name} {appointment?.profiles?.last_name}</Text>
+                    <View style={[styles.infoRow, { flexDirection: 'row', gap: 15 }]}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.label}>PATIENT ID</Text>
+                            <Text style={styles.valueLine}>{patientId || appointment?.user_id?.slice(0, 8) || '___'}</Text>
+                        </View>
+                        <View style={{ width: 100 }}>
+                            <Text style={styles.label}>DATE</Text>
+                            <Text style={[styles.valueLine, { textAlign: 'center' }]}>{date ? new Date(date).toISOString().split('T')[0] : '___'}</Text>
+                        </View>
                     </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Age/Sex:</Text>
-                        <Text style={styles.value}>{appointment?.profiles?.age || '__'} / {appointment?.profiles?.gender || '__'}</Text>
-                    </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Patient ID:</Text>
-                        <Text style={styles.value}>{appointment?.user_id?.slice(0, 4) || '___'}</Text>
-                    </View>
-                </View>
-
-                {/* Doctor */}
-                <View style={styles.gridColumn}>
-                    <View style={styles.sectionTitleContainer}>
-                        <Text style={styles.sectionTitle}>Doctor Details</Text>
-                    </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Name:</Text>
-                        <Text style={styles.value}>Dr. {existingPrescription?.doctor_name || 'Sanath'}</Text>
-                    </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Qualification:</Text>
-                        <Text style={styles.value}>{qualification || 'MBBS, MD'}</Text>
-                    </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Speciality:</Text>
-                        <Text style={styles.value}>{speciality || 'General Physician'}</Text>
-                    </View>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Date/Time:</Text>
-                        <Text style={styles.value}>
-                            {date ? format(new Date(date), 'dd-MMM-yyyy') : format(new Date(), 'dd-MMM-yyyy (HH:mm)')}
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>CONSULTING SPECIALIST</Text>
+                        <Text style={[styles.valueLine, { fontSize: 14 }]}>
+                            DR. {(doctorName || existingPrescription?.doctor_name || appointment?.doctors?.first_name || 'NIKITHA').replace(/^Dr\.\s+/i, '').toUpperCase()}
                         </Text>
                     </View>
                 </View>
-            </View>
 
-            {/* Clinical Notes */}
-            <View>
-                <View style={styles.accentSeparator} />
-                <Text style={styles.sectionHeader}>Clinical Notes</Text>
-
-                <View style={styles.contentBlock}>
-                    <Text style={styles.contentLabel}>Chief Complaints / History:</Text>
-                    <Text style={styles.contentText}>{notes}</Text>
-                </View>
-
-                <View style={styles.contentBlock}>
-                    <Text style={styles.contentLabel}>Vitals:</Text>
-                    <View style={{ flexDirection: 'row' }}>
-                        <Text style={{ fontSize: 10, marginRight: 15 }}>BP: {vitals.bp || '___'}</Text>
-                        <Text style={{ fontSize: 10, marginRight: 15 }}>Pulse: {vitals.pulse || '___'}</Text>
-                        <Text style={{ fontSize: 10, marginRight: 15 }}>Temp: {vitals.temp || '___'}</Text>
-                        <Text style={{ fontSize: 10, marginRight: 15 }}>SpO2: {vitals.spo2 || '___'}</Text>
-                        <Text style={{ fontSize: 10 }}>Weight: {vitals.weight || '___'}</Text>
+                <View style={styles.vitalsCard}>
+                    <View style={styles.vitalsHeader}>
+                        <Text>CLINICAL VITALS</Text>
+                    </View>
+                    <View style={styles.vitalsBody}>
+                        <View style={styles.vitalsRow}>
+                            <Text>BP</Text>
+                            <Text>{(vitals?.bp_sys && vitals?.bp_dia) ? `${vitals.bp_sys}/${vitals.bp_dia}` : '___ / ___'} mmHg</Text>
+                        </View>
+                        <View style={styles.vitalsRow}>
+                            <Text>SpO2</Text>
+                            <Text>{vitals?.spo2 || '___'} %</Text>
+                        </View>
+                        <View style={styles.vitalsRow}>
+                            <Text>Pulse</Text>
+                            <Text>{vitals?.pulse || '___'} BPM</Text>
+                        </View>
+                        <View style={styles.vitalsRow}>
+                            <Text>Temp</Text>
+                            <Text>{vitals?.temp || '___'} °F</Text>
+                        </View>
                     </View>
                 </View>
-
-                <View style={styles.contentBlock}>
-                    <Text style={styles.contentLabel}>Diagnosis:</Text>
-                    <Text style={styles.contentText}>{diagnosis}</Text>
-                </View>
             </View>
 
-            {/* Prescription */}
-            {/* Removed flexGrow to allow content to collapse naturally */}
+            {/* Clinical Sections */}
             <View>
-                <View style={styles.accentSeparator} />
-                <Text style={styles.sectionHeader}>Prescription</Text>
-                <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', marginBottom: 4 }}>Rx</Text>
+                <Text style={styles.sectionTitle}>DIAGNOSIS</Text>
+                <View style={styles.sectionLine} />
+                <Text style={[styles.sectionContent, { fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' }]}>
+                    {diagnosis || 'GENERAL CONSULTATION'}
+                </Text>
+            </View>
 
+            <View>
+                <Text style={styles.sectionTitle}>CHIEF COMPLAINTS (C/O)</Text>
+                <View style={styles.sectionLine} />
+                <Text style={styles.sectionContent}>{notes || 'No specific complaints recorded.'}</Text>
+            </View>
+
+            <View>
+                <Text style={styles.sectionTitle}>PRESCRIPTION (RX)</Text>
+                <View style={styles.sectionLine} />
                 <View style={styles.table}>
                     <View style={styles.tableHeader}>
-                        <View style={styles.colNo}><Text style={styles.colTextBold}>No.</Text></View>
-                        <View style={styles.colMed}><Text style={styles.colTextBold}>Medicine</Text></View>
-                        <View style={styles.colDose}><Text style={styles.colTextBold}>Dose</Text></View>
-                        <View style={styles.colFreq}><Text style={styles.colTextBold}>Freq</Text></View>
-                        <View style={styles.colDays}><Text style={styles.colTextBold}>Days</Text></View>
-                        <View style={styles.colInstr}><Text style={styles.colTextBold}>Instructions</Text></View>
+                        <Text style={[styles.headerCell, styles.colNo]}>NO</Text>
+                        <Text style={[styles.headerCell, styles.colMed]}>MEDICINE NAME</Text>
+                        <Text style={[styles.headerCell, styles.colStrength]}>STRENGTH</Text>
+                        <Text style={[styles.headerCell, styles.colFreq]}>FREQ</Text>
+                        <Text style={[styles.headerCell, styles.colDays]}>DAYS</Text>
+                        <Text style={[styles.headerCell, styles.colNotes]}>NOTES</Text>
                     </View>
-
                     {medicines.map((med, i) => (
                         <View key={i} style={styles.tableRow}>
-                            <View style={styles.colNo}><Text style={styles.colText}>{i + 1}</Text></View>
-                            <View style={styles.colMed}><Text style={styles.colTextBold}>{med.name}</Text></View>
-                            <View style={styles.colDose}><Text style={styles.colText}>{med.dosage}</Text></View>
-                            <View style={styles.colFreq}><Text style={styles.colText}>{med.frequency}</Text></View>
-                            <View style={styles.colDays}><Text style={styles.colText}>{med.duration}</Text></View>
-                            <View style={styles.colInstr}><Text style={styles.colText}>{med.notes || 'After Food'}</Text></View>
+                            <Text style={[styles.cellText, styles.colNo, { color: '#888' }]}>{i + 1}</Text>
+                            <Text style={[styles.cellText, styles.colMed, { fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' }]}>{med.name}</Text>
+                            <Text style={[styles.cellText, styles.colStrength]}>{med.strength}</Text>
+                            <Text style={[styles.cellText, styles.colFreq]}>{med.frequency}</Text>
+                            <Text style={[styles.cellText, styles.colDays]}>{med.duration}</Text>
+                            <Text style={[styles.cellText, styles.colNotes, { fontSize: 8 }]}>{med.notes}</Text>
                         </View>
                     ))}
-                    {/* Removed empty row filler to prevent wasting space */}
                 </View>
             </View>
 
-            {/* Advice - 1.5 line space (approx 15-20pt) after medicines */}
-            <View style={{ marginTop: 20, marginBottom: 10 }}>
-                {/* Removed accent separator for advice to keep it compact as requested "immediate space"? Or keep standard? LaTeX usually has sections. User said "1.5 line space must be advice". keeping section header for clarity but close. */}
-                <Text style={styles.sectionHeader}>Advice</Text>
-                {advice ? advice.split('\n').map((line, i) =>
-                    <Text key={i} style={styles.listItem}>• {line}</Text>
+            <View>
+                <Text style={styles.sectionTitle}>MEDICAL ADVICE & INSTRUCTIONS</Text>
+                <View style={styles.sectionLine} />
+                {advice ? advice.split('\n').filter(l => l.trim()).map((line, i) =>
+                    <View key={i} style={{ flexDirection: 'row', marginBottom: 4 }}>
+                        <Text style={{ width: 10 }}>•</Text>
+                        <Text style={styles.sectionContent}>{line}</Text>
+                    </View>
                 ) : (
-                    <Text style={styles.listItem}>• Avoid Oily and Spicy Food</Text>
+                    <Text style={[styles.sectionContent, { color: '#888' }]}>Follow-up as scheduled.</Text>
                 )}
             </View>
 
-            {/* Footer - Immediate right end */}
-            <View style={{ marginTop: 10, alignItems: 'flex-end' }}>
-                <View style={styles.signatureLine} />
-                <Text style={styles.docSignature}>Doctor Signature</Text>
+            {/* Footer */}
+            <View style={styles.footer}>
+                <View style={styles.signatureBlock}>
+                    <Text style={styles.signedBy}>Digitally signed by</Text>
+                    <Text style={styles.doctorNameFull}>
+                        DR. {(existingPrescription?.doctor_name || appointment?.doctors?.first_name || 'NIKITHA').replace(/^Dr\.\s+/i, '').toUpperCase()}
+                    </Text>
+                    <Text style={styles.consultant}>MEDICAL CONSULTANT</Text>
+                </View>
             </View>
-
         </Page>
     </Document>
 );

@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Plus, Trash2, Printer, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Printer, ChevronDown, Stethoscope, ClipboardList, Pill, Activity, Heart, Thermometer, Droplets, Weight, User, Calendar, IdCard, GraduationCap } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { getConsultationDetails, savePrescription } from '@/app/actions/consultation';
+import { getConsultationDetails, savePrescription, getMedicineOptions } from '@/app/actions/consultation';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PrescriptionPDF from '@/components/PrescriptionPDF';
@@ -91,11 +92,11 @@ function AutocompleteInput({ value, onChange, options, placeholder, className, c
                         e.target.select(); // Auto-select text for quick overwrite
                     }}
                     placeholder={placeholder}
-                    className={`${className} ${centerText ? 'text-center' : 'text-left'} w-full bg-transparent focus:outline-none pr-4`} // Room for chevron
+                    className={`${className} ${centerText ? 'text-center' : 'text-left'} w-full bg-transparent focus:outline-none pr-6 text-ellipsis overflow-hidden whitespace-nowrap`} // Room for chevron
                 />
                 {/* Visual Arrow */}
                 <div
-                    className="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-black print:hidden"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-black print:hidden"
                     onClick={() => {
                         // Toggle dropdown
                         if (isOpen) {
@@ -157,6 +158,7 @@ export default function ConsultationPage({ params }: PageProps) {
 
     // Core Data
     const [medicines, setMedicines] = useState<Medicine[]>([]);
+    const [medicineOptions, setMedicineOptions] = useState<string[]>([]);
 
     // Editable Fields (Directly on Paper)
     const [patientName, setPatientName] = useState('');
@@ -175,7 +177,7 @@ export default function ConsultationPage({ params }: PageProps) {
 
     // Legacy/Unused for now but kept for compatibility logic
     // Updated to include height
-    const [vitals, setVitals] = useState({ bp: '', pulse: '', temp: '', spo2: '', weight: '', height: '' });
+    const [vitals, setVitals] = useState({ bp: '', bp_sys: '', bp_dia: '', pulse: '', temp: '', spo2: '', weight: '' });
     const [investigations, setInvestigations] = useState('');
     const [followUp, setFollowUp] = useState('');
     const [notes, setNotes] = useState('');
@@ -207,24 +209,58 @@ export default function ConsultationPage({ params }: PageProps) {
     useEffect(() => {
         if (session?.user) {
             const u = session.user as any;
-            if (!doctorName) setDoctorName(`Dr. ${u.firstName || ''} ${u.lastName || ''}`.trim());
+            const getNormalizedName = (f: string, l: string) => {
+                let name = `${f || ''} ${l || ''}`.trim();
+                if (!name) return 'Doctor';
+                const cleaned = name.replace(/^(dr\.?\s*)+/i, '').trim();
+                return `Dr. ${cleaned}`;
+            };
+            if (!doctorName) setDoctorName(getNormalizedName(u.firstName, u.lastName));
             if (!qualification) setQualification(u.qualifications || 'MBBS');
             if (!speciality) setSpeciality(u.specialization || 'General Physician');
         }
     }, [session, doctorName, qualification, speciality]);
 
     useEffect(() => {
-        if (appointment?.profiles) {
-            setPatientName(`${appointment.profiles.first_name} ${appointment.profiles.last_name}`);
-            setPatientAge(`${appointment.profiles.age || ''}`);
-            setPatientGender(appointment.profiles.gender || '');
-            setPatientId(appointment.user_id?.slice(0, 4) || '___');
+        if (appointment) {
+            const profile = appointment.patient_profile || appointment.profiles;
+
+            if (profile) {
+                const fName = profile.firstName || profile.first_name || '';
+                const lName = profile.lastName || profile.last_name || '';
+                if (fName || lName) {
+                    setPatientName(`${fName} ${lName}`.trim());
+                } else if (appointment.patient_name) {
+                    setPatientName(appointment.patient_name);
+                }
+
+                // Calculate age from dob
+                let ageStr = profile.age || '';
+                if (!ageStr && profile.dob) {
+                    const dobDate = new Date(profile.dob);
+                    const diffMs = Date.now() - dobDate.getTime();
+                    const ageDt = new Date(diffMs);
+                    ageStr = Math.abs(ageDt.getUTCFullYear() - 1970).toString();
+                }
+                setPatientAge(ageStr);
+                setPatientGender(profile.gender || '');
+                setPatientId(profile.uhid || appointment.user_id?.slice(0, 8) || '');
+            } else if (appointment.patient_name) {
+                setPatientName(appointment.patient_name);
+                setPatientId(appointment.user_id?.slice(0, 8) || '');
+            }
         }
     }, [appointment]);
 
     useEffect(() => {
         fetchAppointmentDetails();
+        fetchMedicineOptions();
     }, [id]);
+
+    const fetchMedicineOptions = async () => {
+        const { medicines: options } = await getMedicineOptions();
+        if (options) setMedicineOptions(options);
+    };
 
     const fetchAppointmentDetails = async () => {
         const { appointment: apt, prescription: rx, error } = await getConsultationDetails(id);
@@ -256,11 +292,12 @@ export default function ConsultationPage({ params }: PageProps) {
                     // Init Vitals including Height
                     setVitals({
                         bp: parsed.vitals?.bp || '',
+                        bp_sys: parsed.vitals?.bp_sys || '',
+                        bp_dia: parsed.vitals?.bp_dia || '',
                         pulse: parsed.vitals?.pulse || '',
                         temp: parsed.vitals?.temp || '',
                         spo2: parsed.vitals?.spo2 || '',
                         weight: parsed.vitals?.weight || '',
-                        height: parsed.vitals?.height || '',
                     });
 
                     if (rx.date) {
@@ -274,6 +311,15 @@ export default function ConsultationPage({ params }: PageProps) {
                 setAdviceLines(rx.additionalNotes ? rx.additionalNotes.split('\n') : ['']);
             }
         }
+
+        // Always try to set Patient ID and default date if not already set by prescription
+        if (apt) {
+            setPatientId(apt.patient_profile?.uhid || apt.user_id?.slice(0, 8) || '');
+            if (!rx?.date) {
+                setVisitDate(new Date().toISOString().split('T')[0]);
+            }
+        }
+
         setAppointment(apt);
         setLoading(false);
     };
@@ -290,7 +336,25 @@ export default function ConsultationPage({ params }: PageProps) {
 
     const handleMedicineChange = (index: number, field: keyof Medicine, value: string) => {
         const newMeds = [...medicines];
-        newMeds[index][field] = value;
+
+        if (field === 'name') {
+            const isOption = medicineOptions.includes(value);
+            if (isOption) {
+                // Split logic: Find first space or hyphen followed by a number
+                const match = value.match(/^([^0-9]+?)[-\s]+(\d.*)$/);
+                if (match) {
+                    newMeds[index].name = match[1].trim();
+                    newMeds[index].strength = match[2].trim();
+                } else {
+                    newMeds[index].name = value;
+                }
+            } else {
+                newMeds[index].name = value;
+            }
+        } else {
+            newMeds[index][field] = value;
+        }
+
         setMedicines(newMeds);
     };
 
@@ -372,8 +436,8 @@ export default function ConsultationPage({ params }: PageProps) {
                         <ArrowLeft className="w-6 h-6" />
                     </Link>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-800">Prescription Editor</h1>
-                        <p className="text-sm text-slate-500">Black & White Formal Layout</p>
+                        <h1 className="text-xl font-bold text-cyan-900 tracking-tight">Prescription Editor</h1>
+                        <p className="text-xs font-medium text-cyan-600 uppercase tracking-widest">Premium Medical Standard</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -402,11 +466,16 @@ export default function ConsultationPage({ params }: PageProps) {
                         followUp={followUp}
                         fileName={`${patientName.replace(/\s+/g, '_')}_Prescription.pdf`}
                         date={visitDate}
+                        patientName={patientName}
+                        patientAge={patientAge}
+                        patientGender={patientGender}
+                        patientId={patientId}
+                        doctorName={doctorName}
                     />
 
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 shadow-sm transition-all"
+                        className="flex items-center gap-2 px-4 py-2 bg-white text-cyan-900 border border-cyan-200 rounded-lg hover:bg-cyan-50 shadow-sm transition-all font-semibold"
                     >
                         <Printer className="w-4 h-4" /> Print
                     </button>
@@ -414,300 +483,288 @@ export default function ConsultationPage({ params }: PageProps) {
             </div>
 
             {/* A4 PAGE CONTAINER */}
-            <div className="bg-white shadow-xl mx-auto w-[210mm] min-h-[297mm] p-12 relative text-slate-900 print:shadow-none print:w-full print:p-12 print:text-black">
-
-                {/* 1. Header (Static/Logo) */}
-                <div className="flex items-start justify-between mb-8 border-b-2 border-black pb-4">
-                    <div className="flex items-center gap-4">
-                        <div className="">
-                            <img src="/logo.png" alt="Logo" className="w-[80px] grayscale brightness-0" />
-                        </div>
-                        <div className="">
-                            <h1 className="text-3xl font-bold text-black mb-1 uppercase tracking-tight">Wellness Hospital</h1>
-                            <p className="text-sm font-semibold text-gray-800">Palanajoghalli, Mallathalli Post, Doddaballapura</p>
-                            <p className="text-sm text-gray-600">Karnataka - 561203 | Ph: 6366662245</p>
-                        </div>
+            <div className="bg-white shadow-xl mx-auto w-[210mm] min-h-[297mm] p-12 relative text-[#111] print:shadow-none print:w-full print:p-12 font-sans">
+                {/* Header */}
+                <div className="flex items-center">
+                    <div className="w-20 h-20 mr-5 relative">
+                        <Image
+                            src="/logo.png"
+                            alt="Wellness Hospital Logo"
+                            fill
+                            className="object-contain grayscale contrast-150"
+                            priority
+                        />
+                    </div>
+                    <div>
+                        <h1 className="text-[36px] font-[800] uppercase leading-tight">Wellness Hospital</h1>
+                        <p className="text-[14px] tracking-[1px] uppercase">Palanajoghalli, Mallathalli Post, Doddaballapura</p>
+                        <p className="text-[14px] tracking-[1px] uppercase text-gray-600">Karnataka - 561203 | Ph: +91 6366662245</p>
                     </div>
                 </div>
 
-                {/* 2. Patient / Doctor Info Box (Grid Style) */}
-                <div className="border-2 border-black mb-8 text-sm">
-                    {/* Row 1 */}
-                    <div className="grid grid-cols-2 divide-x-2 divide-black border-b border-black">
-                        <div className="p-2 flex items-center">
-                            <span className="font-bold w-24">Patient Name:</span>
-                            <input
-                                type="text"
-                                value={patientName}
-                                onChange={e => setPatientName(e.target.value)}
-                                className="font-medium uppercase focus:outline-none w-full bg-transparent"
-                            />
-                        </div>
-                        <div className="p-2 flex items-center">
-                            <span className="font-bold w-24">Date:</span>
-                            <input
-                                type="date"
-                                value={visitDate}
-                                onChange={(e) => setVisitDate(e.target.value)}
-                                className="font-medium focus:outline-none bg-transparent cursor-pointer print:hidden"
-                            />
-                            <span className="hidden print:inline font-medium">
-                                {format(new Date(visitDate), 'dd-MMM-yyyy')}
-                            </span>
-                        </div>
-                    </div>
+                <div className="border-t-[3px] border-black my-5"></div>
 
-                    {/* Row 2 */}
-                    <div className="grid grid-cols-2 divide-x-2 divide-black border-b border-black">
-                        <div className="p-2 flex items-center">
-                            <span className="font-bold w-24">Age / Gender:</span>
-                            <div className="flex items-center gap-1">
+                {/* Top Section */}
+                <div className="flex justify-between items-start">
+                    <div className="w-[68%] flex flex-col gap-3">
+                        <div className="flex gap-4">
+                            <div className="space-y-1 flex-1">
+                                <label className="text-[12px] font-bold tracking-[1px] uppercase">Patient Name</label>
                                 <input
                                     type="text"
-                                    value={patientAge}
-                                    onChange={e => setPatientAge(e.target.value)}
-                                    className="font-medium w-12 focus:outline-none bg-transparent"
-                                />
-                                <span>/</span>
-                                <input
-                                    type="text"
-                                    value={patientGender}
-                                    onChange={e => setPatientGender(e.target.value)}
-                                    className="font-medium w-24 focus:outline-none bg-transparent"
+                                    value={patientName}
+                                    onChange={e => setPatientName(e.target.value)}
+                                    className="w-full h-[25px] border-b border-[#aaa] focus:outline-none bg-transparent font-bold uppercase text-[14px]"
                                 />
                             </div>
-                        </div>
-                        <div className="p-2 flex items-center">
-                            <span className="font-bold w-24">Patient ID:</span>
-                            <input
-                                type="text"
-                                value={patientId}
-                                onChange={e => setPatientId(e.target.value)}
-                                className="font-medium focus:outline-none bg-transparent w-full"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Row 3 - Doctor */}
-                    <div className="grid grid-cols-1">
-                        <div className="p-2 flex items-center">
-                            <span className="font-bold w-24">Consultant:</span>
-                            <div className="flex gap-2 w-full">
-                                <input
-                                    type="text"
-                                    value={doctorName}
-                                    onChange={e => setDoctorName(e.target.value)}
-                                    className="font-bold uppercase focus:outline-none bg-transparent"
-                                />
-                                -
-                                <input
-                                    type="text"
-                                    value={qualification}
-                                    onChange={e => setQualification(e.target.value)}
-                                    className="font-medium focus:outline-none bg-transparent w-auto"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 3. Vitals (New Section) */}
-                <div className="mb-6">
-                    <div className="bg-black text-white inline-block px-3 py-1 font-bold uppercase text-sm mb-2 print:bg-black print:text-white print-color-adjust">
-                        Vitals
-                    </div>
-                    <div className="border border-black p-3">
-                        <div className="grid grid-cols-3 gap-y-4 gap-x-2 sm:grid-cols-6">
-                            {/* BP */}
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-600 uppercase">BP (mmHg)</span>
-                                <input
-                                    type="text"
-                                    value={vitals.bp}
-                                    onChange={(e) => setVitals({ ...vitals, bp: e.target.value })}
-                                    className="font-bold border-b border-gray-300 focus:border-black outline-none py-1"
-                                />
-                            </div>
-                            {/* Pulse */}
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-600 uppercase">Pulse (bpm)</span>
-                                <input
-                                    type="text"
-                                    value={vitals.pulse}
-                                    onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
-                                    className="font-medium border-b border-gray-300 focus:border-black outline-none py-1"
-                                />
-                            </div>
-                            {/* Temp */}
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-600 uppercase">Temp (°F)</span>
-                                <input
-                                    type="text"
-                                    value={vitals.temp}
-                                    onChange={(e) => setVitals({ ...vitals, temp: e.target.value })}
-                                    className="font-medium border-b border-gray-300 focus:border-black outline-none py-1"
-                                />
-                            </div>
-                            {/* SpO2 */}
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-600 uppercase">SpO2 (%)</span>
-                                <input
-                                    type="text"
-                                    value={vitals.spo2}
-                                    onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
-                                    className="font-medium border-b border-gray-300 focus:border-black outline-none py-1"
-                                />
-                            </div>
-                            {/* Weight */}
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-600 uppercase">Weight (kg)</span>
-                                <input
-                                    type="text"
-                                    value={vitals.weight}
-                                    onChange={(e) => setVitals({ ...vitals, weight: e.target.value })}
-                                    className="font-medium border-b border-gray-300 focus:border-black outline-none py-1"
-                                />
-                            </div>
-                            {/* Height */}
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-600 uppercase">Height (cm)</span>
-                                <input
-                                    type="text"
-                                    value={vitals.height || ''}
-                                    onChange={(e) => setVitals({ ...vitals, height: e.target.value })}
-                                    className="font-medium border-b border-gray-300 focus:border-black outline-none py-1"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 4. Medicines (Editable Table) */}
-                <div className="mb-8">
-                    <div className="bg-black text-white inline-block px-3 py-1 font-bold uppercase text-sm mb-4 print:bg-black print:text-white print-color-adjust">
-                        Prescription (Rx)
-                    </div>
-
-
-                    {/* Header */}
-                    <div className="mb-4">
-                        <div className="grid grid-cols-[30px_2fr_1.5fr_1fr_1fr_2fr_30px] gap-4 border-b border-gray-200 pb-2 font-bold text-black text-sm uppercase tracking-wide">
-                            <div className="text-left">No</div>
-                            <div className="text-left">Medicine Name</div>
-                            <div className="text-left">Strength/Form</div>
-                            <div className="text-left">Frequency</div>
-                            <div className="text-left">Days</div>
-                            <div className="text-left">Instruction</div>
-                            <div className="print:hidden"></div>
-                        </div>
-
-                        {/* Rows */}
-                        <div className="flex flex-col gap-4 mt-4">
-                            {medicines.map((med, i) => (
-                                <div key={i} className="grid grid-cols-[30px_2fr_1.5fr_1fr_1fr_2fr_30px] gap-4 items-start text-sm">
-                                    <div className="text-left text-black font-medium mt-1.5">{i + 1}</div>
-
-                                    {/* Name */}
-                                    <div>
-                                        <textarea
-                                            value={med.name}
-                                            onChange={e => handleMedicineChange(i, 'name', e.target.value)}
-                                            className="w-full font-bold uppercase focus:outline-none bg-transparent resize-none overflow-hidden"
-                                            placeholder="DOLO"
-                                            rows={1}
-                                            style={{ minHeight: '24px' }}
-                                            onInput={(e) => {
-                                                const target = e.target as HTMLTextAreaElement;
-                                                target.style.height = 'auto';
-                                                target.style.height = `${target.scrollHeight}px`;
-                                            }}
-                                        />
-                                    </div>
-
-                                    {/* Strength/Form */}
-                                    <div>
-                                        <input
-                                            type="text"
-                                            value={med.strength || ''}
-                                            onChange={e => handleMedicineChange(i, 'strength', e.target.value)}
-                                            className="w-full focus:outline-none bg-transparent text-black"
-                                            placeholder="Tablet 650 mg"
-                                        />
-                                    </div>
-
-                                    {/* Frequency (mapped to dosage state) */}
-                                    <div>
-                                        <AutocompleteInput
-                                            value={med.dosage}
-                                            onChange={(val) => handleMedicineChange(i, 'dosage', val)}
-                                            options={DOSAGE_OPTIONS}
-                                            className="text-black"
-                                            placeholder="1-0-1"
-                                        />
-                                    </div>
-
-                                    {/* Days */}
-                                    <div>
-                                        <input
-                                            type="text"
-                                            value={med.duration}
-                                            onChange={e => handleMedicineChange(i, 'duration', e.target.value)}
-                                            className="w-full focus:outline-none bg-transparent text-black"
-                                            placeholder="5 Days"
-                                        />
-                                    </div>
-
-                                    {/* Instructions */}
-                                    <div>
-                                        <AutocompleteInput
-                                            value={med.notes}
-                                            onChange={(val) => handleMedicineChange(i, 'notes', val)}
-                                            options={INSTRUCTION_OPTIONS}
-                                            className="text-black"
-                                            placeholder="After food"
-                                        />
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="print:hidden text-center mt-1">
-                                        <button
-                                            onClick={() => handleRemoveMedicine(i)}
-                                            className="text-slate-300 hover:text-red-600 transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                            <div className="space-y-1 w-32">
+                                <label className="text-[12px] font-bold tracking-[1px] uppercase">Age / Gen</label>
+                                <div className="flex items-center justify-center gap-1 h-[25px] border-b border-[#aaa]">
+                                    <input
+                                        type="text"
+                                        value={patientAge}
+                                        onChange={e => setPatientAge(e.target.value)}
+                                        className="w-10 focus:outline-none bg-transparent font-bold text-[14px] text-center"
+                                        placeholder="Age"
+                                    />
+                                    <span className="text-gray-300">/</span>
+                                    <input
+                                        type="text"
+                                        value={patientGender}
+                                        onChange={e => setPatientGender(e.target.value)}
+                                        className="w-12 focus:outline-none bg-transparent font-bold uppercase text-[14px] text-center"
+                                        placeholder="M/F"
+                                    />
                                 </div>
-                            ))}
+                            </div>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="space-y-1 flex-1">
+                                <label className="text-[12px] font-bold tracking-[1px] uppercase">Patient ID</label>
+                                <input
+                                    type="text"
+                                    value={patientId}
+                                    onChange={e => setPatientId(e.target.value)}
+                                    className="w-full h-[25px] border-b border-[#aaa] focus:outline-none bg-transparent font-bold uppercase text-[14px]"
+                                />
+                            </div>
+                            <div className="space-y-1 w-32">
+                                <label className="text-[12px] font-bold tracking-[1px] uppercase">Date</label>
+                                <input
+                                    type="date"
+                                    value={visitDate}
+                                    onChange={e => setVisitDate(e.target.value)}
+                                    className="w-full h-[25px] border-b border-[#aaa] focus:outline-none bg-transparent font-bold text-[14px]"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[12px] font-bold tracking-[1px] uppercase">Consulting Specialist</label>
+                            <input
+                                type="text"
+                                value={doctorName}
+                                onChange={e => setDoctorName(e.target.value)}
+                                className="w-full h-[25px] focus:outline-none bg-transparent font-[800] uppercase text-[18px]"
+                            />
                         </div>
                     </div>
 
-                    <div className="mt-2 print:hidden">
+                    <div className="w-[28%] border border-[#ccc] rounded-[10px] overflow-hidden">
+                        <div className="bg-[#eee] text-center font-bold p-[10px] text-[12px] tracking-widest uppercase">CLINICAL VITALS</div>
+                        <div className="p-[10px] space-y-3">
+                            <div className="flex justify-between text-[14px]">
+                                <span className="font-semibold text-gray-600">BP</span>
+                                <div className="flex items-center gap-1 font-bold">
+                                    <input
+                                        type="text"
+                                        value={vitals.bp_sys || ''}
+                                        onChange={(e) => setVitals({ ...vitals, bp_sys: e.target.value })}
+                                        className="w-8 text-center border-b border-gray-100 focus:outline-none"
+                                        placeholder="___"
+                                    />
+                                    <span className="text-gray-300">/</span>
+                                    <input
+                                        type="text"
+                                        value={vitals.bp_dia || ''}
+                                        onChange={(e) => setVitals({ ...vitals, bp_dia: e.target.value })}
+                                        className="w-8 text-center border-b border-gray-100 focus:outline-none"
+                                        placeholder="___"
+                                    />
+                                    <span className="text-[10px] font-normal text-gray-400">mmHg</span>
+                                </div>
+                            </div>
+                            <div className="flex justify-between text-[14px]">
+                                <span className="font-semibold text-gray-600">SpO2</span>
+                                <div className="flex items-center gap-1 font-bold">
+                                    <input
+                                        type="text"
+                                        value={vitals.spo2}
+                                        onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
+                                        className="w-12 text-center border-b border-gray-100 focus:outline-none"
+                                        placeholder="___"
+                                    />
+                                    <span className="text-[10px] font-normal text-gray-400">%</span>
+                                </div>
+                            </div>
+                            <div className="flex justify-between text-[14px]">
+                                <span className="font-semibold text-gray-600">Pulse</span>
+                                <div className="flex items-center gap-1 font-bold">
+                                    <input
+                                        type="text"
+                                        value={vitals.pulse}
+                                        onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
+                                        className="w-12 text-center border-b border-gray-100 focus:outline-none"
+                                        placeholder="___"
+                                    />
+                                    <span className="text-[10px] font-normal text-gray-400">BPM</span>
+                                </div>
+                            </div>
+                            <div className="flex justify-between text-[14px]">
+                                <span className="font-semibold text-gray-600">Temp</span>
+                                <div className="flex items-center gap-1 font-bold">
+                                    <input
+                                        type="text"
+                                        value={vitals.temp}
+                                        onChange={(e) => setVitals({ ...vitals, temp: e.target.value })}
+                                        className="w-12 text-center border-b border-gray-100 focus:outline-none"
+                                        placeholder="___"
+                                    />
+                                    <span className="text-[10px] font-normal text-gray-400">°F</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sections */}
+                <div className="mt-[25px] space-y-8">
+                    {/* Diagnosis */}
+                    <div>
+                        <div className="text-[16px] font-bold tracking-[2px] uppercase">Diagnosis</div>
+                        <div className="border-t-2 border-black mt-1"></div>
+                        <textarea
+                            value={diagnosis}
+                            onChange={e => setDiagnosis(e.target.value)}
+                            className="w-full mt-3 font-bold text-[16px] uppercase focus:outline-none bg-transparent resize-none border-0 p-0 placeholder:text-gray-300"
+                            placeholder="ENTER CLINICAL DIAGNOSIS..."
+                            rows={1}
+                        />
+                    </div>
+
+                    {/* Chief Complaints */}
+                    <div>
+                        <div className="text-[14px] font-bold tracking-[2px] uppercase">Chief Complaints (C/O)</div>
+                        <div className="border-t-2 border-black mt-1"></div>
+                        <textarea
+                            value={notes}
+                            onChange={e => setNotes(e.target.value)}
+                            className="w-full mt-3 text-[14px] font-medium text-gray-600 focus:outline-none bg-transparent border-0 p-0 placeholder:text-gray-300"
+                            placeholder="Patient's clinical presentation..."
+                            rows={1}
+                            onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = `${target.scrollHeight}px`;
+                            }}
+                        />
+                    </div>
+
+                    {/* Prescription (Rx) */}
+                    <div>
+                        <div className="text-[14px] font-bold tracking-[2px] uppercase">Prescription (Rx)</div>
+                        <div className="border-t-2 border-black mt-1"></div>
+                        <table className="w-full mt-4">
+                            <thead>
+                                <tr className="border-b border-[#ccc]">
+                                    <th className="py-2 text-left text-[12px] font-bold uppercase w-[5%]">No</th>
+                                    <th className="py-2 text-left text-[12px] font-bold uppercase w-[30%]">Medicine Name</th>
+                                    <th className="py-2 text-left text-[12px] font-bold uppercase w-[20%]">Strength</th>
+                                    <th className="py-2 text-left text-[12px] font-bold uppercase w-[15%]">Freq</th>
+                                    <th className="py-2 text-left text-[12px] font-bold uppercase w-[10%]">Days</th>
+                                    <th className="py-2 text-left text-[12px] font-bold uppercase w-[20%]">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {medicines.map((med, index) => (
+                                    <tr key={index} className="border-b border-[#ccc] group">
+                                        <td className="py-3 text-[14px] text-gray-400">{index + 1}</td>
+                                        <td className="py-3">
+                                            <AutocompleteInput
+                                                value={med.name}
+                                                onChange={(val) => handleMedicineChange(index, 'name', val)}
+                                                options={medicineOptions}
+                                                placeholder="Medicine..."
+                                                className="font-bold text-black uppercase text-[14px] placeholder:text-gray-100"
+                                            />
+                                        </td>
+                                        <td className="py-3">
+                                            <input
+                                                className="w-full bg-transparent focus:outline-none font-semibold text-gray-600 text-[14px] placeholder:text-gray-100"
+                                                value={med.strength}
+                                                onChange={(e) => handleMedicineChange(index, 'strength', e.target.value)}
+                                                placeholder="Strength..."
+                                            />
+                                        </td>
+                                        <td className="py-3">
+                                            <AutocompleteInput
+                                                value={med.frequency}
+                                                onChange={(val) => handleMedicineChange(index, 'frequency', val)}
+                                                options={DOSAGE_OPTIONS}
+                                                placeholder="Freq..."
+                                                centerText={true}
+                                                className="font-semibold text-gray-600 text-[14px] text-center placeholder:text-gray-100"
+                                            />
+                                        </td>
+                                        <td className="py-3">
+                                            <input
+                                                className="w-full bg-transparent focus:outline-none font-semibold text-gray-600 text-[14px] text-center placeholder:text-gray-100"
+                                                value={med.duration}
+                                                onChange={(e) => handleMedicineChange(index, 'duration', e.target.value)}
+                                                placeholder="Days..."
+                                            />
+                                        </td>
+                                        <td className="py-3 relative">
+                                            <AutocompleteInput
+                                                value={med.notes}
+                                                onChange={(val) => handleMedicineChange(index, 'notes', val)}
+                                                options={INSTRUCTION_OPTIONS}
+                                                placeholder="Notes..."
+                                                className="font-medium text-gray-400 text-[14px] placeholder:text-gray-100"
+                                            />
+                                            <button
+                                                onClick={() => handleRemoveMedicine(index)}
+                                                className="absolute -right-6 top-1/2 -translate-y-1/2 text-gray-200 hover:text-red-500 transition-colors print:hidden"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                         <button
                             onClick={handleAddMedicine}
-                            className="flex items-center gap-1 text-sm text-black hover:bg-gray-100 px-3 py-1.5 rounded border border-gray-300 transition-colors"
+                            className="mt-4 flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-[10px] font-bold uppercase tracking-widest rounded transition-all print:hidden"
                         >
-                            <Plus className="w-4 h-4" /> Add Medicine Row
+                            <Plus className="w-3 h-3" /> Add Medicine
                         </button>
                     </div>
-                </div>
 
-                {/* 5. Advice - Dynamic Points */}
-                <div className="mb-8">
-                    <div className="bg-black text-white inline-block px-3 py-1 font-bold uppercase text-sm mb-4 print:bg-black print:text-white print-color-adjust">
-                        Advice
-                    </div>
-                    <div className="border border-black p-4 min-h-[150px]">
-                        <ul className="list-disc pl-5 space-y-1">
+                    {/* Medical Advice */}
+                    <div>
+                        <div className="text-[14px] font-bold tracking-[2px] uppercase">Medical Advice & Instructions</div>
+                        <div className="border-t-2 border-black mt-1"></div>
+                        <ul className="mt-4 space-y-2">
                             {adviceLines.map((line, index) => (
-                                <li key={index} className="marker:text-black text-sm">
+                                <li key={index} className="flex items-start gap-3 group">
+                                    <span className="text-gray-300 font-bold mt-1.5">•</span>
                                     <input
                                         id={`advice-${index}`}
-                                        className="w-full bg-transparent focus:outline-none"
+                                        className="flex-1 bg-transparent focus:outline-none text-[14px] font-medium text-gray-600 placeholder:text-gray-200 py-1"
                                         value={line}
                                         onChange={(e) => handleAdviceChange(index, e.target.value)}
                                         onKeyDown={(e) => handleAdviceKeyDown(index, e)}
-                                        placeholder={index === 0 && adviceLines.length === 1 ? "Type advice here... (Press Enter for new point)" : ""}
+                                        placeholder={index === 0 ? "Start typing advice..." : ""}
                                     />
                                 </li>
                             ))}
@@ -715,12 +772,14 @@ export default function ConsultationPage({ params }: PageProps) {
                     </div>
                 </div>
 
-                {/* 6. Footer Signature */}
-                <div className="mt-12 flex justify-end">
-                    <div className="text-center">
-                        <p className="font-bold text-sm mb-2 uppercase">{doctorName || 'Signature'}</p>
-                        <div className="w-48 h-[1px] bg-black mb-1"></div>
-                        <p className="font-bold text-xs uppercase">Signature</p>
+                {/* Footer */}
+                <div className="mt-12 flex justify-end items-end">
+                    <div className="text-right">
+                        <p className="text-[10px] text-gray-400 mb-1">Digitally signed by</p>
+                        <p className="text-[20px] font-[800] uppercase italic">
+                            DR. {doctorName.replace(/^Dr\.\s+/i, '').toUpperCase() || 'NIKITHA'}
+                        </p>
+                        <p className="text-[10px] font-bold text-gray-500 tracking-[1px] uppercase">Medical Consultant</p>
                     </div>
                 </div>
 
@@ -728,7 +787,6 @@ export default function ConsultationPage({ params }: PageProps) {
                 <div className="absolute top-[297mm] left-0 w-full border-b-2 border-dashed border-red-300 pointer-events-none print:hidden flex items-center justify-center">
                     <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-bold">End of Page 1</span>
                 </div>
-
             </div>
 
             <style jsx global>{`
@@ -746,6 +804,6 @@ export default function ConsultationPage({ params }: PageProps) {
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
-}
+};

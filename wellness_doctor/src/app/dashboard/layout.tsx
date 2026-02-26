@@ -15,9 +15,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const { data: session } = useSession();
 
-    // Use session name with fallback
+    // Helper to normalize doctor name and avoid double "Dr."
+    const getNormalizedName = (firstName: string, lastName: string) => {
+        let name = `${firstName || ''} ${lastName || ''}`.trim();
+        if (!name) return 'Doctor';
+        // Remove existing Dr. prefix (case insensitive, with or without dot, and handles multiple occurrences)
+        const cleanedName = name.replace(/^(dr\.?\s*)+/i, '').trim();
+        return `Dr. ${cleanedName}`;
+    };
+
     const doctorName = (session?.user as any)?.firstName
-        ? `Dr. ${(session?.user as any).firstName} ${(session?.user as any).lastName || ''}`.trim()
+        ? getNormalizedName((session?.user as any).firstName, (session?.user as any).lastName)
         : 'Doctor';
 
     const handleSignOut = async () => {
