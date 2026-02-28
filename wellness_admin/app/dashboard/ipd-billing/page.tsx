@@ -13,7 +13,8 @@ import {
     CheckCircle2,
     Clock,
     X,
-    Receipt
+    Receipt,
+    Printer
 } from 'lucide-react';
 
 export default function IPDBillingPage() {
@@ -61,9 +62,10 @@ export default function IPDBillingPage() {
             });
 
             if (res.ok) {
-                alert('Billing processed successfully!');
+                const data = await res.json();
                 setBillingModalOpen(false);
                 fetchAdmissions();
+                window.open('/dashboard/ipd-billing/invoice/' + data.invoice.id, '_blank');
             } else {
                 const data = await res.json();
                 alert('Error: ' + data.error);
@@ -146,17 +148,30 @@ export default function IPDBillingPage() {
                                         <p className="font-semibold text-slate-900">₹{adm.totalCharges?.toLocaleString() || 0}</p>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => {
-                                                setSelectedAdmission(adm);
-                                                setDiscountAmount(0);
-                                                setBillingModalOpen(true);
-                                            }}
-                                            className="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-medium text-sm transition-colors"
-                                        >
-                                            <FileText className="w-4 h-4" />
-                                            Bill Record
-                                        </button>
+                                        {adm.pharmacyInvoices?.length > 0 ? (
+                                            <button
+                                                onClick={() => {
+                                                    const latestInvoice = adm.pharmacyInvoices[adm.pharmacyInvoices.length - 1];
+                                                    window.open(`/dashboard/ipd-billing/invoice/${latestInvoice.id}`, '_blank');
+                                                }}
+                                                className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-sm transition-colors"
+                                            >
+                                                <Printer className="w-4 h-4" />
+                                                Print Bill
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedAdmission(adm);
+                                                    setDiscountAmount(0);
+                                                    setBillingModalOpen(true);
+                                                }}
+                                                className="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-medium text-sm transition-colors"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                Bill Record
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))

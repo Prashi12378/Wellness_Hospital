@@ -360,7 +360,7 @@ export default function DischargeSummaryPage() {
                     {/* Row 2 */}
                     <div className="flex items-baseline col-span-4 overflow-hidden pr-4">
                         <span className="font-bold shrink-0 mr-2 whitespace-nowrap">Consultant:</span>
-                        <span className="font-bold text-slate-950 truncate uppercase">Dr. {admission.primaryDoctor?.firstName} {admission.primaryDoctor?.lastName}</span>
+                        <span className="font-bold text-slate-950 truncate uppercase">{admission.primaryDoctor?.firstName} {admission.primaryDoctor?.lastName}</span>
                     </div>
                     <div className="flex items-baseline col-span-3 overflow-hidden">
                         <span className="font-bold shrink-0 mr-2">IP.NO:</span>
@@ -523,7 +523,7 @@ export default function DischargeSummaryPage() {
 
                     <div className="flex justify-end mt-12 mb-8">
                         <div className="text-right border-t border-slate-900 pt-2 min-w-[200px]">
-                            <p className="font-bold text-md uppercase">Dr. {admission.primaryDoctor?.firstName} {admission.primaryDoctor?.lastName}</p>
+                            <p className="font-bold text-md uppercase">{admission.primaryDoctor?.firstName} {admission.primaryDoctor?.lastName}</p>
                             <p className="text-[11px] font-bold text-slate-900 uppercase">{admission.doctorDesignation || admission.primaryDoctor?.specialization || "CONSULTANT AYURVEDA"}</p>
                         </div>
                     </div>

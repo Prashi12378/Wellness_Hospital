@@ -293,7 +293,7 @@ export default function AdmissionDetailPage() {
                                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Primary Physician</p>
                                         <p className="text-lg font-black text-slate-800 leading-tight">
-                                            {admission.primaryDoctor ? `Dr. ${admission.primaryDoctor.firstName} ${admission.primaryDoctor.lastName}` : "Unassigned"}
+                                            {admission.primaryDoctor ? `${admission.primaryDoctor.firstName} ${admission.primaryDoctor.lastName}` : "Unassigned"}
                                         </p>
                                         <p className="text-xs font-bold text-slate-500 mt-1">{admission.primaryDoctor?.specialization || "--"}</p>
                                     </div>

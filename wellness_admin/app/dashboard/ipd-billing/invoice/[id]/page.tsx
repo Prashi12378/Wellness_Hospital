@@ -1,58 +1,43 @@
-'use client';
-
-import { getAdmissionDetails } from '@/app/actions/ipd';
+import { prisma } from '@/lib/db';
 import { format } from 'date-fns';
-import { Printer, ArrowLeft, Hospital, Activity, Calendar } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { useState, useEffect, use } from 'react';
+import PrintButton from './PrintButton';
 
-export default function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
-    const [loading, setLoading] = useState(true);
-    const [admission, setAdmission] = useState<any>(null);
-    const [billDate, setBillDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+export default async function AdminInvoicePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const result = await getAdmissionDetails(id);
-            if (result.success && result.admission) {
-                setAdmission(result.admission);
+    // Fetch invoice with admission and patient details
+    const invoice = await prisma.invoice.findUnique({
+        where: { id },
+        include: {
+            items: true,
+            admission: {
+                include: {
+                    patient: true,
+                    primaryDoctor: true
+                }
             }
-            setLoading(false);
-        };
-        fetchData();
-    }, [id]);
+        }
+    });
 
-    if (loading) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-50">
-            <p className="text-slate-500 font-bold animate-pulse">Loading Invoice...</p>
-        </div>;
-    }
-
-    if (!admission) {
+    if (!invoice) {
         notFound();
     }
 
-    const totalBill = admission.charges?.reduce((acc: number, c: any) => acc + Number(c.amount), 0) || 0;
-
-    const handlePrint = () => {
-        window.print();
-    };
+    const { admission } = invoice;
+    const patient = admission?.patient;
+    const doctor = admission?.primaryDoctor;
 
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0 print:m-0">
             {/* Action Bar */}
             <div className="max-w-[800px] mx-auto mb-8 flex justify-between items-center print:hidden">
-                <Link href={`/dashboard/ipd/${id}`} className="flex items-center gap-2 text-slate-600 font-bold hover:text-primary transition-colors">
-                    <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+                <Link href={`/dashboard/ipd-billing`} className="flex items-center gap-2 text-slate-600 font-bold hover:text-primary transition-colors">
+                    <ArrowLeft className="w-5 h-5" /> Back to Billing
                 </Link>
-                <button
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-                >
-                    <Printer className="w-5 h-5" /> Print Invoice
-                </button>
+                <PrintButton />
             </div>
 
             {/* Invoice Document - wrapped in print table for margins */}
@@ -77,7 +62,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                 </div>
 
                                 <div className="p-12 print:p-8 relative z-10">
-                                    {/* Header matching User Mockup - Refactored to prevent overlap */}
+                                    {/* Header */}
                                     <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8 mb-8">
                                         <div className="w-24 h-24 print:w-20 print:h-20 shrink-0">
                                             <img src="/logo.png" alt="Hospital Logo" className="w-full h-full object-contain" />
@@ -91,53 +76,47 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                                 <span className="text-slate-900">Ph No. +91 8105666338 | E-mail: wellnesshospital8383@gmail.com</span>
                                             </p>
                                             <div className="inline-block bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                                                GST NO: 29JNVPS4919B2Z5
+                                                GST NO: {invoice.gstin || '29JNVPS4919B2Z5'}
                                             </div>
                                         </div>
 
-                                        <div className="w-24 print:w-20 shrink-0"></div> {/* Spacer for symmetry */}
+                                        <div className="w-24 print:w-20 shrink-0"></div>
                                     </div>
 
+                                    {/* Patient Info */}
                                     <div className="flex justify-between items-center mb-8 font-sans">
                                         <div className="space-y-1">
                                             <p className="text-[11px] font-black text-slate-600 uppercase">Bill To:</p>
-                                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">{admission.patient?.firstName} {admission.patient?.lastName}</h2>
-                                            <p className="text-[11px] font-bold text-slate-500 uppercase">UHID: {admission.patient?.uhid || '---'}</p>
+                                            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">{invoice.patientName}</h2>
+                                            <p className="text-[11px] font-bold text-slate-500 uppercase">UHID: {patient?.uhid || '---'}</p>
+                                            <p className="text-[11px] font-bold text-slate-500 uppercase">Phone: {invoice.patientPhone || patient?.phone || '---'}</p>
                                         </div>
                                         <div className="text-right space-y-1">
-                                            <p className="text-[11px] font-black text-slate-900 uppercase">Bill No: <span className="font-sans text-primary">IPD-{admission.id.slice(-6).toUpperCase()}</span></p>
+                                            <p className="text-[11px] font-black text-slate-900 uppercase">Bill No: <span className="font-sans text-primary">{invoice.billNo}</span></p>
 
-                                            <div className="flex items-center justify-end gap-2 group">
+                                            <div className="flex items-center justify-end gap-2">
                                                 <p className="text-[11px] font-black text-slate-900 uppercase">Date:</p>
-                                                <div className="relative inline-block">
-                                                    <input
-                                                        type="date"
-                                                        value={billDate}
-                                                        onChange={(e) => setBillDate(e.target.value)}
-                                                        className="text-[11px] font-black text-slate-900 uppercase bg-transparent border-b border-dashed border-slate-300 focus:border-primary focus:outline-none cursor-pointer print:hidden p-0 m-0"
-                                                    />
-                                                    <span className="hidden print:inline text-[11px] font-black text-slate-900 uppercase">
-                                                        {format(new Date(billDate), 'dd-MM-yy')}
-                                                    </span>
-                                                </div>
+                                                <span className="text-[11px] font-black text-slate-900 uppercase">
+                                                    {format(new Date(invoice.createdAt), 'dd-MMM-yyyy')}
+                                                </span>
                                             </div>
 
-                                            <p className="text-[11px] font-black text-slate-900 uppercase">IP No: {admission.id.slice(0, 8).toUpperCase()}</p>
+                                            {admission && <p className="text-[11px] font-black text-slate-900 uppercase">IP No: {admission.id.slice(0, 8).toUpperCase()}</p>}
                                         </div>
                                     </div>
 
                                     <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between print:bg-white print:border-slate-200">
                                         <div>
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Primary Consultant</p>
-                                            <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{admission.primaryDoctor?.firstName} {admission.primaryDoctor?.lastName}</p>
+                                            <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{doctor?.firstName || '---'} {doctor?.lastName || '---'}</p>
                                         </div>
                                         <div className="text-center">
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ward / Bed</p>
-                                            <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{admission.ward || 'General'} / {admission.bedNumber || '---'}</p>
+                                            <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{admission?.ward || 'General'} / {admission?.bedNumber || '---'}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Admission Date</p>
-                                            <p className="text-sm font-bold text-slate-900">{admission.admissionDate ? format(new Date(admission.admissionDate), 'dd MMM yyyy') : '---'}</p>
+                                            <p className="text-sm font-bold text-slate-900">{admission?.admissionDate ? format(new Date(admission.admissionDate), 'dd MMM yyyy') : '---'}</p>
                                         </div>
                                     </div>
 
@@ -148,26 +127,20 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                                 <tr className="border-y-2 border-slate-900 text-[10px] font-black uppercase text-slate-900">
                                                     <th className="py-3 px-2">S.No</th>
                                                     <th className="py-3 px-2">Service / Item Description</th>
-                                                    <th className="py-3 px-2">Service Type</th>
                                                     <th className="py-3 px-2 text-right">Amount (₹)</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-200">
-                                                {admission.charges?.map((charge: any, idx: number) => (
-                                                    <tr key={charge.id} className="text-xs text-slate-800">
+                                                {invoice.items.map((item: any, idx: number) => (
+                                                    <tr key={item.id} className="text-xs text-slate-800">
                                                         <td className="py-4 px-2 font-bold">{idx + 1}</td>
-                                                        <td className="py-4 px-2 font-black uppercase tracking-tight">{charge.description}</td>
-                                                        <td className="py-4 px-2">
-                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-200 px-2 py-0.5 rounded">
-                                                                {charge.type}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-4 px-2 text-right font-black">₹{Number(charge.amount).toLocaleString()}</td>
+                                                        <td className="py-4 px-2 font-black uppercase tracking-tight">{item.name}</td>
+                                                        <td className="py-4 px-2 text-right font-black">₹{Number(item.amount).toLocaleString()}</td>
                                                     </tr>
                                                 ))}
-                                                {admission.charges?.length === 0 && (
+                                                {invoice.items.length === 0 && (
                                                     <tr>
-                                                        <td colSpan={4} className="py-12 text-center text-slate-400 italic">No charges recorded for this admission.</td>
+                                                        <td colSpan={3} className="py-12 text-center text-slate-400 italic">No charges recorded.</td>
                                                     </tr>
                                                 )}
                                             </tbody>
@@ -202,15 +175,21 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                             <div className="space-y-2 pt-4 border-t border-slate-200">
                                                 <div className="flex justify-between items-center px-2">
                                                     <span className="text-[11px] font-black text-slate-500 uppercase">Sub Total</span>
-                                                    <span className="text-sm font-bold text-slate-900">₹{totalBill.toLocaleString()}</span>
+                                                    <span className="text-sm font-bold text-slate-900">₹{Number(invoice.subTotal).toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center px-2">
                                                     <span className="text-[11px] font-black text-slate-500 uppercase">Total Items</span>
-                                                    <span className="text-sm font-bold text-slate-900">{admission.charges?.length || 0}</span>
+                                                    <span className="text-sm font-bold text-slate-900">{invoice.items.length}</span>
                                                 </div>
+                                                {Number(invoice.discountAmount) > 0 && (
+                                                    <div className="flex justify-between items-center px-2">
+                                                        <span className="text-[11px] font-black text-emerald-600 uppercase">Discount Applied</span>
+                                                        <span className="text-sm font-bold text-emerald-600">-₹{Number(invoice.discountAmount).toLocaleString()}</span>
+                                                    </div>
+                                                )}
                                                 <div className="flex justify-between items-center pt-4 border-t-2 border-slate-900 bg-slate-900 text-white p-4 rounded-2xl print:bg-white print:text-slate-900 print:border-2 print:border-slate-900">
                                                     <span className="text-lg font-black uppercase tracking-tighter">Grand Total</span>
-                                                    <span className="text-3xl font-black">₹{totalBill.toLocaleString()}</span>
+                                                    <span className="text-3xl font-black">₹{Number(invoice.grandTotal).toLocaleString()}</span>
                                                 </div>
                                             </div>
 

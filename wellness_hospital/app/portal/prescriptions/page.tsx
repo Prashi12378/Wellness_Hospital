@@ -50,7 +50,7 @@ export default function PrescriptionsPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-lg text-foreground">{px.medication}</h3>
-                                        <p className="text-sm text-primary font-medium">Dr. {px.doctor_name}</p>
+                                        <p className="text-sm text-primary font-medium">{px.doctor_name}</p>
                                         <div className="flex flex-wrap gap-3 mt-2">
                                             <span className="text-xs bg-muted px-2 py-1 rounded flex items-center gap-1 font-medium border border-border">
                                                 <Clock className="w-3 h-3" /> {px.frequency}

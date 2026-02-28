@@ -39,7 +39,7 @@ export default async function DoctorsPage() {
                                 <Stethoscope className="w-7 h-7" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-slate-800 text-lg">Dr. {doc.firstName} {doc.lastName}</h3>
+                                <h3 className="font-bold text-slate-800 text-lg">{doc.firstName} {doc.lastName}</h3>
                                 <span className="inline-block px-2 py-0.5 bg-primary/5 text-primary text-xs rounded-full font-medium border border-primary/10">
                                     {doc.specialization || "General Physician"}
                                 </span>

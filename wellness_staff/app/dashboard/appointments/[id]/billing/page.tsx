@@ -99,7 +99,7 @@ export default function OPDBillingPage() {
             appointmentId: id,
             patientName: appointment.patientName || `${appointment.patient.firstName} ${appointment.patient.lastName}`,
             patientPhone: appointment.patientPhone || appointment.patient.phone,
-            doctorName: appointment.doctor ? `Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName}` : undefined,
+            doctorName: appointment.doctor ? `${appointment.doctor.firstName} ${appointment.doctor.lastName}` : undefined,
             subTotal: totalBill,
             totalGst: 0, // Simplified for now
             grandTotal: totalBill,
@@ -140,7 +140,7 @@ export default function OPDBillingPage() {
                             </span>
                             <span className="flex items-center gap-2 text-xs">
                                 <Stethoscope className="w-4 h-4 text-primary" />
-                                {appointment.doctor ? `Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName}` : "No Doctor Assigned"}
+                                {appointment.doctor ? `${appointment.doctor.firstName} ${appointment.doctor.lastName}` : "No Doctor Assigned"}
                             </span>
                         </div>
                     </div>
@@ -336,7 +336,7 @@ export default function OPDBillingPage() {
                                             if (doctorSelect && doctorSelect.value) {
                                                 const doctor = doctors.find(d => d.id === doctorSelect.value);
                                                 if (doctor) {
-                                                    (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - Dr. ${doctor.firstName} ${doctor.lastName}`;
+                                                    (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - `${doctor.firstName} ${doctor.lastName}`;
                                                     (form.elements.namedItem('amount') as HTMLInputElement).value = doctor.consultationFee.toString();
                                                 }
                                             }
@@ -359,14 +359,14 @@ export default function OPDBillingPage() {
                                         const doctor = doctors.find(d => d.id === e.target.value);
                                         const form = e.target.form;
                                         if (doctor && form) {
-                                            (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - Dr. ${doctor.firstName} ${doctor.lastName}`;
+                                            (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - `${doctor.firstName} ${doctor.lastName}`;
                                             (form.elements.namedItem('amount') as HTMLInputElement).value = doctor.consultationFee.toString();
                                         }
                                     }}
                                 >
                                     <option value="">Select a doctor to fill details...</option>
                                     {doctors.map(d => (
-                                        <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName} ({d.specialization})</option>
+                                        <option key={d.id} value={d.id}>{d.firstName} {d.lastName} ({d.specialization})</option>
                                     ))}
                                 </select>
                             </div>

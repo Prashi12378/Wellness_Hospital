@@ -16,6 +16,7 @@ export async function GET(req: Request) {
                 patient: true,
                 primaryDoctor: true,
                 HospitalCharge: true,
+                pharmacyInvoices: true,
             },
             orderBy: {
                 admissionDate: 'desc'

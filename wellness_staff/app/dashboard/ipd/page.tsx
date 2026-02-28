@@ -285,7 +285,7 @@ export default function IPDDashboard() {
                                             <td className="px-6 py-6">
                                                 {adm.primaryDoctor ? (
                                                     <div>
-                                                        <p className="text-sm font-black text-slate-800">Dr. {adm.primaryDoctor.firstName} {adm.primaryDoctor.lastName}</p>
+                                                        <p className="text-sm font-black text-slate-800">{adm.primaryDoctor.firstName} {adm.primaryDoctor.lastName}</p>
                                                         <p className="text-xs font-bold text-slate-400 tracking-wider">{adm.primaryDoctor.specialization}</p>
                                                     </div>
                                                 ) : (
@@ -460,7 +460,7 @@ export default function IPDDashboard() {
                                     >
                                         <option value="">Assign Doctor...</option>
                                         {doctors.map(d => (
-                                            <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName}</option>
+                                            <option key={d.id} value={d.id}>{d.firstName} {d.lastName}</option>
                                         ))}
                                     </select>
                                 </div>

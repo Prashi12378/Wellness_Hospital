@@ -192,7 +192,7 @@ export default function DirectVisitPage() {
                                         <option value="">Choose a doctor...</option>
                                         {doctors.map(d => (
                                             <option key={d.id} value={d.id}>
-                                                Dr. {d.firstName} {d.lastName} ({d.specialization})
+                                                {d.firstName} {d.lastName} ({d.specialization})
                                             </option>
                                         ))}
                                     </select>

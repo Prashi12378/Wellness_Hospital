@@ -21,7 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (!name) return 'Doctor';
         // Remove existing Dr. prefix (case insensitive, with or without dot, and handles multiple occurrences)
         const cleanedName = name.replace(/^(dr\.?\s*)+/i, '').trim();
-        return `Dr. ${cleanedName}`;
+        return `${cleanedName}`;
     };
 
     const doctorName = (session?.user as any)?.firstName

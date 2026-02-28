@@ -213,7 +213,7 @@ export default function ConsultationPage({ params }: PageProps) {
                 let name = `${f || ''} ${l || ''}`.trim();
                 if (!name) return 'Doctor';
                 const cleaned = name.replace(/^(dr\.?\s*)+/i, '').trim();
-                return `Dr. ${cleaned}`;
+                return `${cleaned}`;
             };
             if (!doctorName) setDoctorName(getNormalizedName(u.firstName, u.lastName));
             if (!qualification) setQualification(u.qualifications || 'MBBS');

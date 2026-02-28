@@ -139,7 +139,7 @@ export default function PatientHistoryDetailPage() {
                                                 {format(new Date(adm.admissionDate), 'MMMM dd, yyyy')} — {adm.dischargeDate ? format(new Date(adm.dischargeDate), 'MMMM dd, yyyy') : 'Current'}
                                             </h3>
                                             <p className="text-sm font-bold text-slate-400 mt-1">
-                                                ID: {adm.id.split('-')[0].toUpperCase()} • {adm.ward} / {adm.bedNumber} • Consultant: Dr. {adm.primaryDoctor?.firstName} {adm.primaryDoctor?.lastName}
+                                                ID: {adm.id.split('-')[0].toUpperCase()} • {adm.ward} / {adm.bedNumber} • Consultant: {adm.primaryDoctor?.firstName} {adm.primaryDoctor?.lastName}
                                             </p>
                                         </div>
                                     </div>
@@ -249,7 +249,7 @@ export default function PatientHistoryDetailPage() {
                                             {format(new Date(apt.appointmentDate), 'MMMM dd, yyyy')} — {apt.appointmentTime}
                                         </h3>
                                         <p className="text-sm font-bold text-slate-500 mt-1">
-                                            Consultant: Dr. {apt.doctor?.firstName} {apt.doctor?.lastName} ({apt.doctor?.specialization})
+                                            Consultant: {apt.doctor?.firstName} {apt.doctor?.lastName} ({apt.doctor?.specialization})
                                         </p>
                                     </div>
                                 </div>

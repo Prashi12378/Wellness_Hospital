@@ -104,7 +104,7 @@ export default async function AppointmentsPage() {
                                                 {apt.doctor ? (
                                                     <>
                                                         <div className="font-medium text-slate-800">
-                                                            Dr. {apt.doctor.firstName} {apt.doctor.lastName}
+                                                            {apt.doctor.firstName} {apt.doctor.lastName}
                                                         </div>
                                                         <div className="text-sm text-slate-500">{apt.doctor.specialization}</div>
                                                     </>
