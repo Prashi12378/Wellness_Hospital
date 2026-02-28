@@ -148,17 +148,17 @@ export default function IPDBillingPage() {
                                         <p className="font-semibold text-slate-900">₹{adm.totalCharges?.toLocaleString() || 0}</p>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center justify-end gap-3">
+                                        <div className="flex items-center justify-end gap-2 text-slate-400">
                                             {adm.pharmacyInvoices?.length > 0 && (
                                                 <button
                                                     onClick={() => {
                                                         const latestInvoice = adm.pharmacyInvoices[adm.pharmacyInvoices.length - 1];
                                                         window.open(`/dashboard/ipd-billing/invoice/${latestInvoice.id}`, '_blank');
                                                     }}
-                                                    className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-sm transition-colors"
+                                                    className="p-2 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors"
+                                                    title="Print Bill"
                                                 >
-                                                    <Printer className="w-4 h-4" />
-                                                    Print Bill
+                                                    <Printer className="w-5 h-5" />
                                                 </button>
                                             )}
 
@@ -168,10 +168,10 @@ export default function IPDBillingPage() {
                                                     setDiscountAmount(0);
                                                     setBillingModalOpen(true);
                                                 }}
-                                                className="inline-flex items-center gap-1 text-primary hover:text-primary/80 font-medium text-sm transition-colors"
+                                                className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                                title="Bill Record"
                                             >
-                                                <FileText className="w-4 h-4" />
-                                                Bill Record
+                                                <FileText className="w-5 h-5" />
                                             </button>
                                         </div>
                                     </td>
