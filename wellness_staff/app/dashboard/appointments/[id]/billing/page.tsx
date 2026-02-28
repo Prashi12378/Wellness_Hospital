@@ -336,7 +336,7 @@ export default function OPDBillingPage() {
                                             if (doctorSelect && doctorSelect.value) {
                                                 const doctor = doctors.find(d => d.id === doctorSelect.value);
                                                 if (doctor) {
-                                                    (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - `${doctor.firstName} ${doctor.lastName}`;
+                                                    (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - ${doctor.firstName} ${doctor.lastName}`;
                                                     (form.elements.namedItem('amount') as HTMLInputElement).value = doctor.consultationFee.toString();
                                                 }
                                             }
@@ -359,7 +359,7 @@ export default function OPDBillingPage() {
                                         const doctor = doctors.find(d => d.id === e.target.value);
                                         const form = e.target.form;
                                         if (doctor && form) {
-                                            (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - `${doctor.firstName} ${doctor.lastName}`;
+                                            (form.elements.namedItem('description') as HTMLInputElement).value = `Consultation Fee - ${doctor.firstName} ${doctor.lastName}`;
                                             (form.elements.namedItem('amount') as HTMLInputElement).value = doctor.consultationFee.toString();
                                         }
                                     }}
