@@ -309,9 +309,13 @@ export default function DischargeSummaryPage() {
 
             {/* Professional Discharge Summary (Printable) */}
             <div
-                className="bg-white p-8 shadow-sm border border-slate-200 text-slate-900 leading-relaxed print:shadow-none print:border-none print:p-0 print:m-0"
+                className="bg-white relative p-8 shadow-sm border border-slate-200 text-slate-900 leading-relaxed print:shadow-none print:border-none print:p-0 print:m-0 print:bg-transparent"
                 style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
             >
+                {/* Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] print:opacity-[0.08] pointer-events-none z-0 select-none overflow-hidden print:fixed print:inset-0">
+                    <img src="/logo.png" alt="Watermark" className="w-[50%] max-w-[500px] object-contain grayscale-0" />
+                </div>
 
                 {/* Hospital Header (Centered matching User Mockup) */}
                 <div className="text-center mb-6">

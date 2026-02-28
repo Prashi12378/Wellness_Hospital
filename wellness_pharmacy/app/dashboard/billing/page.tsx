@@ -176,7 +176,7 @@ export default function BillingPage() {
                 expiryDate: medicine.expiryDate,
                 qty: 1,
                 mrp: medicine.price,
-                gstRate: 0, // Default to 0% as per user request
+                gstRate: medicine.gstRate || defaultGstRate,
                 stock: medicine.stock
             }]);
         }

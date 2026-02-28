@@ -483,7 +483,12 @@ export default function ConsultationPage({ params }: PageProps) {
             </div>
 
             {/* A4 PAGE CONTAINER */}
-            <div className="bg-white shadow-xl mx-auto w-[210mm] min-h-[297mm] p-12 relative text-[#111] print:shadow-none print:w-full print:p-12 font-sans">
+            <div className="bg-white relative shadow-xl mx-auto w-[210mm] min-h-[297mm] p-12 text-[#111] print:shadow-none print:w-full print:p-12 font-sans print:bg-transparent">
+                {/* Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] print:opacity-[0.08] pointer-events-none z-0 select-none overflow-hidden print:fixed print:inset-0">
+                    <img src="/logo.png" alt="Watermark" className="w-[50%] max-w-[500px] object-contain grayscale-0" />
+                </div>
+
                 {/* Header */}
                 <div className="flex items-center">
                     <div className="w-20 h-20 mr-5 relative">

@@ -202,9 +202,14 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                     `}} />
 
                     {/* Invoice Paper Design for A5 */}
-                    <div className="invoice-container max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm print:border-none print:shadow-none bg-white text-xs">
+                    <div className="invoice-container relative max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm print:border-none print:shadow-none bg-white text-xs">
+                        {/* Watermark */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] print:opacity-[0.08] pointer-events-none z-0 select-none overflow-hidden print:fixed print:inset-0">
+                            <img src="/logo.png" alt="Watermark" className="w-[60%] max-w-[300px] object-contain grayscale-0" />
+                        </div>
+
                         {/* Hospital Header */}
-                        <div className="flex justify-between items-start mb-4 border-b-2 border-slate-900 pb-4 header-container">
+                        <div className="relative z-10 flex justify-between items-start mb-4 border-b-2 border-slate-900 pb-4 header-container">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 relative grayscale print:grayscale-0 header-logo flex-shrink-0">
                                     <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-contain" />
@@ -269,7 +274,9 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                         <td className="py-1 px-1 uppercase text-right">{item.batchNo}</td>
                                         <td className="py-1 px-1 text-right">{Number(item.mrp).toFixed(2)}</td>
                                         <td className="py-1 px-1 text-right">{item.gstRate}</td>
-                                        <td className="py-1 px-1 text-right font-bold">{Number(item.amount).toFixed(2)}</td>
+                                        <td className="py-1 px-1 text-right font-bold">
+                                            {Number(Number(item.amount) + (Number(item.amount) * Number(item.gstRate)) / 100).toFixed(2)}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -280,28 +287,6 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                             <div className="flex justify-between items-start gap-8">
                                 {/* Tax Summary Table */}
                                 <div className="w-1/2">
-                                    <table className="tax-table w-full text-[10px] border border-slate-300">
-                                        <thead className="bg-slate-50">
-                                            <tr className="border-b border-slate-300">
-                                                <th className="px-1 py-1 text-left">TAX</th>
-                                                <th className="px-1 py-1 text-right">TAXABLE</th>
-                                                <th className="px-1 py-1 text-right">CGST</th>
-                                                <th className="px-1 py-1 text-right">SGST</th>
-                                                <th className="px-1 py-1 text-right">TOTAL</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {Object.entries(taxGroups).map(([rate, vals]: [string, any]) => (
-                                                <tr key={rate} className="border-b border-slate-200">
-                                                    <td className="px-1 py-1 font-bold">{rate}%</td>
-                                                    <td className="px-1 py-1 text-right">{vals.taxable.toFixed(2)}</td>
-                                                    <td className="px-1 py-1 text-right">{vals.cgst.toFixed(2)}</td>
-                                                    <td className="px-1 py-1 text-right">{vals.sgst.toFixed(2)}</td>
-                                                    <td className="px-1 py-1 text-right font-bold">{vals.total.toFixed(2)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
                                     <div className="mt-2 text-[9px] leading-tight opacity-70">
                                         <p>1. Major Credit/Debit/Digital Cards accepted.</p>
                                         <p>2. E & O E Goods Once Sold Cannot Be Exchanged.</p>
@@ -314,6 +299,10 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                         <div className="flex justify-between">
                                             <span>Sub Total :</span>
                                             <span className="font-bold">{invoice.subTotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Total GST :</span>
+                                            <span className="font-bold">{invoice.totalGst.toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Total Items :</span>

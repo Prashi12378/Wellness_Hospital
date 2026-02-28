@@ -77,7 +77,11 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
             </div>
 
             {/* Print Area */}
-            <div id="printable-report" className="bg-white p-8 md:p-12 rounded-[48px] border border-slate-100 shadow-sm print:shadow-none print:border-0 print:p-0 print:rounded-none min-h-[1000px] flex flex-col font-sans mb-10">
+            <div id="printable-report" className="bg-white relative p-8 md:p-12 rounded-[48px] border border-slate-100 shadow-sm print:shadow-none print:border-0 print:p-0 print:rounded-none min-h-[1000px] flex flex-col font-sans mb-10 print:bg-transparent">
+                {/* Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] print:opacity-[0.1] pointer-events-none z-0 select-none overflow-hidden print:fixed print:inset-0">
+                    <img src="/logo.png" alt="Watermark" className="w-[50%] max-w-[400px] object-contain grayscale-0" />
+                </div>
 
                 {/* Polished Header */}
                 <div className="flex justify-between items-start mb-10 border-b-2 border-slate-100 pb-8 px-2">
