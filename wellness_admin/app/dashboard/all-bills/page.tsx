@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ReceiptText, Filter } from 'lucide-react';
+import { Search, ReceiptText, Filter, Eye } from 'lucide-react';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 export default function AllBillsPage() {
     const [bills, setBills] = useState<any[]>([]);
@@ -96,6 +97,7 @@ export default function AllBillsPage() {
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Type</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Amount</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Status</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -152,6 +154,14 @@ export default function AllBillsPage() {
                                             >
                                                 {bill.status}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <Link
+                                                href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
+                                            >
+                                                <Eye className="w-4 h-4" /> View
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))
