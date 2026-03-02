@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Receipt, Filter } from 'lucide-react';
+import { Search, ReceiptText, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function AllBillsPage() {
@@ -44,7 +44,7 @@ export default function AllBillsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                        <Receipt className="w-8 h-8 text-primary" />
+                        <ReceiptText className="w-8 h-8 text-primary" />
                         All Bills & Invoices
                     </h1>
                     <p className="text-slate-500 font-medium mt-1">Unified view of all hospital billing transactions</p>
@@ -63,8 +63,8 @@ export default function AllBillsPage() {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-primary shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             {tab}
