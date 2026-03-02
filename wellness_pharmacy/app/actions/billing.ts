@@ -255,6 +255,11 @@ export async function getPharmacySettings() {
 export async function getInvoices() {
     try {
         const invoices = await db.invoice.findMany({
+            where: {
+                billNo: {
+                    startsWith: 'S-'
+                }
+            },
             include: {
                 items: true,
             },

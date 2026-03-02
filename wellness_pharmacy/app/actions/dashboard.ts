@@ -35,6 +35,9 @@ export async function getDashboardStats() {
             where: {
                 createdAt: {
                     gte: today
+                },
+                billNo: {
+                    startsWith: 'S-'
                 }
             },
             _sum: {

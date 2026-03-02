@@ -19,6 +19,12 @@ export default function LedgerPage() {
     const [isAddModalOpen, setAddModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
 
+    // Date Range Filter State (default: start of month to today)
+    const [dateRange, setDateRange] = useState({
+        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+        end: new Date().toISOString().split('T')[0]
+    });
+
     // Stats
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
 
@@ -34,12 +40,16 @@ export default function LedgerPage() {
 
     useEffect(() => {
         fetchTransactions();
-    }, []);
+    }, [dateRange.start, dateRange.end]);
 
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/ledger');
+            const queryParams = new URLSearchParams({
+                startDate: dateRange.start,
+                endDate: dateRange.end
+            });
+            const res = await fetch(`/api/ledger?${queryParams}`);
             if (res.ok) {
                 const data = await res.json();
                 setTransactions(data);
@@ -111,18 +121,38 @@ export default function LedgerPage() {
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Financial Ledger</h1>
                     <p className="text-slate-500 text-sm">Track and manage hospital-wide income and expenses by category.</p>
                 </div>
-                <button
-                    onClick={() => setAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm font-bold text-sm active:scale-95"
-                >
-                    <Plus className="w-4 h-4" />
-                    New Entry
-                </button>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        <div className="flex items-center gap-2 text-sm">
+                            <input
+                                type="date"
+                                value={dateRange.start}
+                                onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                className="outline-none text-slate-700 font-medium bg-transparent"
+                            />
+                            <span className="text-slate-300">to</span>
+                            <input
+                                type="date"
+                                value={dateRange.end}
+                                onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                className="outline-none text-slate-700 font-medium bg-transparent"
+                            />
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setAddModalOpen(true)}
+                        className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm font-bold text-sm active:scale-95"
+                    >
+                        <Plus className="w-4 h-4" />
+                        New Entry
+                    </button>
+                </div>
             </div>
 
             {/* Category Tabs */}

@@ -11,7 +11,25 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const { searchParams } = new URL(req.url);
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
+
+        const where: any = {};
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
+            where.transactionDate = {
+                gte: start,
+                lte: end
+            };
+        }
+
         const transactions = await prisma.ledger.findMany({
+            where,
             include: {
                 user: {
                     select: {
