@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
     return (
-        <div className="min-h-screen bg-background flex">
+        <div className="min-h-screen bg-background flex print:block print:bg-white print:h-auto">
             {/* Sidebar */}
             <aside
                 onMouseEnter={() => setIsHovered(true)}
@@ -132,7 +132,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 print:block print:w-full print:h-auto">
                 {/* Header */}
                 <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 lg:px-8">
                     <button
@@ -153,7 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+                <main className="flex-1 p-4 lg:p-8 overflow-y-auto print:overflow-visible print:h-auto print:block print:p-0">
                     {children}
                 </main>
             </div>
