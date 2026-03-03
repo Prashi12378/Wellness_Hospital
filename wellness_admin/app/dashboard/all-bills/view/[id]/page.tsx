@@ -252,13 +252,8 @@ export default async function UniversalInvoicePage({
                                         <span className="text-3xl font-black">₹{invoiceData.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 </div>
-
-                                <div className="pt-8 text-center">
-                                    <div className="w-32 h-px bg-slate-300 mx-auto mb-2 print:bg-slate-900"></div>
-                                    <p className="text-[11px] font-black text-slate-900 uppercase">Authorized Signatory</p>
-                                    <p className="text-[9px] font-bold text-slate-400 mt-0.5">Wellness Hospital Accounts</p>
-                                </div>
                             </div>
+
                         </div>
 
                     </div>

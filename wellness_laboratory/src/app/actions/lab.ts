@@ -100,24 +100,50 @@ export async function createLabRequest(data: {
     requestedByName?: string;
     technicianName?: string;
     consultantName?: string;
+    amount?: number;
 }) {
     try {
-        const request = await prisma.labRequest.create({
-            data: {
-                patientId: data.patientId,
-                patientName: data.patientName,
-                testName: data.testName,
-                department: (data.department || "General") as any,
-                priority: data.priority || "normal",
-                requestedById: data.requestedById,
-                requestedByName: data.requestedByName,
-                technicianName: data.technicianName,
-                consultantName: data.consultantName,
-                status: "pending"
+        const result = await prisma.$transaction(async (tx) => {
+            const request = await tx.labRequest.create({
+                data: {
+                    patientId: data.patientId,
+                    patientName: data.patientName,
+                    testName: data.testName,
+                    department: (data.department || "General") as any,
+                    priority: data.priority || "normal",
+                    requestedById: data.requestedById,
+                    requestedByName: data.requestedByName,
+                    technicianName: data.technicianName,
+                    consultantName: data.consultantName,
+                    amount: data.amount || 0,
+                    status: "pending"
+                }
+            });
+
+            if (data.amount && data.amount > 0) {
+                // Find lab user ID or default to system
+                const adminUser = await tx.user.findFirst({
+                    where: { profile: { role: 'lab' } }
+                });
+
+                await tx.ledger.create({
+                    data: {
+                        transactionType: "income",
+                        category: "lab",
+                        description: `Lab Test: ${data.testName} for ${data.patientName}`,
+                        amount: data.amount,
+                        paymentMethod: "cash", // Or potentially map this if available
+                        transactionDate: new Date(),
+                        recordedBy: data.requestedById || adminUser?.id || "system",
+                    }
+                });
             }
+
+            return request;
         });
+
         revalidatePath("/dashboard");
-        return { success: true, data: request };
+        return { success: true, data: result };
     } catch (error: any) {
         console.error("[LabActions] createLabRequest Error:", error);
         return { success: false, error: error.message };

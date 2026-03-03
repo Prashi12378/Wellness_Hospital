@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, Trash2, Mail, Phone, Stethoscope, UserRound, Clock, IndianRupee, Award, Briefcase, Upload, X, Pencil, Eye, EyeOff } from 'lucide-react';
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
 
 // Define Timing type
 type TimingSlot = {
@@ -42,6 +43,8 @@ export default function DoctorManagementPage() {
     const [uploading, setUploading] = useState(false);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
+
+    useLockBodyScroll(isAddModalOpen);
 
     useEffect(() => {
         fetchDoctors();

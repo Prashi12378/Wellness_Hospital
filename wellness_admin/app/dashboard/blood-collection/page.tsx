@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, Trash2, Pencil, Check, X, Loader2, IndianRupee, Droplet } from 'lucide-react';
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
 
 export default function BloodCollectionManagementPage() {
     const [packages, setPackages] = useState<any[]>([]);
@@ -23,6 +24,8 @@ export default function BloodCollectionManagementPage() {
         popular: false
     });
     const [newInclude, setNewInclude] = useState('');
+
+    useLockBodyScroll(modalOpen || deleteModalOpen);
 
     useEffect(() => {
         fetchPackages();

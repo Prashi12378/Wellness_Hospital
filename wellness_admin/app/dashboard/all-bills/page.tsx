@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
 
 export default function AllBillsPage() {
     const [bills, setBills] = useState<any[]>([]);
@@ -16,6 +17,8 @@ export default function AllBillsPage() {
     const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
     const [discountAmount, setDiscountAmount] = useState(0);
     const [processing, setProcessing] = useState(false);
+
+    useLockBodyScroll(billingModalOpen);
 
     useEffect(() => {
         fetchBills();

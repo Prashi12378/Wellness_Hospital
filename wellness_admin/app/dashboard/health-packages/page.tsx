@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, Trash2, Pencil, Package, Check, X, Loader2, List, IndianRupee } from 'lucide-react';
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
 
 export default function HealthPackagesPage() {
     const [packages, setPackages] = useState<any[]>([]);
@@ -21,6 +22,8 @@ export default function HealthPackagesPage() {
         popular: false
     });
     const [newInclude, setNewInclude] = useState('');
+
+    useLockBodyScroll(modalOpen);
 
     useEffect(() => {
         fetchPackages();

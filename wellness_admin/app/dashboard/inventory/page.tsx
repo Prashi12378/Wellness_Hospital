@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Package, AlertTriangle, ArrowUpRight, Trash2, Edit, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
 
 export default function AdminInventoryPage() {
     const [medicines, setMedicines] = useState<any[]>([]);
@@ -26,6 +27,8 @@ export default function AdminInventoryPage() {
         stock: '',
         location: ''
     });
+
+    useLockBodyScroll(isEditModalOpen || deleteConfirm.isOpen);
 
     useEffect(() => {
         fetchInventory();

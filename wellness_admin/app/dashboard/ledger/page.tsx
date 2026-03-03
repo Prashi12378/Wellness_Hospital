@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Search, Trash2, TrendingUp, TrendingDown, Wallet, Calendar, ArrowUpRight, ArrowDownRight, Pill, Users, IndianRupee, Microscope, LayoutGrid } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
 
 const CATEGORIES = [
     { id: 'pharmacy', name: 'Pharmacy', icon: Pill, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -37,6 +38,8 @@ export default function LedgerPage() {
         transaction_date: new Date().toISOString().split('T')[0]
     });
     const [submitting, setSubmitting] = useState(false);
+
+    useLockBodyScroll(isAddModalOpen);
 
     useEffect(() => {
         fetchTransactions();

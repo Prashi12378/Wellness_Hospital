@@ -10,6 +10,7 @@ interface TestEntry {
     name: string;
     department: string;
     priority: string;
+    amount?: number;
 }
 
 interface ManualEntryModalProps {
@@ -30,6 +31,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
     const [currentTestName, setCurrentTestName] = useState("");
     const [currentDepartment, setCurrentDepartment] = useState("General");
     const [currentPriority, setCurrentPriority] = useState("normal");
+    const [currentAmount, setCurrentAmount] = useState<string>("");
 
     // Autocomplete state
     const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
@@ -115,8 +117,10 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                 name,
                 department: currentDepartment,
                 priority: currentPriority,
+                amount: currentAmount ? parseFloat(currentAmount) : 0,
             }]);
             setCurrentTestName("");
+            setCurrentAmount("");
             setTimeout(() => testInputRef.current?.focus(), 50);
         }
     };
@@ -158,8 +162,10 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
             name,
             department: currentDepartment,
             priority: currentPriority,
+            amount: currentAmount ? parseFloat(currentAmount) : 0,
         }]);
         setCurrentTestName("");
+        setCurrentAmount("");
         setSuggestions([]);
         setShowSuggestions(false);
         setTimeout(() => testInputRef.current?.focus(), 50);
@@ -180,6 +186,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                     testName: test.name,
                     department: test.department,
                     priority: test.priority,
+                    amount: test.amount,
                     technicianName,
                     consultantName,
                 } as any);
@@ -339,7 +346,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                                             </div>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-3 gap-3">
                                         <select
                                             value={currentDepartment}
                                             onChange={(e) => setCurrentDepartment(e.target.value)}
@@ -360,6 +367,17 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                                             <option value="normal">Normal Priority</option>
                                             <option value="urgent">Urgent Priority</option>
                                         </select>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                                            <input
+                                                type="number"
+                                                value={currentAmount}
+                                                onChange={(e) => setCurrentAmount(e.target.value)}
+                                                placeholder="Price"
+                                                className="w-full pl-8 pr-4 py-3 bg-white border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-xs"
+                                                onKeyDown={handleTestInputKeyDown}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -382,7 +400,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                                                         <div>
                                                             <p className="text-sm font-black text-slate-800 uppercase">{test.name}</p>
                                                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                                                                {test.department} • {test.priority === "urgent" ? "🔴 Urgent" : "Normal"}
+                                                                {test.department} • {test.priority === "urgent" ? "🔴 Urgent" : "Normal"} {test.amount ? ` • ₹${test.amount}` : ""}
                                                             </p>
                                                         </div>
                                                     </div>

@@ -305,6 +305,7 @@ model LabRequest {
   reportUrl       String?
   requestedById   String?
   requestedByName String?
+  amount          Decimal  @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   department      String   @default("General")

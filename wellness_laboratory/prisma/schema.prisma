@@ -301,6 +301,7 @@ model LabRequest {
   consultantName  String?
   requestedById   String?
   requestedByName String?
+  amount          Decimal  @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   patient         Profile  @relation("PatientLabRequests", fields: [patientId], references: [id])

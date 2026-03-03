@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, Mail, Phone, User, Trash2, Edit, X, Save } from 'lucide-react';
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
 
 export default function StaffManagementPage() {
     const [staff, setStaff] = useState<any[]>([]);
@@ -21,6 +22,8 @@ export default function StaffManagementPage() {
     // Delete State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [staffToDelete, setStaffToDelete] = useState<any>(null);
+
+    useLockBodyScroll(isCreateOpen || isEditOpen || deleteModalOpen);
 
     useEffect(() => {
         fetchStaff();
