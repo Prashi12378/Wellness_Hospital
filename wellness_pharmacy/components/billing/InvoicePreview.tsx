@@ -159,6 +159,9 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 background: white !important;
                                 display: block !important;
                                 height: auto !important;
+                                position: static !important;
+                                float: none !important;
+                                min-height: 100% !important;
                             }
 
                             /* Fix Table Row Spacing */
@@ -202,7 +205,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                     `}} />
 
                     {/* Invoice Paper Design for A5 */}
-                    <div className="invoice-container relative max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm print:border-none print:shadow-none bg-white text-xs">
+                    <div className="invoice-container relative print:static max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm print:border-none print:shadow-none bg-white text-xs">
                         {/* Watermark */}
                         <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] print:opacity-[0.08] pointer-events-none z-0 select-none overflow-hidden print:fixed print:inset-0">
                             <img src="/logo.png" alt="Watermark" className="w-[60%] max-w-[300px] object-contain grayscale-0" />
