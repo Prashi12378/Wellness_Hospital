@@ -19,10 +19,9 @@ export async function GET(req: Request) {
 
         const where: any = {};
         if (startDate && endDate) {
-            const start = new Date(startDate);
-            start.setHours(0, 0, 0, 0);
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            // Force parsed dates into IST boundaries to avoid server local time mismatch
+            const start = new Date(`${startDate}T00:00:00+05:30`);
+            const end = new Date(`${endDate}T23:59:59.999+05:30`);
 
             where.transactionDate = {
                 gte: start,
@@ -93,7 +92,8 @@ export async function POST(req: Request) {
                 description,
                 amount: parseFloat(amount),
                 paymentMethod: payment_method,
-                transactionDate: new Date(transaction_date),
+                // Anchor to noon IST to firmly sit inside the day regardless of UTC shifts
+                transactionDate: new Date(`${transaction_date}T12:00:00+05:30`),
                 recordedBy: (session.user as any).id
             }
         });
