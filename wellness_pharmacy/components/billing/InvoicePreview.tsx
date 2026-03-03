@@ -232,7 +232,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                     <th className="py-1 px-1 text-left">Hsn Code</th>
                                     <th className="py-1 px-1 text-center w-8">Qty</th>
                                     <th className="py-1 px-1 text-right">Batch</th>
-                                    <th className="py-1 px-1 text-right">MRP</th>
+                                    <th className="py-1 px-1 text-right">Rate</th>
                                     <th className="py-1 px-1 text-right">GST%</th>
                                     <th className="py-1 px-1 text-right">Amount</th>
                                 </tr>
@@ -245,7 +245,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                         <td className="py-1 px-1">{item.hsnCode}</td>
                                         <td className="py-1 px-1 text-center">{item.qty}</td>
                                         <td className="py-1 px-1 uppercase text-right">{item.batchNo}</td>
-                                        <td className="py-1 px-1 text-right">{Number(item.mrp).toFixed(2)}</td>
+                                        <td className="py-1 px-1 text-right">{(Number(item.mrp) / (1 + Number(item.gstRate) / 100)).toFixed(2)}</td>
                                         <td className="py-1 px-1 text-right">{item.gstRate}</td>
                                         <td className="py-1 px-1 text-right font-bold">
                                             {Number(item.amount).toFixed(2)}
