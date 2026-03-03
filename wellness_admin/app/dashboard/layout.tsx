@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
     return (
-        <div className="min-h-screen bg-background flex print:block print:bg-white print:h-auto">
+        <div className="min-h-screen bg-background flex print:block print:bg-white print:min-h-0 print:h-auto">
             {/* Sidebar */}
             <aside
                 onMouseEnter={() => setIsHovered(true)}
