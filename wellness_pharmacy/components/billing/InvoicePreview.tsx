@@ -278,7 +278,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                         <td className="py-1 px-1 text-right">{Number(item.mrp).toFixed(2)}</td>
                                         <td className="py-1 px-1 text-right">{item.gstRate}</td>
                                         <td className="py-1 px-1 text-right font-bold">
-                                            {Number(Number(item.amount) + (Number(item.amount) * Number(item.gstRate)) / 100).toFixed(2)}
+                                            {Number(item.amount).toFixed(2)}
                                         </td>
                                     </tr>
                                 ))}

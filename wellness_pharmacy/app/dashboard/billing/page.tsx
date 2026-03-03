@@ -206,9 +206,15 @@ export default function BillingPage() {
         }));
     };
 
-    // Calculations
-    const subTotal = cart.reduce((acc, item) => acc + (item.qty * item.mrp), 0);
-    const totalGst = cart.reduce((acc, item) => acc + ((item.qty * item.mrp) * item.gstRate / 100), 0);
+    // Calculations — MRP is GST-inclusive, so extract GST from MRP
+    const subTotal = cart.reduce((acc, item) => {
+        const base = item.mrp / (1 + item.gstRate / 100);
+        return acc + (item.qty * base);
+    }, 0);
+    const totalGst = cart.reduce((acc, item) => {
+        const base = item.mrp / (1 + item.gstRate / 100);
+        return acc + (item.qty * (item.mrp - base));
+    }, 0);
     const discountAmount = (subTotal + totalGst) * (discountRate / 100);
     const grandTotal = subTotal + totalGst - discountAmount;
 
@@ -525,7 +531,7 @@ export default function BillingPage() {
                                                         <option value="18">18%</option>
                                                     </select>
                                                 </td>
-                                                <td className="py-4 text-right font-black text-slate-900">₹{(item.qty * item.mrp * (1 + item.gstRate / 100)).toFixed(2)}</td>
+                                                <td className="py-4 text-right font-black text-slate-900">₹{(item.qty * item.mrp).toFixed(2)}</td>
                                                 <td className="py-4 text-center">
                                                     <button
                                                         onClick={() => removeFromCart(item.medicineId)}

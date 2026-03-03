@@ -104,10 +104,13 @@ export async function createInvoice(data: {
             const qty = Number(item.qty);
             const mrp = Number(item.mrp);
             const gstRate = Number(item.gstRate || 0);
-            const amount = Number((qty * mrp).toFixed(2));
-            const gstAmount = Number(((amount * gstRate) / 100).toFixed(2));
 
-            subTotal += amount;
+            // MRP is GST-inclusive: extract base price and GST from MRP
+            const basePrice = mrp / (1 + gstRate / 100);
+            const amount = Number((qty * mrp).toFixed(2));                    // total paid = qty × MRP
+            const gstAmount = Number(((mrp - basePrice) * qty).toFixed(2));   // GST extracted from MRP
+
+            subTotal += Number((qty * basePrice).toFixed(4));   // pre-GST subtotal
             totalGst += gstAmount;
 
             // console.log(`Item: ${item.name}, Qty: ${qty}, MRP: ${mrp}, GST: ${gstRate}%, Amount: ${amount}, GST Amt: ${gstAmount}`);
