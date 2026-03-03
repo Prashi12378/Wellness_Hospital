@@ -2,6 +2,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { User, Plus } from "lucide-react";
 import SearchPatients from "./SearchPatients";
+import PatientActions from "@/components/PatientActions";
 
 export const dynamic = 'force-dynamic';
 
@@ -79,7 +80,7 @@ export default async function PatientsPage({
                                 <User className="w-8 h-8" />
                             )}
                         </div>
-                        <div>
+                        <div className="flex-1">
                             <h3 className="font-bold text-slate-800 text-lg">
                                 {patient.firstName} {patient.lastName}
                             </h3>
@@ -90,6 +91,9 @@ export default async function PatientsPage({
                             </div>
                             <p className="text-sm text-slate-500 mt-2">{patient.email}</p>
                             {patient.phone && <p className="text-sm text-slate-400 mt-1">{patient.phone}</p>}
+                        </div>
+                        <div className="flex flex-col items-end pl-4 border-l border-slate-100">
+                            <PatientActions patientId={patient.id} />
                         </div>
                     </div>
                 ))}

@@ -1,8 +1,9 @@
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
@@ -14,6 +15,7 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
+        const sortOrder = searchParams.get('sortOrder') || 'desc';
 
         const where: any = {};
         if (startDate && endDate) {
@@ -43,7 +45,7 @@ export async function GET(req: Request) {
                 }
             },
             orderBy: {
-                transactionDate: 'desc'
+                transactionDate: sortOrder === 'asc' ? 'asc' : 'desc'
             }
         });
 

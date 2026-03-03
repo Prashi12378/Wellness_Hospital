@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, TrendingUp, TrendingDown, Wallet, Calendar, ArrowUpRight, ArrowDownRight, Pill, Users, IndianRupee, Microscope, LayoutGrid } from 'lucide-react';
+import { Plus, Search, Trash2, TrendingUp, TrendingDown, Wallet, Calendar, ArrowUpRight, ArrowDownRight, Pill, Users, IndianRupee, Microscope, LayoutGrid, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
@@ -20,11 +20,18 @@ export default function LedgerPage() {
     const [isAddModalOpen, setAddModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
 
-    // Date Range Filter State (default: start of month to today)
+    // Date Range Filter State
+    const getLocalDateString = (date = new Date()) => {
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().split('T')[0];
+    };
+
     const [dateRange, setDateRange] = useState({
-        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        end: new Date().toISOString().split('T')[0]
+        start: getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)),
+        end: getLocalDateString(new Date())
     });
+
+    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
     // Stats
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
@@ -43,14 +50,16 @@ export default function LedgerPage() {
 
     useEffect(() => {
         fetchTransactions();
-    }, [dateRange.start, dateRange.end]);
+    }, [dateRange.start, dateRange.end, sortOrder]);
 
     const fetchTransactions = async () => {
         setLoading(true);
         try {
             const queryParams = new URLSearchParams({
                 startDate: dateRange.start,
-                endDate: dateRange.end
+                endDate: dateRange.end,
+                sortOrder: sortOrder,
+                t: Date.now().toString()
             });
             const res = await fetch(`/api/ledger?${queryParams}`);
             if (res.ok) {
@@ -240,7 +249,17 @@ export default function LedgerPage() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50/50 border-b border-slate-100">
                             <tr>
-                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date & Type</th>
+                                <th
+                                    className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-100/50 transition-colors group"
+                                    onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        Date & Type
+                                        <div className="p-1 rounded bg-slate-100 group-hover:bg-slate-200 transition-colors">
+                                            <ArrowUpDown className={cn("w-3 h-3 transition-transform", sortOrder === 'asc' ? "rotate-180" : "")} />
+                                        </div>
+                                    </div>
+                                </th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Category & Method</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Recorded By</th>
