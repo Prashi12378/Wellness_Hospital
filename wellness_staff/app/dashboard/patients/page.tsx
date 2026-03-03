@@ -67,32 +67,36 @@ export default async function PatientsPage({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {patients.map((patient) => (
-                    <div key={patient.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0 overflow-hidden relative">
-                            {patient.user?.image ? (
-                                <Image
-                                    src={patient.user.image}
-                                    alt="User"
-                                    fill
-                                    className="object-cover"
-                                />
-                            ) : (
-                                <User className="w-8 h-8" />
-                            )}
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-slate-800 text-lg">
-                                {patient.firstName} {patient.lastName}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-200">
-                                    {patient.uhid || 'No UHID'}
-                                </span>
+                    <div key={patient.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col hover:shadow-md transition-shadow max-w-full">
+                        <div className="flex items-start gap-4">
+                            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0 overflow-hidden relative mt-1">
+                                {patient.user?.image ? (
+                                    <Image
+                                        src={patient.user.image}
+                                        alt="User"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <User className="w-7 h-7" />
+                                )}
                             </div>
-                            <p className="text-sm text-slate-500 mt-2">{patient.email}</p>
-                            {patient.phone && <p className="text-sm text-slate-400 mt-1">{patient.phone}</p>}
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-slate-800 text-base truncate">
+                                    {patient.firstName} {patient.lastName}
+                                </h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-200">
+                                        {patient.uhid || 'No UHID'}
+                                    </span>
+                                </div>
+                                <div className="mt-2.5 space-y-1">
+                                    <p className="text-xs text-slate-500 truncate" title={patient.email}>{patient.email}</p>
+                                    {patient.phone && <p className="text-xs text-slate-400 truncate">{patient.phone}</p>}
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex flex-col items-end pl-4 border-l border-slate-100">
+                        <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-end">
                             <PatientActions patientId={patient.id} />
                         </div>
                     </div>
