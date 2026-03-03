@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { deletePatient } from "@/app/actions/patient-management";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function PatientActions({ patientId }: { patientId: string }) {
     const [isDeleting, setIsDeleting] = useState(false);
@@ -16,9 +17,10 @@ export default function PatientActions({ patientId }: { patientId: string }) {
         setIsDeleting(true);
         const result = await deletePatient(patientId);
         if (result.success) {
+            toast.success("Patient deleted successfully");
             router.refresh();
         } else {
-            alert(result.error || "Failed to delete patient");
+            toast.error(result.error || "Failed to delete patient");
         }
         setIsDeleting(false);
     };

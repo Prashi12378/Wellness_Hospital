@@ -109,3 +109,17 @@ export async function requestLabTest(data: {
         return { success: false, error: "Failed to request lab test" };
     }
 }
+
+export async function cancelAppointment(appointmentId: string) {
+    try {
+        await prisma.appointment.update({
+            where: { id: appointmentId },
+            data: { status: 'cancelled' }
+        });
+        revalidatePath('/dashboard/appointments');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to cancel appointment:", error);
+        return { success: false, error: "Failed to cancel appointment" };
+    }
+}

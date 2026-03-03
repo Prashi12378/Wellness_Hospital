@@ -1,7 +1,7 @@
-
 import { prisma } from "@/lib/db";
 import { format } from "date-fns";
 import { BadgeCheck, Clock, XCircle, Plus, ReceiptText } from "lucide-react";
+import CancelAppointmentButton from "@/components/CancelAppointmentButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -120,14 +120,17 @@ export default async function AppointmentsPage() {
                                                         {apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}
                                                     </span>
                                                     {apt.status !== 'cancelled' && (
-                                                        <a
-                                                            href={`/dashboard/appointments/${apt.id}/billing`}
-                                                            className="p-2 hover:bg-slate-100 rounded-lg text-primary transition-colors flex items-center gap-1 text-xs font-bold"
-                                                            title="Billing"
-                                                        >
-                                                            <ReceiptText className="w-4 h-4" />
-                                                            Billing
-                                                        </a>
+                                                        <>
+                                                            <a
+                                                                href={`/dashboard/appointments/${apt.id}/billing`}
+                                                                className="p-2 hover:bg-slate-100 rounded-lg text-primary transition-colors flex items-center gap-1 text-xs font-bold"
+                                                                title="Billing"
+                                                            >
+                                                                <ReceiptText className="w-4 h-4" />
+                                                                Billing
+                                                            </a>
+                                                            {apt.status !== 'completed' && <CancelAppointmentButton appointmentId={apt.id} />}
+                                                        </>
                                                     )}
                                                 </div>
                                             </td>
