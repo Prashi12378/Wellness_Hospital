@@ -18,15 +18,18 @@ export async function GET(req: Request) {
         const sortOrder = searchParams.get('sortOrder') || 'desc';
 
         const where: any = {};
-        if (startDate && endDate) {
-            // Force parsed dates into IST boundaries to avoid server local time mismatch
-            const start = new Date(`${startDate}T00:00:00+05:30`);
-            const end = new Date(`${endDate}T23:59:59.999+05:30`);
 
-            where.transactionDate = {
-                gte: start,
-                lte: end
-            };
+        if (startDate || endDate) {
+            where.transactionDate = {};
+
+            if (startDate) {
+                const start = new Date(`${startDate}T00:00:00+05:30`);
+                where.transactionDate.gte = start;
+            }
+            if (endDate) {
+                const end = new Date(`${endDate}T23:59:59.999+05:30`);
+                where.transactionDate.lte = end;
+            }
         }
 
         const transactions = await prisma.ledger.findMany({

@@ -27,7 +27,7 @@ export default function LedgerPage() {
     };
 
     const [dateRange, setDateRange] = useState({
-        start: getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)),
+        start: '',
         end: getLocalDateString(new Date())
     });
 
@@ -133,29 +133,55 @@ export default function LedgerPage() {
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Financial Ledger</h1>
                     <p className="text-slate-500 text-sm">Track and manage hospital-wide income and expenses by category.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                        className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
+                    >
+                        <ArrowUpDown className={cn("w-4 h-4 transition-transform", sortOrder === 'asc' ? "rotate-180" : "")} />
+                        {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+                    </button>
+
+                    <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm relative">
                         <Calendar className="w-4 h-4 text-slate-400" />
                         <div className="flex items-center gap-2 text-sm">
-                            <input
-                                type="date"
-                                value={dateRange.start}
-                                onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                className="outline-none text-slate-700 font-medium bg-transparent"
-                            />
+                            <div className="flex items-center relative group">
+                                <input
+                                    type="date"
+                                    value={dateRange.start}
+                                    onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                    className="outline-none text-slate-700 font-medium bg-transparent cursor-pointer w-[120px]"
+                                />
+                                {!dateRange.start && (
+                                    <span className="absolute inset-0 bg-white pointer-events-none flex items-center text-slate-400 font-medium">Start Date</span>
+                                )}
+                            </div>
                             <span className="text-slate-300">to</span>
-                            <input
-                                type="date"
-                                value={dateRange.end}
-                                onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                                className="outline-none text-slate-700 font-medium bg-transparent"
-                            />
+                            <div className="flex items-center relative">
+                                <input
+                                    type="date"
+                                    value={dateRange.end}
+                                    onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                    className="outline-none text-slate-700 font-medium bg-transparent cursor-pointer w-[120px]"
+                                />
+                                {!dateRange.end && (
+                                    <span className="absolute inset-0 bg-white pointer-events-none flex items-center text-slate-400 font-medium">End Date</span>
+                                )}
+                            </div>
                         </div>
+                        {(dateRange.start || dateRange.end !== getLocalDateString(new Date())) && (
+                            <button
+                                onClick={() => setDateRange({ start: '', end: getLocalDateString(new Date()) })}
+                                className="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm hover:bg-primary-dark transition-all scale-90 hover:scale-100"
+                            >
+                                Reset Range
+                            </button>
+                        )}
                     </div>
                     <button
                         onClick={() => setAddModalOpen(true)}
@@ -249,17 +275,7 @@ export default function LedgerPage() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50/50 border-b border-slate-100">
                             <tr>
-                                <th
-                                    className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-100/50 transition-colors group"
-                                    onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        Date & Type
-                                        <div className="p-1 rounded bg-slate-100 group-hover:bg-slate-200 transition-colors">
-                                            <ArrowUpDown className={cn("w-3 h-3 transition-transform", sortOrder === 'asc' ? "rotate-180" : "")} />
-                                        </div>
-                                    </div>
-                                </th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date & Type</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Category & Method</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Recorded By</th>
