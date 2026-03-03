@@ -55,8 +55,39 @@ export async function GET() {
             };
         });
 
+        const admissions = await prisma.admission.findMany({
+            where: {
+                pharmacyInvoices: {
+                    none: {
+                        billNo: {
+                            startsWith: "INV-IPD-"
+                        }
+                    }
+                }
+            },
+            include: {
+                patient: true,
+                HospitalCharge: true
+            }
+        });
+
+        const admissionBills = admissions.map((adm: any) => {
+            const totalCharges = adm.HospitalCharge.reduce((sum: number, charge: any) => sum + Number(charge.amount), 0);
+            return {
+                id: adm.id,
+                billNo: `IPD-${adm.id.slice(0, 6).toUpperCase()}`,
+                date: adm.admissionDate,
+                patientName: `${adm.patient.firstName} ${adm.patient.lastName}`,
+                amount: totalCharges,
+                type: "IPD",
+                status: "PENDING",
+                paymentMethod: "CASH",
+                rawAdmission: adm // Pass this so we can show details in the modal
+            };
+        });
+
         // Combine and sort by date descending
-        const allBills = [...invoiceBills, ...labBills].sort((a, b) => b.date.getTime() - a.date.getTime());
+        const allBills = [...invoiceBills, ...labBills, ...admissionBills].sort((a, b) => b.date.getTime() - a.date.getTime());
 
         return NextResponse.json({ success: true, data: allBills });
 

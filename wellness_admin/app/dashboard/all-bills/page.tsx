@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ReceiptText, Filter, Eye } from 'lucide-react';
+import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
@@ -10,6 +10,12 @@ export default function AllBillsPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('ALL'); // ALL, IPD, OPD, PHARMACY, LABORATORY
+
+    // Billing Modal State for unbilled IPD
+    const [billingModalOpen, setBillingModalOpen] = useState(false);
+    const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         fetchBills();
@@ -27,6 +33,36 @@ export default function AllBillsPage() {
             console.error("Error fetching bills:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleProcessBilling = async () => {
+        if (!selectedAdmission) return;
+
+        setProcessing(true);
+        try {
+            const res = await fetch(`/api/ipd/billing/${selectedAdmission.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    discountAmount,
+                    paymentMethod: 'CASH'
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setBillingModalOpen(false);
+                fetchBills();
+                window.open('/dashboard/ipd-billing/invoice/' + data.invoice.id, '_blank');
+            } else {
+                const data = await res.json();
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            alert('Billing failed. Please check console.');
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -155,13 +191,43 @@ export default function AllBillsPage() {
                                                 {bill.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <Link
-                                                href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
-                                            >
-                                                <Eye className="w-4 h-4" /> View
-                                            </Link>
+                                        <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                            {bill.type === 'IPD' && bill.status === 'PENDING' ? (
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedAdmission(bill);
+                                                        setDiscountAmount(0);
+                                                        setBillingModalOpen(true);
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
+                                                    title="Discount & Finalize"
+                                                >
+                                                    <FileText className="w-4 h-4" /> Finalize
+                                                </button>
+                                            ) : bill.type === 'IPD' && (bill.status === 'PAID' || bill.status === 'COMPLETED') ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => window.open(`/dashboard/ipd-billing/invoice/${bill.id}`, '_blank')}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold rounded-lg transition-colors text-xs"
+                                                        title="Print Invoice"
+                                                    >
+                                                        <Printer className="w-4 h-4" /> Print
+                                                    </button>
+                                                    <Link
+                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold rounded-lg transition-colors text-xs"
+                                                    >
+                                                        <Eye className="w-4 h-4" /> View
+                                                    </Link>
+                                                </>
+                                            ) : (
+                                                <Link
+                                                    href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
+                                                >
+                                                    <Eye className="w-4 h-4" /> View
+                                                </Link>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -170,6 +236,94 @@ export default function AllBillsPage() {
                     </table>
                 </div>
             </div>
+            {/* Billing Modal */}
+            {billingModalOpen && selectedAdmission && selectedAdmission.rawAdmission && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-slate-800">Generate Final Bill</h2>
+                            <button onClick={() => setBillingModalOpen(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                                <X className="w-5 h-5 text-slate-500" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Patient Summary */}
+                            <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white">
+                                    <User className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-blue-900">{selectedAdmission.patientName}</h3>
+                                    <p className="text-sm text-blue-600">IPD ID: {selectedAdmission.id.slice(-6).toUpperCase()}</p>
+                                </div>
+                            </div>
+
+                            {/* Charges Breakdown */}
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Hospital Charges</h4>
+                                <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
+                                    {selectedAdmission.rawAdmission.HospitalCharge?.map((charge: any) => (
+                                        <div key={charge.id} className="flex justify-between items-center py-2 border-b border-slate-50 text-sm">
+                                            <span className="text-slate-600">{charge.description}</span>
+                                            <span className="font-medium">₹{Number(charge.amount).toLocaleString()}</span>
+                                        </div>
+                                    ))}
+                                    {(!selectedAdmission.rawAdmission.HospitalCharge || selectedAdmission.rawAdmission.HospitalCharge.length === 0) && (
+                                        <p className="text-center py-4 text-slate-400 text-sm italic">No hospital charges recorded</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Discount Application */}
+                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
+                                <div className="flex justify-between items-center text-slate-600">
+                                    <span>Subtotal</span>
+                                    <span className="font-semibold text-slate-900">₹{selectedAdmission.amount.toLocaleString()}</span>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700 block">Apply Discount (₹)</label>
+                                    <div className="relative">
+                                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={selectedAdmission.amount}
+                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
+                                            placeholder="Enter discount amount"
+                                            value={discountAmount}
+                                            onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
+                                    <span className="text-lg font-bold text-slate-800">Grand Total</span>
+                                    <span className="text-2xl font-bold text-primary">
+                                        ₹{Math.max(0, selectedAdmission.amount - discountAmount).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleProcessBilling}
+                                disabled={processing}
+                                className="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {processing ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <CheckCircle2 className="w-5 h-5" />
+                                        Finalize & Print Invoice
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
