@@ -38,7 +38,21 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
     if (!mounted) return null;
 
     const handlePrint = () => {
+        // Clone the invoice-container directly to body — no flex/height ancestor constraints
+        const invoiceEl = printRef.current?.querySelector('.invoice-container') as HTMLElement | null;
+        if (!invoiceEl) { window.print(); return; }
+
+        const clone = invoiceEl.cloneNode(true) as HTMLElement;
+        const root = document.createElement('div');
+        root.id = 'pharma-print-root';
+        root.appendChild(clone);
+        document.body.appendChild(root);
+        document.body.setAttribute('data-printing', 'true');
+
         window.print();
+
+        document.body.removeChild(root);
+        document.body.removeAttribute('data-printing');
     };
 
     const taxGroups = invoice.items.reduce((acc: any, item: any) => {
@@ -93,110 +107,90 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 size: A5 portrait;
                                 margin: 5mm;
                             }
-                            
-                            /* 1. HIDE ALL BACKGROUND CONTENT */
-                            body > *:not(.invoice-modal-overlay) {
+
+                            /* --- CLONE PRINT APPROACH ---
+                               handlePrint() places a clean clone of .invoice-container
+                               as #pharma-print-root directly on body.
+                               We hide everything else and show only that root.
+                            */
+
+                            /* 1. When printing invoice, hide all body children except our print root */
+                            body[data-printing] > *:not(#pharma-print-root) {
                                 display: none !important;
                             }
 
-                            /* 2. RESET BODY & HTML */
+                            /* 2. Reset body */
                             html, body {
                                 margin: 0 !important;
                                 padding: 0 !important;
                                 height: auto !important;
-                                width: 100% !important;
-                                background: white !important;
                                 overflow: visible !important;
+                                background: white !important;
                                 -webkit-print-color-adjust: exact !important;
                                 print-color-adjust: exact !important;
                             }
 
-                            /* 3. ISOLATE INVOICE MODAL */
-                            .invoice-modal-overlay {
-                                position: static !important; /* Allow natural page flow */
-                                width: 100% !important;
+                            /* 3. Print root — clean block, no constraints */
+                            #pharma-print-root {
                                 display: block !important;
+                                position: static !important;
+                                width: 100% !important;
+                                height: auto !important;
+                                overflow: visible !important;
                                 background: white !important;
                                 padding: 0 !important;
                                 margin: 0 !important;
-                                overflow: visible !important;
                             }
 
-                            .invoice-modal-container {
-                                width: 100% !important;
-                                max-width: none !important;
-                                max-height: none !important;
-                                height: auto !important;
-                                border: none !important;
-                                border-radius: 0 !important;
-                                box-shadow: none !important;
-                                margin: 0 !important;
-                                padding: 0 !important;
-                                display: block !important;
-                                overflow: visible !important;
-                            }
-
-                            #print-area {
-                                padding: 0 !important;
-                                margin: 0 !important;
-                                width: 100% !important;
-                                display: block !important;
-                                overflow: visible !important;
-                            }
-
-                            .no-print {
-                                display: none !important;
-                            }
-
-                            /* 4. COMPACT INVOICE CONTENT */
+                            /* 4. Invoice container */
                             .invoice-container {
+                                display: block !important;
+                                position: static !important;
                                 width: 100% !important;
                                 max-width: 148mm !important;
+                                height: auto !important;
+                                overflow: visible !important;
                                 margin: 0 auto !important;
                                 padding: 5mm !important;
                                 border: none !important;
                                 box-shadow: none !important;
                                 background: white !important;
-                                display: block !important;
-                                height: auto !important;
-                                position: static !important;
                                 float: none !important;
-                                min-height: 100% !important;
                             }
 
-                            /* Fix Table Row Spacing */
-                            table tr td, table tr th {
-                                padding-top: 4px !important;
-                                padding-bottom: 4px !important;
-                            }
-
-                            /* Table Pagination */
+                            /* 5. Table pagination — allow rows to break across pages */
                             table {
                                 width: 100% !important;
                                 border-collapse: collapse !important;
                                 page-break-inside: auto !important;
+                                break-inside: auto !important;
                             }
                             tr {
                                 page-break-inside: avoid !important;
+                                break-inside: avoid !important;
                                 page-break-after: auto !important;
+                                break-after: auto !important;
                             }
-                            thead {
-                                display: table-header-group !important;
-                            }
+                            thead { display: table-header-group !important; }
+                            tfoot { display: table-footer-group !important; }
 
-                            /* Footer Fix: Prevent Split */
+                            /* 6. Footer: keep together */
                             .footer-section {
                                 page-break-inside: avoid !important;
+                                break-inside: avoid !important;
                                 display: block !important;
                                 width: 100% !important;
                             }
 
-                            /* Font Scaling */
+                            /* 7. Font & spacing */
+                            table tr td, table tr th {
+                                padding-top: 4px !important;
+                                padding-bottom: 4px !important;
+                            }
                             h1 { font-size: 12pt !important; margin-bottom: 2px !important; }
                             h2 { font-size: 10pt !important; margin-bottom: 2px !important; }
                             p, span, td, th { font-size: 7.5pt !important; line-height: 1.1 !important; }
-                            .tax-table th, .tax-table td { font-size: 6.5pt !important; padding: 2px !important; }
-                            
+
                             .header-logo { width: 48px !important; height: 48px !important; }
                             .header-container { margin-bottom: 8px !important; padding-bottom: 8px !important; }
                             .patient-info { margin-bottom: 8px !important; }
