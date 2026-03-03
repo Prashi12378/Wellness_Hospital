@@ -38,21 +38,93 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
     if (!mounted) return null;
 
     const handlePrint = () => {
-        // Clone the invoice-container directly to body — no flex/height ancestor constraints
-        const invoiceEl = printRef.current?.querySelector('.invoice-container') as HTMLElement | null;
-        if (!invoiceEl) { window.print(); return; }
+        // 1. Inject @page + print CSS directly into <head> so Chrome reliably picks up A5 size
+        const styleEl = document.createElement('style');
+        styleEl.id = 'pharma-invoice-print-styles';
+        styleEl.innerHTML = `
+            @page {
+                size: A5 portrait;
+                margin: 5mm;
+            }
+            @media print {
+                /* Hide everything except our clean print root */
+                body > *:not(#pharma-print-root) {
+                    display: none !important;
+                }
+                html, body {
+                    margin: 0 !important; padding: 0 !important;
+                    height: auto !important; overflow: visible !important;
+                    background: white !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                /* Clean unconstrained print root */
+                #pharma-print-root {
+                    display: block !important; position: static !important;
+                    width: 100% !important; height: auto !important;
+                    overflow: visible !important; background: white !important;
+                    padding: 0 !important; margin: 0 !important;
+                }
+                /* Invoice container */
+                .invoice-container {
+                    display: block !important; position: static !important;
+                    width: 100% !important; max-width: 148mm !important;
+                    height: auto !important; overflow: visible !important;
+                    margin: 0 auto !important; padding: 5mm !important;
+                    border: none !important; box-shadow: none !important;
+                    background: white !important; float: none !important;
+                }
+                /* Watermark: fixed so it repeats on every page */
+                .invoice-watermark {
+                    position: fixed !important; inset: 0 !important;
+                    opacity: 0.06 !important;
+                }
+                /* Table: allow rows to flow across pages */
+                table {
+                    width: 100% !important; border-collapse: collapse !important;
+                    page-break-inside: auto !important; break-inside: auto !important;
+                }
+                tr {
+                    page-break-inside: avoid !important; break-inside: avoid !important;
+                    page-break-after: auto !important; break-after: auto !important;
+                }
+                thead { display: table-header-group !important; }
+                tfoot { display: table-footer-group !important; }
+                /* Footer: keep together */
+                .footer-section {
+                    page-break-inside: avoid !important; break-inside: avoid !important;
+                    display: block !important; width: 100% !important;
+                }
+                /* Typography */
+                table tr td, table tr th { padding-top: 4px !important; padding-bottom: 4px !important; }
+                h1 { font-size: 12pt !important; margin-bottom: 2px !important; }
+                h2 { font-size: 10pt !important; margin-bottom: 2px !important; }
+                p, span, td, th { font-size: 7.5pt !important; line-height: 1.1 !important; }
+                .header-logo { width: 48px !important; height: 48px !important; }
+                .header-container { margin-bottom: 8px !important; padding-bottom: 8px !important; }
+                .patient-info { margin-bottom: 8px !important; }
+                .items-table { margin-bottom: 8px !important; }
+            }
+        `;
+        document.head.appendChild(styleEl);
 
-        const clone = invoiceEl.cloneNode(true) as HTMLElement;
+        // 2. Clone invoice-container to a direct body child (no flex/height constraints)
+        const invoiceEl = printRef.current?.querySelector('.invoice-container') as HTMLElement | null;
+        if (!invoiceEl) {
+            document.head.removeChild(styleEl);
+            return;
+        }
         const root = document.createElement('div');
         root.id = 'pharma-print-root';
-        root.appendChild(clone);
+        root.appendChild(invoiceEl.cloneNode(true));
         document.body.appendChild(root);
-        document.body.setAttribute('data-printing', 'true');
 
+        // 3. Print
         window.print();
 
+        // 4. Cleanup
         document.body.removeChild(root);
-        document.body.removeAttribute('data-printing');
+        document.head.removeChild(styleEl);
     };
 
     const taxGroups = invoice.items.reduce((acc: any, item: any) => {
@@ -100,103 +172,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
 
                 {/* Print Area */}
                 <div ref={printRef} className="flex-1 overflow-auto p-8 bg-white print:p-0 print:overflow-visible" id="print-area">
-                    <style dangerouslySetInnerHTML={{
-                        __html: `
-                        @media print {
-                            @page {
-                                size: A5 portrait;
-                                margin: 5mm;
-                            }
 
-                            /* --- CLONE PRINT APPROACH ---
-                               handlePrint() places a clean clone of .invoice-container
-                               as #pharma-print-root directly on body.
-                               We hide everything else and show only that root.
-                            */
-
-                            /* 1. When printing invoice, hide all body children except our print root */
-                            body[data-printing] > *:not(#pharma-print-root) {
-                                display: none !important;
-                            }
-
-                            /* 2. Reset body */
-                            html, body {
-                                margin: 0 !important;
-                                padding: 0 !important;
-                                height: auto !important;
-                                overflow: visible !important;
-                                background: white !important;
-                                -webkit-print-color-adjust: exact !important;
-                                print-color-adjust: exact !important;
-                            }
-
-                            /* 3. Print root — clean block, no constraints */
-                            #pharma-print-root {
-                                display: block !important;
-                                position: static !important;
-                                width: 100% !important;
-                                height: auto !important;
-                                overflow: visible !important;
-                                background: white !important;
-                                padding: 0 !important;
-                                margin: 0 !important;
-                            }
-
-                            /* 4. Invoice container */
-                            .invoice-container {
-                                display: block !important;
-                                position: static !important;
-                                width: 100% !important;
-                                max-width: 148mm !important;
-                                height: auto !important;
-                                overflow: visible !important;
-                                margin: 0 auto !important;
-                                padding: 5mm !important;
-                                border: none !important;
-                                box-shadow: none !important;
-                                background: white !important;
-                                float: none !important;
-                            }
-
-                            /* 5. Table pagination — allow rows to break across pages */
-                            table {
-                                width: 100% !important;
-                                border-collapse: collapse !important;
-                                page-break-inside: auto !important;
-                                break-inside: auto !important;
-                            }
-                            tr {
-                                page-break-inside: avoid !important;
-                                break-inside: avoid !important;
-                                page-break-after: auto !important;
-                                break-after: auto !important;
-                            }
-                            thead { display: table-header-group !important; }
-                            tfoot { display: table-footer-group !important; }
-
-                            /* 6. Footer: keep together */
-                            .footer-section {
-                                page-break-inside: avoid !important;
-                                break-inside: avoid !important;
-                                display: block !important;
-                                width: 100% !important;
-                            }
-
-                            /* 7. Font & spacing */
-                            table tr td, table tr th {
-                                padding-top: 4px !important;
-                                padding-bottom: 4px !important;
-                            }
-                            h1 { font-size: 12pt !important; margin-bottom: 2px !important; }
-                            h2 { font-size: 10pt !important; margin-bottom: 2px !important; }
-                            p, span, td, th { font-size: 7.5pt !important; line-height: 1.1 !important; }
-
-                            .header-logo { width: 48px !important; height: 48px !important; }
-                            .header-container { margin-bottom: 8px !important; padding-bottom: 8px !important; }
-                            .patient-info { margin-bottom: 8px !important; }
-                            .items-table { margin-bottom: 8px !important; }
-                        }
-                    `}} />
 
                     {/* Invoice Paper Design for A5 */}
                     <div className="invoice-container relative print:static max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm print:border-none print:shadow-none bg-white text-xs">
