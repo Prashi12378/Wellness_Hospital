@@ -232,7 +232,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                     <th className="py-1 px-1 text-left">Hsn Code</th>
                                     <th className="py-1 px-1 text-center w-8">Qty</th>
                                     <th className="py-1 px-1 text-right">Batch</th>
-                                    <th className="py-1 px-1 text-right">Rate</th>
+                                    <th className="py-1 px-1 text-right">MRP</th>
                                     <th className="py-1 px-1 text-right">GST%</th>
                                     <th className="py-1 px-1 text-right">Amount</th>
                                 </tr>
