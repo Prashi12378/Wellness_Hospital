@@ -38,93 +38,93 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
     if (!mounted) return null;
 
     const handlePrint = () => {
-        // 1. Inject @page + print CSS directly into <head> so Chrome reliably picks up A5 size
-        const styleEl = document.createElement('style');
-        styleEl.id = 'pharma-invoice-print-styles';
-        styleEl.innerHTML = `
-            @page {
-                size: A5 portrait;
-                margin: 5mm;
-            }
-            @media print {
-                /* Hide everything except our clean print root */
-                body > *:not(#pharma-print-root) {
-                    display: none !important;
-                }
-                html, body {
-                    margin: 0 !important; padding: 0 !important;
-                    height: auto !important; overflow: visible !important;
-                    background: white !important;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                /* Clean unconstrained print root */
-                #pharma-print-root {
-                    display: block !important; position: static !important;
-                    width: 100% !important; height: auto !important;
-                    overflow: visible !important; background: white !important;
-                    padding: 0 !important; margin: 0 !important;
-                }
-                /* Invoice container */
-                .invoice-container {
-                    display: block !important; position: static !important;
-                    width: 100% !important; max-width: 148mm !important;
-                    height: auto !important; overflow: visible !important;
-                    margin: 0 auto !important; padding: 5mm !important;
-                    border: none !important; box-shadow: none !important;
-                    background: white !important; float: none !important;
-                }
-                /* Watermark: fixed so it repeats on every page */
-                .invoice-watermark {
-                    position: fixed !important; inset: 0 !important;
-                    opacity: 0.06 !important;
-                }
-                /* Table: allow rows to flow across pages */
-                table {
-                    width: 100% !important; border-collapse: collapse !important;
-                    page-break-inside: auto !important; break-inside: auto !important;
-                }
-                tr {
-                    page-break-inside: avoid !important; break-inside: avoid !important;
-                    page-break-after: auto !important; break-after: auto !important;
-                }
-                thead { display: table-header-group !important; }
-                tfoot { display: table-footer-group !important; }
-                /* Footer: keep together */
-                .footer-section {
-                    page-break-inside: avoid !important; break-inside: avoid !important;
-                    display: block !important; width: 100% !important;
-                }
-                /* Typography */
-                table tr td, table tr th { padding-top: 4px !important; padding-bottom: 4px !important; }
-                h1 { font-size: 12pt !important; margin-bottom: 2px !important; }
-                h2 { font-size: 10pt !important; margin-bottom: 2px !important; }
-                p, span, td, th { font-size: 7.5pt !important; line-height: 1.1 !important; }
-                .header-logo { width: 48px !important; height: 48px !important; }
-                .header-container { margin-bottom: 8px !important; padding-bottom: 8px !important; }
-                .patient-info { margin-bottom: 8px !important; }
-                .items-table { margin-bottom: 8px !important; }
-            }
-        `;
-        document.head.appendChild(styleEl);
-
-        // 2. Clone invoice-container to a direct body child (no flex/height constraints)
         const invoiceEl = printRef.current?.querySelector('.invoice-container') as HTMLElement | null;
-        if (!invoiceEl) {
-            document.head.removeChild(styleEl);
-            return;
+        if (!invoiceEl) return;
+
+        // 1. Create a hidden iframe — completely isolated from modal layout constraints
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:148mm;height:297mm;border:none;visibility:hidden;';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) { document.body.removeChild(iframe); return; }
+
+        // 2. Copy all stylesheets from the main app so Tailwind classes work in iframe
+        const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+            .map(el => el.outerHTML).join('\n');
+
+        // 3. Write clean HTML — only the invoice content, no modal chrome
+        iframeDoc.open();
+        iframeDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    ${styleLinks}
+    <style>
+        @page { size: A5 portrait; margin: 5mm; }
+        html, body {
+            margin: 0 !important; padding: 0 !important;
+            height: auto !important; overflow: visible !important;
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
-        const root = document.createElement('div');
-        root.id = 'pharma-print-root';
-        root.appendChild(invoiceEl.cloneNode(true));
-        document.body.appendChild(root);
+        .invoice-container {
+            display: block !important; position: static !important;
+            width: 100% !important; max-width: 148mm !important;
+            height: auto !important; overflow: visible !important;
+            margin: 0 auto !important; padding: 5mm !important;
+            border: none !important; box-shadow: none !important; float: none !important;
+        }
+        /* Watermark: fixed so it appears on every printed page */
+        .invoice-watermark {
+            position: fixed !important; inset: 0 !important; opacity: 0.06 !important;
+        }
+        /* Table: allow rows to break across pages */
+        table {
+            width: 100% !important; border-collapse: collapse !important;
+            page-break-inside: auto !important; break-inside: auto !important;
+        }
+        tr {
+            page-break-inside: avoid !important; break-inside: avoid !important;
+            page-break-after: auto !important; break-after: auto !important;
+        }
+        thead { display: table-header-group !important; }
+        tfoot { display: table-footer-group !important; }
+        /* Footer: keep together on one page */
+        .footer-section { page-break-inside: avoid !important; break-inside: avoid !important; }
+        /* Typography */
+        table tr td, table tr th { padding-top: 4px !important; padding-bottom: 4px !important; }
+        h1 { font-size: 12pt !important; margin-bottom: 2px !important; }
+        h2 { font-size: 10pt !important; margin-bottom: 2px !important; }
+        p, span, td, th { font-size: 7.5pt !important; line-height: 1.1 !important; }
+        .header-logo { width: 48px !important; height: 48px !important; }
+        .header-container { margin-bottom: 8px !important; padding-bottom: 8px !important; }
+        .patient-info { margin-bottom: 8px !important; }
+        .items-table { margin-bottom: 8px !important; }
+    </style>
+</head>
+<body>${invoiceEl.outerHTML}</body>
+</html>`);
+        iframeDoc.close();
 
-        // 3. Print
-        window.print();
+        // 4. Print once iframe CSS is loaded
+        const doPrint = () => {
+            try {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+            } finally {
+                setTimeout(() => {
+                    if (document.body.contains(iframe)) document.body.removeChild(iframe);
+                }, 1000);
+            }
+        };
 
-        // 4. Cleanup
-        document.body.removeChild(root);
-        document.head.removeChild(styleEl);
+        if (iframeDoc.readyState === 'complete') {
+            setTimeout(doPrint, 300);
+        } else {
+            iframe.addEventListener('load', () => setTimeout(doPrint, 300));
+        }
     };
 
     const taxGroups = invoice.items.reduce((acc: any, item: any) => {
@@ -170,25 +170,24 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                     </div>
                 </div>
 
-                {/* Print Area */}
-                <div ref={printRef} className="flex-1 overflow-auto p-8 bg-white print:p-0 print:overflow-visible" id="print-area">
-
+                {/* Print Area — for screen preview only */}
+                <div ref={printRef} className="flex-1 overflow-auto p-8 bg-white" id="print-area">
 
                     {/* Invoice Paper Design for A5 */}
-                    <div className="invoice-container relative print:static max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm print:border-none print:shadow-none bg-white text-xs">
+                    <div className="invoice-container relative max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm bg-white text-xs">
                         {/* Watermark */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] print:opacity-[0.08] pointer-events-none z-0 select-none overflow-hidden print:fixed print:inset-0">
-                            <img src="/logo.png" alt="Watermark" className="w-[60%] max-w-[300px] object-contain grayscale-0" />
+                        <div className="invoice-watermark absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0 select-none overflow-hidden">
+                            <img src="/logo.png" alt="Watermark" className="w-[60%] max-w-[300px] object-contain" />
                         </div>
 
                         {/* Hospital Header */}
                         <div className="relative z-10 flex justify-between items-start mb-4 border-b-2 border-slate-900 pb-4 header-container">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 relative grayscale print:grayscale-0 header-logo flex-shrink-0">
+                                <div className="w-12 h-12 relative grayscale header-logo flex-shrink-0">
                                     <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-contain" />
                                 </div>
                                 <div>
-                                    <h1 className="text-lg font-black uppercase tracking-tight text-slate-900 leading-none mb-1">Wellness Hospital & Pharmacy</h1>
+                                    <h1 className="text-lg font-black uppercase tracking-tight text-slate-900 leading-none mb-1">Wellness Hospital &amp; Pharmacy</h1>
                                     <p className="text-[9px] leading-tight max-w-[260px] text-slate-600">
                                         Beside friend function hall, Gowribidnur main road, Palanjoghalli,<br />
                                         Doddaballapur - 561203, Karnataka, India<br />
@@ -199,7 +198,6 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                             </div>
                             <div className="text-right flex-shrink-0">
                                 <h2 className="text-base font-bold uppercase mb-1">GST Invoice</h2>
-                                <div className="text-2xl font-black text-slate-400 opacity-20 select-none no-print">24/7</div>
                                 <div className="mt-2 text-[10px] font-medium leading-tight">
                                     <p>Bill No : <span className="font-bold">{invoice.billNo}</span></p>
                                     <p>Date : <span className="font-bold">{format(new Date(invoice.date), 'dd-MM-yy')}</span></p>
@@ -238,14 +236,17 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 </tr>
                             </thead>
                             <tbody>
-                                {invoice.items.map((item, index) => (
+                                {invoice.items.map((item: any, index: number) => (
                                     <tr key={index} className="border-b border-slate-200">
                                         <td className="py-1 px-1">{index + 1}</td>
                                         <td className="py-1 px-1 font-bold">{item.name}</td>
                                         <td className="py-1 px-1">{item.hsnCode}</td>
                                         <td className="py-1 px-1 text-center">{item.qty}</td>
                                         <td className="py-1 px-1 uppercase text-right">{item.batchNo}</td>
-                                        <td className="py-1 px-1 text-right">{(Number(item.mrp) / (1 + Number(item.gstRate) / 100)).toFixed(2)}</td>
+                                        {/* MRP col: show base price (GST-exclusive) since MRP on strip includes GST */}
+                                        <td className="py-1 px-1 text-right">
+                                            {(Number(item.mrp) / (1 + Number(item.gstRate) / 100)).toFixed(2)}
+                                        </td>
                                         <td className="py-1 px-1 text-right">{item.gstRate}</td>
                                         <td className="py-1 px-1 text-right font-bold">
                                             {Number(item.amount).toFixed(2)}
@@ -258,11 +259,11 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         {/* Footer Section */}
                         <div className="footer-section pt-4">
                             <div className="flex justify-between items-start gap-8">
-                                {/* Tax Summary Table */}
+                                {/* Terms */}
                                 <div className="w-1/2">
                                     <div className="mt-2 text-[9px] leading-tight opacity-70">
                                         <p>1. Major Credit/Debit/Digital Cards accepted.</p>
-                                        <p>2. E & O E Goods Once Sold Cannot Be Exchanged.</p>
+                                        <p>2. E &amp; O E Goods Once Sold Cannot Be Exchanged.</p>
                                     </div>
                                 </div>
 
@@ -298,7 +299,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                     </div>
 
                                     <div className="text-center mt-2 w-full max-w-[150px]">
-                                        <div className="h-10 border-b border-slate-400 mb-1 italic text-slate-300 pointer-events-none">
+                                        <div className="h-10 border-b border-slate-400 mb-1">
                                             {/* Signature Placeholder */}
                                         </div>
                                         <p className="text-[10px] font-bold uppercase">Signature</p>
