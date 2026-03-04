@@ -174,7 +174,7 @@ function ServiceCard({ title, desc, image, href, icon: Icon }: { title: string, 
 function PackageCard({ title, price, color, textColor, items }: { title: string, price: string, color: string, textColor: string, items: string[] }) {
   // FIXED: Removed extra spaces in Tailwind classes (min - w - [260px] -> min-w-[260px])
   return (
-    <div className={`min-w-[260px] snap-center rounded-2xl p-5 ${color} shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow`}>
+    <Link href="/blood-collection" className={`min-w-[260px] snap-center rounded-2xl p-5 ${color} shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow block`}>
       {/* Background Icon (Decorative) */}
       <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
 
@@ -189,7 +189,7 @@ function PackageCard({ title, price, color, textColor, items }: { title: string,
       <div className="mt-4 text-xs font-semibold text-primary flex items-center gap-1 opacity-90 group-hover:opacity-100">
         Book Now <ArrowRight className="w-3 h-3" />
       </div>
-    </div>
+    </Link>
   )
 }
 
