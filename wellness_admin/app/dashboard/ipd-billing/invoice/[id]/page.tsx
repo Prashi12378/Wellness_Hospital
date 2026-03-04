@@ -209,12 +209,12 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                             print-color-adjust: exact !important;
                         }
                         @page {
-                            margin: 10mm;
+                            margin: 0;
                         }
                         /* Outer page wrapper */
                         .min-h-screen {
                             min-height: 0 !important;
-                            padding: 0 !important;
+                            padding: 10mm !important;
                             background: white !important;
                         }
                         /* Invoice card */
@@ -228,6 +228,13 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                             border-radius: 0 !important;
                             overflow: visible !important;
                         }
+                        /* Remove black Grand Total box background */
+                        .bg-slate-900 {
+                            background-color: white !important;
+                            color: #0f172a !important;
+                            border: 2px solid #0f172a !important;
+                        }
+                        .text-white { color: #0f172a !important; }
                         /* Allow table to break across pages */
                         table {
                             page-break-inside: auto !important;
