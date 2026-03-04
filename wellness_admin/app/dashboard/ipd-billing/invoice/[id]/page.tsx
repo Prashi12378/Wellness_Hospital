@@ -199,30 +199,55 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                             width: 0 !important;
                             overflow: hidden !important;
                         }
-                        body {
+                        html, body {
                             background: white !important;
                             margin: 0 !important;
                             padding: 0 !important;
+                            height: auto !important;
+                            overflow: visible !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
                         }
                         @page {
-                            margin: 0;
+                            margin: 10mm;
                         }
+                        /* Outer page wrapper */
+                        .min-h-screen {
+                            min-height: 0 !important;
+                            padding: 0 !important;
+                            background: white !important;
+                        }
+                        /* Invoice card */
                         .max-w-\\[800px\\] {
                             max-width: 100% !important;
                             width: 100% !important;
                             margin: 0 !important;
                             padding: 0 !important;
                             box-shadow: none !important;
+                            border: none !important;
+                            border-radius: 0 !important;
+                            overflow: visible !important;
                         }
+                        /* Allow table to break across pages */
                         table {
-                            page-break-inside: auto;
+                            page-break-inside: auto !important;
+                            break-inside: auto !important;
                         }
                         tr {
-                            page-break-inside: avoid;
-                            page-break-after: auto;
+                            page-break-inside: avoid !important;
+                            break-inside: avoid !important;
+                            page-break-after: auto !important;
                         }
                         thead {
-                            display: table-header-group;
+                            display: table-header-group !important;
+                        }
+                        tfoot {
+                            display: table-footer-group !important;
+                        }
+                        /* Keep footer together */
+                        .print\\:break-inside-avoid {
+                            break-inside: avoid !important;
+                            page-break-inside: avoid !important;
                         }
                     }
                 ` }} />
