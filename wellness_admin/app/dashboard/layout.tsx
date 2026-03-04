@@ -69,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ease-in-out border-r border-slate-800",
+                    "fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ease-in-out border-r border-slate-800 print:hidden",
                     isSidebarOpen ? "translate-x-0" : "-translate-x-full",
                     "lg:translate-x-0 lg:static",
                     isHovered ? "lg:w-64" : "lg:w-16",
@@ -135,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0 print:block print:w-full print:h-auto">
                 {/* Header */}
-                <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 lg:px-8">
+                <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 lg:px-8 print:hidden">
                     <button
                         onClick={() => setSidebarOpen(!isSidebarOpen)}
                         className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-muted"
@@ -162,7 +162,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Mobile Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden print:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}

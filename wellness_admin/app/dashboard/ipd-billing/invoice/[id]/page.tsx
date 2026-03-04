@@ -8,7 +8,6 @@ import PrintButton from './PrintButton';
 export default async function AdminInvoicePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
-    // Fetch invoice with admission and patient details
     const invoice = await prisma.invoice.findUnique({
         where: { id },
         include: {
@@ -22,245 +21,195 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
         }
     });
 
-    if (!invoice) {
-        notFound();
-    }
+    if (!invoice) notFound();
 
     const { admission } = invoice;
     const patient = admission?.patient;
     const doctor = admission?.primaryDoctor;
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0 print:m-0 print:min-h-0 print:block">
-            {/* Action Bar */}
-            <div className="max-w-[800px] mx-auto mb-8 flex justify-between items-center print:hidden">
-                <Link href={`/dashboard/ipd-billing`} className="flex items-center gap-2 text-slate-600 font-bold hover:text-primary transition-colors">
-                    <ArrowLeft className="w-5 h-5" /> Back to Billing
-                </Link>
-                <PrintButton />
-            </div>
-
-            {/* Invoice Document */}
-            <div className="print:block">
-                <div className="print:block">
-                    <div className="max-w-[800px] mx-auto relative bg-white shadow-2xl rounded-[40px] overflow-hidden border border-slate-100 print:shadow-none print:border-none print:rounded-none print:overflow-visible print:block">
-                        {/* Watermark */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] print:opacity-[0.08] pointer-events-none z-0 select-none overflow-hidden print:overflow-visible print:fixed print:inset-0">
-                            <img src="/logo.png" alt="Watermark" className="w-[50%] max-w-md object-contain grayscale-0" />
-                        </div>
-
-                        <div className="p-12 print:p-8 relative z-10">
-                            {/* Header */}
-                            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8 mb-8">
-                                <div className="w-24 h-24 print:w-20 print:h-20 shrink-0">
-                                    <img src="/logo.png" alt="Hospital Logo" className="w-full h-full object-contain" />
-                                </div>
-
-                                <div className="text-center flex-1 px-4">
-                                    <h1 className="text-4xl font-black uppercase tracking-tight text-slate-900 mb-1">Wellness Hospital</h1>
-                                    <p className="text-[11px] font-bold text-slate-600 max-w-md mx-auto leading-snug mb-2">
-                                        Beside friend function hall, Gowribidnur main road, Palanjoghalli,<br />
-                                        Doddaballapur - 561203, Karnataka, India<br />
-                                        <span className="text-slate-900">Ph No. +91 8105666338 | E-mail: wellnesshospital8383@gmail.com</span>
-                                    </p>
-                                    <div className="inline-block bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                                        GST NO: {invoice.gstin || '29JNVPS4919B2Z5'}
-                                    </div>
-                                </div>
-
-                                <div className="w-24 print:w-20 shrink-0"></div>
-                            </div>
-
-                            {/* Patient Info */}
-                            <div className="flex justify-between items-center mb-8 font-sans">
-                                <div className="space-y-1">
-                                    <p className="text-[11px] font-black text-slate-600 uppercase">Bill To:</p>
-                                    <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">{invoice.patientName}</h2>
-                                    <p className="text-[11px] font-bold text-slate-500 uppercase">UHID: {patient?.uhid || '---'}</p>
-                                    <p className="text-[11px] font-bold text-slate-500 uppercase">Phone: {invoice.patientPhone || patient?.phone || '---'}</p>
-                                </div>
-                                <div className="text-right space-y-1">
-                                    <p className="text-[11px] font-black text-slate-900 uppercase">Bill No: <span className="font-sans text-primary">{invoice.billNo}</span></p>
-
-                                    <div className="flex items-center justify-end gap-2">
-                                        <p className="text-[11px] font-black text-slate-900 uppercase">Date:</p>
-                                        <span className="text-[11px] font-black text-slate-900 uppercase">
-                                            {format(new Date(invoice.createdAt), 'dd-MMM-yyyy')}
-                                        </span>
-                                    </div>
-
-                                    {admission && <p className="text-[11px] font-black text-slate-900 uppercase">IP No: {admission.id.slice(0, 8).toUpperCase()}</p>}
-                                </div>
-                            </div>
-
-                            <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between print:bg-white print:border-slate-200">
-                                <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Primary Consultant</p>
-                                    <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{doctor?.firstName || '---'} {doctor?.lastName || '---'}</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ward / Bed</p>
-                                    <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">{admission?.ward || 'General'} / {admission?.bedNumber || '---'}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Admission Date</p>
-                                    <p className="text-sm font-bold text-slate-900">{admission?.admissionDate ? format(new Date(admission.admissionDate), 'dd MMM yyyy') : '---'}</p>
-                                </div>
-                            </div>
-
-                            {/* Table Section */}
-                            <div className="mb-12">
-                                <table className="w-full text-left border-collapse font-sans">
-                                    <thead>
-                                        <tr className="border-y-2 border-slate-900 text-[10px] font-black uppercase text-slate-900">
-                                            <th className="py-3 px-2">S.No</th>
-                                            <th className="py-3 px-2">Service / Item Description</th>
-                                            <th className="py-3 px-2 text-right">Amount (₹)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-200">
-                                        {invoice.items.map((item: any, idx: number) => (
-                                            <tr key={item.id} className="text-xs text-slate-800">
-                                                <td className="py-4 px-2 font-bold">{idx + 1}</td>
-                                                <td className="py-4 px-2 font-black uppercase tracking-tight">{item.name}</td>
-                                                <td className="py-4 px-2 text-right font-black">₹{Number(item.amount).toLocaleString()}</td>
-                                            </tr>
-                                        ))}
-                                        {invoice.items.length === 0 && (
-                                            <tr>
-                                                <td colSpan={3} className="py-12 text-center text-slate-400 italic">No charges recorded.</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Summary Footer */}
-                            <div className="grid grid-cols-2 gap-12 mt-auto font-sans print:break-inside-avoid">
-                                <div className="space-y-6">
-                                    <div className="p-4 bg-slate-50 border-2 border-slate-900 rounded-2xl print:bg-white">
-                                        <h4 className="text-[10px] font-black text-slate-900 uppercase mb-2 italic underline">Important Notes:</h4>
-                                        <ul className="grid grid-cols-1 gap-1.5 text-[9px] font-bold text-slate-600">
-                                            <li className="flex items-center gap-2">
-                                                <div className="w-1 h-1 bg-slate-400 rounded-full" />
-                                                All Major Credit / Debit Cards / Digital Payments accepted.
-                                            </li>
-                                            <li className="flex items-center gap-2">
-                                                <div className="w-1 h-1 bg-slate-400 rounded-full" />
-                                                Please check all items and amounts before leaving.
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-4 border border-slate-200 rounded-2xl bg-slate-50/50">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Computer Generated Invoice</p>
-                                            <p className="text-[10px] font-black text-slate-900 italic">Wellness Hospital IPD</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="space-y-2 pt-4 border-t border-slate-200">
-                                        <div className="flex justify-between items-center px-2">
-                                            <span className="text-[11px] font-black text-slate-500 uppercase">Sub Total</span>
-                                            <span className="text-sm font-bold text-slate-900">₹{Number(invoice.subTotal).toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center px-2">
-                                            <span className="text-[11px] font-black text-slate-500 uppercase">Total Items</span>
-                                            <span className="text-sm font-bold text-slate-900">{invoice.items.length}</span>
-                                        </div>
-                                        {Number(invoice.discountAmount) > 0 && (
-                                            <div className="flex justify-between items-center px-2">
-                                                <span className="text-[11px] font-black text-emerald-600 uppercase">Discount Applied</span>
-                                                <span className="text-sm font-bold text-emerald-600">-₹{Number(invoice.discountAmount).toLocaleString()}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between items-center pt-4 border-t-2 border-slate-900 bg-slate-900 text-white p-4 rounded-2xl print:bg-white print:text-slate-900 print:border-2 print:border-slate-900">
-                                            <span className="text-lg font-black uppercase tracking-tighter">Grand Total</span>
-                                            <span className="text-3xl font-black">₹{Number(invoice.grandTotal).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-8 text-center">
-                                        <p className="text-[11px] font-black text-slate-900 uppercase underline decoration-slate-300 underline-offset-4">Authorized Signatory</p>
-                                        <p className="text-[9px] font-bold text-slate-400 mt-1">Wellness Hospital Management</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Print Styles */}
-                        <style dangerouslySetInnerHTML={{
-                            __html: `
-                    @media print {
-                        nav, aside, header, footer, .sidebar, .topbar, .no-print, .print\\:hidden {
-                            display: none !important;
-                            height: 0 !important;
-                            width: 0 !important;
-                            overflow: hidden !important;
-                        }
-                        html, body {
-                            background: white !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            height: auto !important;
-                            overflow: visible !important;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        @page {
-                            margin: 0;
-                        }
-                        /* Outer page wrapper */
-                        .min-h-screen {
-                            min-height: 0 !important;
-                            padding: 10mm !important;
-                            background: white !important;
-                        }
-                        /* Invoice card */
-                        .max-w-\\[800px\\] {
-                            max-width: 100% !important;
-                            width: 100% !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            box-shadow: none !important;
-                            border: none !important;
-                            border-radius: 0 !important;
-                            overflow: visible !important;
-                        }
-                        /* Remove black Grand Total box background */
-                        .bg-slate-900 {
-                            background-color: white !important;
-                            color: #0f172a !important;
-                            border: 2px solid #0f172a !important;
-                        }
-                        .text-white { color: #0f172a !important; }
-                        /* Allow table to break across pages */
-                        table {
-                            page-break-inside: auto !important;
-                            break-inside: auto !important;
-                        }
-                        tr {
-                            page-break-inside: avoid !important;
-                            break-inside: avoid !important;
-                            page-break-after: auto !important;
-                        }
-                        thead {
-                            display: table-header-group !important;
-                        }
-                        tfoot {
-                            display: table-footer-group !important;
-                        }
-                        /* Keep footer together */
-                        .print\\:break-inside-avoid {
-                            break-inside: avoid !important;
-                            page-break-inside: avoid !important;
-                        }
+        <>
+            {/* Print Styles */}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @media print {
+                    @page { size: A4 portrait; margin: 0; }
+                    html, body {
+                        margin: 0 !important; padding: 0 !important;
+                        background: white !important;
+                        height: auto !important; overflow: visible !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
-                ` }} />
+                    .no-print { display: none !important; }
+                    /* Kill the min-h-screen stretch */
+                    .outer-wrapper {
+                        min-height: 0 !important;
+                        height: auto !important;
+                        padding: 0 !important;
+                        background: white !important;
+                    }
+                    .print-page {
+                        padding: 10mm !important;
+                        box-shadow: none !important;
+                        margin: 0 !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        height: auto !important;
+                    }
+                    table { page-break-inside: auto !important; break-inside: auto !important; }
+                    tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+                    thead { display: table-header-group !important; }
+                    tfoot { display: table-footer-group !important; }
+                    .keep-together { page-break-inside: avoid !important; break-inside: avoid !important; }
+                }
+            `}} />
+
+            <div className="outer-wrapper min-h-screen bg-slate-100 py-10 px-4">
+                {/* Action Bar — hidden in print */}
+                <div className="no-print max-w-[800px] mx-auto mb-6 flex justify-between items-center">
+                    <Link href="/dashboard/ipd-billing" className="flex items-center gap-2 text-slate-600 font-bold hover:text-primary transition-colors">
+                        <ArrowLeft className="w-5 h-5" /> Back to Billing
+                    </Link>
+                    <PrintButton />
+                </div>
+
+                {/* Invoice Document */}
+                <div className="print-page max-w-[800px] mx-auto bg-white shadow-lg p-10 text-slate-900 font-sans text-sm relative overflow-hidden">
+
+                    {/* Watermark — absolute inside the card only */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.05] print:opacity-[0.06]" style={{ zIndex: 0 }}>
+                        <img src="/logo.png" alt="" className="w-[50%] max-w-[400px] object-contain" />
+                    </div>
+
+                    <div className="relative" style={{ zIndex: 1 }}>
+                        {/* ── HEADER ── */}
+                        <div className="text-center border-b-2 border-slate-800 pb-5 mb-5">
+                            <div className="flex items-center justify-center gap-4 mb-2">
+                                <img src="/logo.png" alt="Logo" className="w-14 h-14 object-contain" />
+                                <div className="text-left">
+                                    <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900 leading-none">Wellness Hospital</h1>
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-slate-600 leading-relaxed">
+                                Beside friend function hall, Gowribidnur main road, Palanjoghalli, Doddaballapur – 561203, Karnataka, India
+                            </p>
+                            <p className="text-[10px] text-slate-600">
+                                Ph: +91 8105666338 &nbsp;|&nbsp; wellnesshospital8383@gmail.com
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-700 mt-1">
+                                GST No: {invoice.gstin || '29JNVPS4919B2Z5'}
+                            </p>
+                        </div>
+
+                        {/* ── TITLE ── */}
+                        <div className="text-center mb-5">
+                            <h2 className="text-base font-black uppercase tracking-[0.2em] border border-slate-800 inline-block px-6 py-1">
+                                IPD Invoice
+                            </h2>
+                        </div>
+
+                        {/* ── PATIENT & BILL INFO ── */}
+                        <div className="grid grid-cols-2 gap-6 mb-5 border border-slate-300 p-4">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Patient Details</p>
+                                <p className="font-black text-base uppercase">{invoice.patientName}</p>
+                                <p className="text-[10px] text-slate-600">UHID: {patient?.uhid || '—'}</p>
+                                <p className="text-[10px] text-slate-600">Phone: {invoice.patientPhone || patient?.phone || '—'}</p>
+                            </div>
+                            <div className="space-y-1 text-right">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Bill Details</p>
+                                <p className="font-black text-base">{invoice.billNo}</p>
+                                <p className="text-[10px] text-slate-600">Date: {format(new Date(invoice.createdAt), 'dd MMM yyyy')}</p>
+                                {admission && <p className="text-[10px] text-slate-600">IP No: {admission.id.slice(0, 8).toUpperCase()}</p>}
+                            </div>
+                        </div>
+
+                        {/* ── ADMISSION INFO ── */}
+                        <div className="grid grid-cols-3 gap-4 mb-6 border border-slate-300 border-t-0 p-4 pt-3">
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Primary Doctor</p>
+                                <p className="text-[11px] font-bold uppercase">{doctor?.firstName || '—'} {doctor?.lastName || ''}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Ward / Bed</p>
+                                <p className="text-[11px] font-bold uppercase">{admission?.ward || 'General'} / {admission?.bedNumber || '—'}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Admission Date</p>
+                                <p className="text-[11px] font-bold">{admission?.admissionDate ? format(new Date(admission.admissionDate), 'dd MMM yyyy') : '—'}</p>
+                            </div>
+                        </div>
+
+                        {/* ── CHARGES TABLE ── */}
+                        <table className="w-full border-collapse mb-6 text-[11px]">
+                            <thead>
+                                <tr className="border-y-2 border-slate-800 bg-slate-50">
+                                    <th className="py-2 px-3 text-left font-black uppercase tracking-wide w-10">S.No</th>
+                                    <th className="py-2 px-3 text-left font-black uppercase tracking-wide">Service / Item Description</th>
+                                    <th className="py-2 px-3 text-right font-black uppercase tracking-wide">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {invoice.items.map((item: any, idx: number) => (
+                                    <tr key={item.id} className="border-b border-slate-200">
+                                        <td className="py-2 px-3 text-slate-600">{idx + 1}</td>
+                                        <td className="py-2 px-3 font-semibold uppercase">{item.name}</td>
+                                        <td className="py-2 px-3 text-right font-bold">₹{Number(item.amount).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                                {invoice.items.length === 0 && (
+                                    <tr>
+                                        <td colSpan={3} className="py-10 text-center text-slate-400 italic">No charges recorded.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+
+                        {/* ── FOOTER — keep entire block together (no page break inside) ── */}
+                        <div className="keep-together grid grid-cols-2 gap-10 border-t-2 border-slate-800 pt-5">
+                            {/* Terms */}
+                            <div>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Terms &amp; Notes</p>
+                                <ul className="space-y-1 text-[9px] text-slate-600 leading-relaxed">
+                                    <li>• All Major Credit / Debit Cards / Digital Payments accepted.</li>
+                                    <li>• Please verify all items before leaving the billing desk.</li>
+                                    <li>• This is a computer generated invoice.</li>
+                                </ul>
+                            </div>
+
+                            {/* Totals + Signature — same column, can't split */}
+                            <div className="space-y-1 text-[11px]">
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500 uppercase font-bold">Sub Total</span>
+                                    <span className="font-bold">₹{Number(invoice.subTotal).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500 uppercase font-bold">Total Items</span>
+                                    <span className="font-bold">{invoice.items.length}</span>
+                                </div>
+                                {Number(invoice.discountAmount) > 0 && (
+                                    <div className="flex justify-between text-emerald-700">
+                                        <span className="font-bold uppercase">Discount</span>
+                                        <span className="font-bold">– ₹{Number(invoice.discountAmount).toLocaleString()}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between border-t-2 border-slate-800 pt-2 mt-2">
+                                    <span className="text-base font-black uppercase">Grand Total</span>
+                                    <span className="text-base font-black">₹{Number(invoice.grandTotal).toLocaleString()}</span>
+                                </div>
+
+                                {/* Signature directly below totals */}
+                                <div className="pt-6 text-right">
+                                    <div className="border-b border-slate-400 h-8 mb-1" />
+                                    <p className="text-[10px] font-black uppercase">Authorized Signatory</p>
+                                    <p className="text-[9px] text-slate-400">Wellness Hospital Management</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
