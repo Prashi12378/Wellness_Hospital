@@ -1,5 +1,4 @@
 'use server';
-// Force type refresh
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -172,6 +171,7 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
         });
 
         revalidatePath(`/dashboard/appointments/${data.appointmentId}/billing`);
+        revalidatePath('/dashboard/billing');
         return { success: true, invoice: serializeData(invoice) };
     } catch (error) {
         console.error("Failed to generate invoice:", error);
@@ -195,5 +195,123 @@ export async function getAllDoctors() {
     } catch (error) {
         console.error("Failed to fetch doctors:", error);
         return { success: false, error: "Failed to fetch doctors" };
+    }
+}
+
+interface ObservationInvoiceData {
+    patientName: string;
+    patientPhone?: string;
+    patientId: string;
+    doctorName?: string;
+    subTotal: number;
+    totalGst: number;
+    grandTotal: number;
+    paymentMethod: string;
+    discountAmount?: number;
+    observationHours?: number;
+    ward?: string;
+    items: {
+        name: string;
+        qty: number;
+        mrp: number;
+        gstRate: number;
+        amount: number;
+    }[];
+}
+
+export async function generateObservationInvoice(data: ObservationInvoiceData) {
+    try {
+        const billNo = `OBS-${Date.now().toString().slice(-6)}`;
+
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const invoice = await (prisma as any).invoice.create({
+            data: {
+                billNo,
+                patientName: data.patientName,
+                patientPhone: data.patientPhone,
+                doctorName: data.doctorName,
+                subTotal: data.subTotal,
+                totalGst: data.totalGst,
+                grandTotal: data.grandTotal,
+                paymentMethod: data.paymentMethod,
+                discountAmount: data.discountAmount || 0,
+                status: 'PAID',
+                items: {
+                    create: data.items.map(item => ({
+                        medicineId: 'OBSERVATION',
+                        name: item.name,
+                        qty: item.qty,
+                        mrp: item.mrp,
+                        gstRate: item.gstRate,
+                        amount: item.amount
+                    }))
+                }
+            }
+        });
+
+        // Record to Ledger
+        await prisma.ledger.create({
+            data: {
+                transactionType: 'income',
+                category: 'staff',
+                description: `Observation Bill #${billNo} (${data.patientName})`,
+                amount: data.grandTotal,
+                paymentMethod: data.paymentMethod,
+                transactionDate: new Date(),
+                recordedBy: (session.user as any).id
+            }
+        });
+
+        revalidatePath('/dashboard/billing');
+        return { success: true, invoice: serializeData(invoice) };
+    } catch (error) {
+        console.error("Failed to generate observation invoice:", error);
+        return { success: false, error: "Failed to generate observation invoice" };
+    }
+}
+
+export async function searchPatientsForBilling(query: string) {
+    try {
+        const patients = await prisma.profile.findMany({
+            where: {
+                role: 'patient',
+                OR: [
+                    { firstName: { contains: query, mode: 'insensitive' } },
+                    { lastName: { contains: query, mode: 'insensitive' } },
+                    { uhid: { contains: query, mode: 'insensitive' } },
+                    { phone: { contains: query, mode: 'insensitive' } },
+                ]
+            },
+            select: { id: true, firstName: true, lastName: true, uhid: true, phone: true },
+            take: 10
+        });
+        return { success: true, patients: serializeData(patients) };
+    } catch (error) {
+        console.error('Failed to search patients:', error);
+        return { success: false, error: 'Search failed' };
+    }
+}
+
+export async function getRecentOPDAndObservationBills() {
+    try {
+        const invoices = await (prisma as any).invoice.findMany({
+            where: {
+                OR: [
+                    { items: { some: { medicineId: 'SERVICE' } } },
+                    { items: { some: { medicineId: 'OBSERVATION' } } },
+                ]
+            },
+            include: { items: true },
+            orderBy: { date: 'desc' },
+            take: 50
+        });
+        return { success: true, invoices: serializeData(invoices) };
+    } catch (error) {
+        console.error('Failed to fetch recent bills:', error);
+        return { success: false, error: 'Failed to fetch bills' };
     }
 }

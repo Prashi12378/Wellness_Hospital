@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
-import { LayoutDashboard, Calendar, Users, Stethoscope, LogOut, Menu, Hospital, History, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, Users, Stethoscope, LogOut, Menu, Hospital, History, X, ReceiptText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -17,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Appointments', href: '/dashboard/appointments', icon: Calendar },
         { name: 'In-Patient (IPD)', href: '/dashboard/ipd', icon: Hospital },
+        { name: 'Billing', href: '/dashboard/billing', icon: ReceiptText },
         { name: 'Medical History', href: '/dashboard/history', icon: History },
         { name: 'Patients', href: '/dashboard/patients', icon: Users },
         { name: 'Doctors', href: '/dashboard/doctors', icon: Stethoscope },
