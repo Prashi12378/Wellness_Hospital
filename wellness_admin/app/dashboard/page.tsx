@@ -113,7 +113,7 @@ export default async function DashboardOverview() {
             </div>
 
             {/* Recent Activity or Quick Actions - Placeholder */}
-            <div className="grid gap-8 md:grid-cols-2">
+            <div className="grid gap-8">
                 <div className="p-6 rounded-xl border border-border bg-card">
                     <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
                     <div className="grid grid-cols-2 gap-4">
@@ -125,24 +125,6 @@ export default async function DashboardOverview() {
                             <span className="font-semibold block">Record Transaction</span>
                             <span className="text-xs text-muted-foreground">Add to ledger</span>
                         </Link>
-                    </div>
-                </div>
-
-                <div className="p-6 rounded-xl border border-border bg-card">
-                    <h2 className="text-lg font-semibold mb-4">System Status</h2>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Database Connection</span>
-                            <span className="text-green-600 font-medium">Healthy</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">API Latency</span>
-                            <span className="text-foreground font-medium">45ms</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Last Backup</span>
-                            <span className="text-foreground font-medium">2 hours ago</span>
-                        </div>
                     </div>
                 </div>
             </div>
