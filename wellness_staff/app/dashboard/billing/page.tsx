@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
     ReceiptText, Search, User, Stethoscope, Plus, X, Printer,
     Loader2, CheckCircle2, AlertCircle, ChevronRight, Bed, Clock,
@@ -256,9 +257,9 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                 }
             ` }} />
 
-            <div id="print-invoice-container" className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none transition-all duration-500 print:w-full print:max-w-none">
+            <div id="print-invoice-container" className="bg-white w-full max-w-3xl rounded-[32px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none transition-all duration-500 print:w-full print:max-w-none flex flex-col max-h-[95vh]">
                 {/* Top bar (Hidden in print) */}
-                <div className="bg-slate-900 text-white px-8 py-5 flex items-center justify-between print:hidden">
+                <div className="bg-slate-900 text-white px-8 py-5 flex items-center justify-between print:hidden shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-primary/20 rounded-xl flex items-center justify-center">
                             <ReceiptText className="w-5 h-5 text-primary" />
@@ -279,7 +280,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                 </div>
 
                 {/* Bill body */}
-                <div className="p-10 space-y-10 bg-white relative overflow-hidden print:p-0" id="print-invoice">
+                <div className="p-10 space-y-10 bg-white relative overflow-y-auto print:overflow-visible print:p-0 flex-1" id="print-invoice">
                     {/* Watermark Logo */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.05] select-none print:opacity-[0.07] z-0">
                         <img src="/logo.png" alt="Watermark" className="w-[500px] h-[500px] object-contain" />
@@ -384,7 +385,8 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
