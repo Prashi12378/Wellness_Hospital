@@ -263,7 +263,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                             <ReceiptText className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.4.1</span>
+                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.5</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{type === 'OBS' ? 'Observation' : 'OPD Consultation'}</span>
                         </div>
                     </div>
@@ -289,7 +289,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                         <div className="flex gap-6 items-start">
                             <img src="/logo.png" alt="Logo" className="w-20 h-20 object-contain rounded-2xl" />
                             <div>
-                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-2">Wellness Hospital</h2>
+                                <h1 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-2">WELLNESS HOSPITAL</h1>
                                 <p className="text-slate-600 text-[11px] font-semibold max-w-sm leading-relaxed uppercase tracking-wide">
                                     Beside friend function hall, Gowribidnur main road,<br />
                                     Palanjoghalli, Doddaballapur - 561203<br />
