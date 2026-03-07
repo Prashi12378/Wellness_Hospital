@@ -194,84 +194,161 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
     const handlePrint = () => window.print();
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="invoice-overlay">
-            <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden">
-                {/* Top bar */}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:bg-white print:p-0 print:block" id="invoice-overlay">
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @media print {
+                    @page { 
+                        size: auto;
+                        margin: 0 !important; 
+                    }
+                    html, body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        height: 100%;
+                        -webkit-print-color-adjust: exact;
+                    }
+                    body * { visibility: hidden; }
+                    #print-invoice, #print-invoice * { visibility: visible; }
+                    #print-invoice {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 210mm; /* A4 Width */
+                        min-height: 297mm; /* A4 Height */
+                        padding: 20mm !important;
+                        margin: 0 !important;
+                        box-sizing: border-box;
+                        background: white !important;
+                    }
+                }
+            ` }} />
+
+            <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none transition-all duration-500">
+                {/* Top bar (Hidden in print) */}
                 <div className="bg-slate-900 text-white px-8 py-5 flex items-center justify-between print:hidden">
                     <div className="flex items-center gap-3">
-                        <ReceiptText className="w-5 h-5 text-primary" />
-                        <span className="font-black tracking-tight">Invoice Generated</span>
-                        <span className="px-2 py-0.5 bg-primary/20 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest">{type === 'OBS' ? 'Observation' : 'OPD'}</span>
+                        <div className="w-8 h-8 bg-primary/20 rounded-xl flex items-center justify-center">
+                            <ReceiptText className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <span className="font-black tracking-tight block leading-none">Invoice Generated</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{type === 'OBS' ? 'Observation' : 'OPD Consultation'}</span>
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-2xl font-bold text-sm hover:bg-primary/90 transition-all">
-                            <Printer className="w-4 h-4" /> Print
+                        <button onClick={handlePrint} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-2xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+                            <Printer className="w-4 h-4" /> Print Invoice
                         </button>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
+                        <button onClick={onClose} className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
 
                 {/* Bill body */}
-                <div className="p-8 space-y-6" id="print-invoice">
-                    <div className="text-center border-b border-slate-100 pb-6">
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Wellness Hospital</h2>
-                        <p className="text-slate-500 text-sm mt-1">Tax Invoice · {type === 'OBS' ? 'Observation Bill' : 'OPD Consultation'}</p>
-                        <div className="mt-3 flex items-center justify-center gap-4 text-xs text-slate-500 font-medium">
-                            <span>Bill No: <strong className="text-slate-800">{billNo}</strong></span>
-                            <span>·</span>
-                            <span>{date}</span>
+                <div className="p-10 space-y-10 bg-white relative overflow-hidden" id="print-invoice">
+                    {/* Watermark Logo */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.05] select-none print:opacity-[0.07] z-0">
+                        <img src="/logo.png" alt="Watermark" className="w-[500px] h-[500px] object-contain" />
+                    </div>
+
+                    {/* Professional Header */}
+                    <div className="flex justify-between items-start border-b-2 border-slate-100 pb-10 relative z-10">
+                        <div className="flex gap-6 items-start">
+                            <img src="/logo.png" alt="Logo" className="w-20 h-20 object-contain rounded-2xl" />
+                            <div>
+                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-2">Wellness Hospital</h2>
+                                <p className="text-slate-600 text-[11px] font-semibold max-w-sm leading-relaxed uppercase tracking-wide">
+                                    Beside friend function hall, Gowribidnur main road,<br />
+                                    Palanjoghalli, Doddaballapur - 561203<br />
+                                    <span className="text-primary font-black mt-1 block">PH: 8105666338 | wellnesshospital8383@gmail.com</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-lg text-xs font-black uppercase tracking-widest mb-4">
+                                TAX INVOICE
+                            </div>
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Bill Number</p>
+                            <p className="text-xl font-black text-slate-900 leading-none">{billNo}</p>
+                            <p className="text-slate-500 text-xs font-medium mt-1">{date}</p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6 text-sm">
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Patient</p>
-                            <p className="font-bold text-slate-800">{patientName}</p>
+                    {/* Meta Info */}
+                    <div className="grid grid-cols-3 gap-8 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 relative z-10 print:bg-transparent print:p-0 print:border-0">
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Name</p>
+                            <p className="font-bold text-slate-800 text-lg leading-tight">{patientName}</p>
                         </div>
                         {doctorName && (
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Doctor</p>
-                                <p className="font-bold text-slate-800">{doctorName}</p>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Consulting Doctor</p>
+                                <p className="font-bold text-slate-800 text-lg leading-tight">Dr. {doctorName.replace(/^Dr\.\s+/i, '')}</p>
                             </div>
                         )}
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Payment</p>
-                            <p className="font-bold text-slate-800">{paymentMethod}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-black">
-                                <CheckCircle2 className="w-3 h-3" /> PAID
-                            </span>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Method</p>
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-800 text-lg leading-tight">{paymentMethod}</span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md text-[9px] font-black uppercase tracking-tighter">
+                                    <CheckCircle2 className="w-2.5 h-2.5" /> PAID
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                                <th className="px-4 py-3 text-left rounded-l-xl">Description</th>
-                                <th className="px-4 py-3 text-center">Qty</th>
-                                <th className="px-4 py-3 text-right rounded-r-xl">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((item: any, i: number) => (
-                                <tr key={i} className="border-b border-slate-50">
-                                    <td className="px-4 py-3 font-medium text-slate-700">{item.name}</td>
-                                    <td className="px-4 py-3 text-center text-slate-600">{item.qty}</td>
-                                    <td className="px-4 py-3 text-right font-bold text-slate-800">₹{Number(item.amount).toLocaleString()}</td>
+                    {/* Table */}
+                    <div className="space-y-4">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b-2 border-slate-900 text-slate-900 text-[11px] font-black uppercase tracking-widest">
+                                    <th className="px-2 py-4 text-left">Description of Services</th>
+                                    <th className="px-2 py-4 text-center w-24">Quantity</th>
+                                    <th className="px-2 py-4 text-right w-32">Amount (₹)</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {items.map((item: any, i: number) => (
+                                    <tr key={i}>
+                                        <td className="px-2 py-5 font-bold text-slate-700">{item.name}</td>
+                                        <td className="px-2 py-5 text-center text-slate-600 font-medium">{item.qty}</td>
+                                        <td className="px-2 py-5 text-right font-black text-slate-900 text-lg">₹{Number(item.amount).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
-                    <div className="flex justify-end pt-2 border-t border-slate-100">
-                        <div className="text-right">
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Grand Total</p>
-                            <p className="text-4xl font-black text-slate-900 tracking-tighter">₹{Number(total).toLocaleString()}</p>
+                    {/* Totals & T&C */}
+                    <div className="grid grid-cols-2 gap-10 pt-6 border-t-2 border-slate-100">
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-2">Terms & Conditions</h4>
+                                <ul className="text-[9px] text-slate-500 space-y-1 font-medium leading-relaxed">
+                                    <li>• This is a computer generated invoice and does not require a physical signature.</li>
+                                    <li>• Fees once paid are non-refundable and non-transferable.</li>
+                                    <li>• Please retain this invoice for future follow-ups.</li>
+                                    <li>• Disputes are subject to Bangalore jurisdiction only.</li>
+                                </ul>
+                            </div>
                         </div>
+                        <div className="flex flex-col items-end gap-6 text-right">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Grand Total</p>
+                                <p className="text-5xl font-black text-slate-900 tracking-tighter leading-none">₹{Number(total).toLocaleString()}</p>
+                            </div>
+
+                            <div className="pt-10 w-48 border-t border-slate-200">
+                                <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest text-center mt-2">Authorized Signatory</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center pt-10 text-[9px] text-slate-400 font-medium border-t border-slate-50 border-dashed">
+                        Thank you for choosing Wellness Hospital. Get well soon!
                     </div>
                 </div>
             </div>
