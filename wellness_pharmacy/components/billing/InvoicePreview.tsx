@@ -29,9 +29,10 @@ interface InvoicePreviewProps {
         items: any[];
     };
     onClose: () => void;
+    readOnly?: boolean;
 }
 
-export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
+export default function InvoicePreview({ invoice, onClose, readOnly = false }: InvoicePreviewProps) {
     const printRef = useRef<HTMLDivElement>(null);
     const [mounted, setMounted] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -206,7 +207,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pharmacy Billing System</p>
                     </div>
                     <div className="flex gap-2">
-                        {invoice.status !== 'RETURNED' && (
+                        {!readOnly && invoice.status !== 'RETURNED' && (
                             <>
                                 {selectedItems.length > 0 && (
                                     <button
@@ -312,7 +313,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         <table className="w-full border-collapse mb-6 text-[10px] items-table">
                             <thead className="bg-slate-50 border-y-2 border-slate-900">
                                 <tr>
-                                    {invoice.status !== 'RETURNED' && <th className="py-1 px-1 text-left w-6 no-print item-checkbox"></th>}
+                                    {!readOnly && invoice.status !== 'RETURNED' && <th className="py-1 px-1 text-left w-6 no-print item-checkbox"></th>}
                                     <th className="py-1 px-1 text-left w-8">S.No</th>
                                     <th className="py-1 px-1 text-left">Item Name</th>
                                     <th className="py-1 px-1 text-left">Hsn Code</th>
@@ -327,9 +328,9 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 {invoice.items.map((item: any, idx: number) => (
                                     <tr key={idx} className={cn(
                                         "hover:bg-slate-50 transition-colors",
-                                        selectedItems.includes(item.id) && "bg-amber-50"
+                                        !readOnly && selectedItems.includes(item.id) && "bg-amber-50"
                                     )}>
-                                        {invoice.status !== 'RETURNED' && (
+                                        {!readOnly && invoice.status !== 'RETURNED' && (
                                             <td className="py-1.5 px-1 no-print item-checkbox">
                                                 <input
                                                     type="checkbox"

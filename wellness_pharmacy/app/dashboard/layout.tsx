@@ -24,6 +24,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        if (isSidebarOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isSidebarOpen]);
+
     const fetchNotifications = async () => {
         const { notifications: data } = await getNotifications();
         const { count } = await getUnreadCount();
@@ -50,6 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'Inventory', href: '/dashboard/inventory' },
         { name: 'Billing', href: '/dashboard/billing' },
+        { name: 'Manage Bills', href: '/dashboard/bills' },
         { name: 'Prescriptions', href: '/dashboard/prescriptions' },
         { name: 'Customer History', href: '/dashboard/history' },
     ];
