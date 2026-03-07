@@ -134,7 +134,7 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
         const invoice = await (prisma as any).invoice.create({
             data: {
                 billNo,
-                appointmentId: data.appointmentId,
+                appointmentId: data.appointmentId || undefined,
                 patientName: data.patientName,
                 patientPhone: data.patientPhone,
                 doctorName: data.doctorName,
@@ -173,9 +173,9 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
         revalidatePath(`/dashboard/appointments/${data.appointmentId}/billing`);
         revalidatePath('/dashboard/billing');
         return { success: true, invoice: serializeData(invoice) };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to generate invoice:", error);
-        return { success: false, error: "Failed to generate invoice" };
+        return { success: false, error: `Failed to generate invoice: ${error.message || 'Unknown error'}` };
     }
 }
 
@@ -268,9 +268,9 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
 
         revalidatePath('/dashboard/billing');
         return { success: true, invoice: serializeData(invoice) };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to generate observation invoice:", error);
-        return { success: false, error: "Failed to generate observation invoice" };
+        return { success: false, error: `Failed to generate observation invoice: ${error.message || 'Unknown error'}` };
     }
 }
 
