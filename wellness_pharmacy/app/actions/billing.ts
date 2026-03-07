@@ -352,7 +352,7 @@ export async function deleteInvoice(invoiceId: string) {
         await db.$transaction(async (tx) => {
             // 1. Restore Stock
             for (const item of invoice.items) {
-                await tx.pharmacyInventory.update({
+                await tx.pharmacyInventory.updateMany({
                     where: { id: item.medicineId },
                     data: {
                         stock: {
@@ -415,7 +415,7 @@ export async function returnInvoice(invoiceId: string) {
         await db.$transaction(async (tx) => {
             // 1. Restore Stock
             for (const item of invoice.items) {
-                await tx.pharmacyInventory.update({
+                await tx.pharmacyInventory.updateMany({
                     where: { id: item.medicineId },
                     data: {
                         stock: {
@@ -494,7 +494,7 @@ export async function returnInvoiceItems(invoiceId: string, itemIds: string[]) {
 
             // 1. Restore Stock for selected items
             for (const item of itemsToReturn) {
-                await tx.pharmacyInventory.update({
+                await tx.pharmacyInventory.updateMany({
                     where: { id: item.medicineId },
                     data: {
                         stock: {
