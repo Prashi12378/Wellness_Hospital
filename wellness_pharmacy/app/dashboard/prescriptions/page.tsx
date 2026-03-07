@@ -24,6 +24,17 @@ export default function PrescriptionsPage() {
         fetchPrescriptions();
     }, []);
 
+    useEffect(() => {
+        if (selectedPrescription) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [selectedPrescription]);
+
     const fetchPrescriptions = async () => {
         setLoading(true);
         try {
