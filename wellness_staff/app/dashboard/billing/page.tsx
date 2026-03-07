@@ -200,45 +200,52 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                 @media print {
                     @page { 
                         size: A4;
-                        margin: 0 !important; 
+                        margin: 0mm !important; 
                     }
                     html, body {
                         margin: 0 !important;
                         padding: 0 !important;
                         height: auto !important;
                         background: white !important;
+                        -webkit-print-color-adjust: exact;
                     }
-                    /* Hide everything else */
-                    body > *:not(#invoice-overlay) {
+                    /* Hide entire app UI */
+                    body > * {
                         display: none !important;
                     }
-                    #invoice-overlay {
-                        position: static !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        background: white !important;
+                    /* Show only the invoice overlay and its contents */
+                    body > #invoice-overlay {
                         display: block !important;
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
                         width: 100% !important;
                         height: auto !important;
-                    }
-                    #invoice-overlay > div:not(#print-invoice-container) {
-                        display: none !important;
-                    }
-                    #print-invoice-container {
-                        width: 100% !important;
-                        max-width: none !important;
+                        background: white !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        border-radius: 0 !important;
-                        box-shadow: none !important;
+                    }
+                    #invoice-overlay * {
+                        visibility: hidden !important;
+                    }
+                    #print-invoice-container, #print-invoice-container * {
+                        visibility: visible !important;
                         display: block !important;
                     }
                     #print-invoice {
-                        padding: 20mm !important;
-                        width: 100% !important;
-                        min-height: 297mm;
-                        background: white !important;
+                        visibility: visible !important;
                         display: block !important;
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        padding: 20mm !important;
+                        box-sizing: border-box !important;
+                        background: white !important;
+                    }
+                    /* Hide the top bar and close buttons in print */
+                    .print\\:hidden {
+                        display: none !important;
                     }
                 }
             ` }} />
