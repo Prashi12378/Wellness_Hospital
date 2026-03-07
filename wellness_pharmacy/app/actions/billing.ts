@@ -435,7 +435,7 @@ export async function returnInvoice(invoiceId: string) {
             if (invoice.paymentMethod !== 'CREDIT') {
                 await tx.ledger.create({
                     data: {
-                        transactionType: 'expense', // Or treat as negative income
+                        transactionType: 'expense',
                         category: 'pharmacy',
                         description: `Return - Bill #${invoice.billNo} (${invoice.patientName})`,
                         amount: invoice.grandTotal,
@@ -445,10 +445,6 @@ export async function returnInvoice(invoiceId: string) {
                     }
                 });
             } else if (invoice.admissionId) {
-                // For IPD, we should probably mark the charge as reversed or delete it
-                // To keep audit trail in IPD charges, we add a negative charge?
-                // Or just delete the original charge to avoid confusion on settlement.
-                // Let's go with adding a reversal charge.
                 await tx.hospitalCharge.create({
                     data: {
                         admissionId: invoice.admissionId,
@@ -469,5 +465,146 @@ export async function returnInvoice(invoiceId: string) {
     } catch (error: any) {
         console.error('Return invoice error:', error);
         return { error: 'Failed to return: ' + (error.message || 'Unknown error') };
+    }
+}
+
+export async function returnInvoiceItems(invoiceId: string, itemIds: string[]) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { error: 'Authentication required' };
+        }
+
+        const invoice = await db.invoice.findUnique({
+            where: { id: invoiceId },
+            include: { items: true }
+        });
+
+        if (!invoice) return { error: 'Invoice not found' };
+        if (invoice.status === 'RETURNED') return { error: 'Invoice already fully returned' };
+
+        const itemsToReturn = invoice.items.filter(item => itemIds.includes(item.id));
+        if (itemsToReturn.length === 0) return { error: 'No items selected to return' };
+
+        // Check if we are returning all items
+        const isReturningAll = itemsToReturn.length === invoice.items.length;
+
+        await db.$transaction(async (tx) => {
+            let totalReturnAmount = 0;
+
+            // 1. Restore Stock for selected items
+            for (const item of itemsToReturn) {
+                await tx.pharmacyInventory.update({
+                    where: { id: item.medicineId },
+                    data: {
+                        stock: {
+                            increment: item.qty
+                        }
+                    }
+                });
+                totalReturnAmount += Number(item.amount);
+            }
+
+            // Calculate proportional discount for the returned amount if there was a discount
+            let actualRefundAmount = totalReturnAmount;
+            if (Number(invoice.discountRate) > 0) {
+                // If there's a discount rate, the refund should be the discounted amount
+                actualRefundAmount = Number((totalReturnAmount * (1 - Number(invoice.discountRate) / 100)).toFixed(2));
+            } else if (Number(invoice.discountAmount) > 0) {
+                // Proportional discount based on subtotal
+                const totalInvoiceBeforeDiscount = Number(invoice.subTotal) + Number(invoice.totalGst);
+                const discountRatio = Number(invoice.discountAmount) / totalInvoiceBeforeDiscount;
+                actualRefundAmount = Number((totalReturnAmount * (1 - discountRatio)).toFixed(2));
+            }
+
+            // 2. Remove items or update invoice
+            if (isReturningAll) {
+                await tx.invoice.update({
+                    where: { id: invoiceId },
+                    data: { status: 'RETURNED' }
+                });
+            } else {
+                // Delete the items from the invoice
+                await tx.invoiceItem.deleteMany({
+                    where: {
+                        id: { in: itemIds }
+                    }
+                });
+
+                // Recalculate remaining invoice totals
+                const remainingItems = invoice.items.filter(item => !itemIds.includes(item.id));
+
+                let newSubTotal = 0;
+                let newTotalGst = 0;
+
+                remainingItems.forEach(item => {
+                    const mrp = Number(item.mrp);
+                    const gstRate = Number(item.gstRate);
+                    const qty = Number(item.qty);
+
+                    const basePrice = mrp / (1 + gstRate / 100);
+                    const gstAmount = (mrp - basePrice) * qty;
+
+                    newSubTotal += basePrice * qty;
+                    newTotalGst += gstAmount;
+                });
+
+                // Apply original discount rate or proportional discount amount
+                let newDiscountAmount = 0;
+                if (Number(invoice.discountRate) > 0) {
+                    newDiscountAmount = Number(((newSubTotal + newTotalGst) * (Number(invoice.discountRate) / 100)).toFixed(2));
+                } else if (Number(invoice.discountAmount) > 0) {
+                    const totalInvoiceBeforeDiscount = Number(invoice.subTotal) + Number(invoice.totalGst);
+                    const discountRatio = Number(invoice.discountAmount) / totalInvoiceBeforeDiscount;
+                    newDiscountAmount = Number(((newSubTotal + newTotalGst) * discountRatio).toFixed(2));
+                }
+
+                const newGrandTotal = Number((newSubTotal + newTotalGst - newDiscountAmount).toFixed(2));
+
+                await tx.invoice.update({
+                    where: { id: invoiceId },
+                    data: {
+                        subTotal: Number(newSubTotal.toFixed(2)),
+                        totalGst: Number(newTotalGst.toFixed(2)),
+                        grandTotal: newGrandTotal,
+                        discountAmount: newDiscountAmount
+                    }
+                });
+            }
+
+            // 3. Add reversal ledger entry for the REFUNDED items
+            if (invoice.paymentMethod !== 'CREDIT') {
+                await tx.ledger.create({
+                    data: {
+                        transactionType: 'expense',
+                        category: 'pharmacy',
+                        description: `Partial Return - Bill #${invoice.billNo} (${itemsToReturn.map(i => i.name).join(', ')})`,
+                        amount: actualRefundAmount,
+                        paymentMethod: invoice.paymentMethod,
+                        transactionDate: new Date(),
+                        recordedBy: (session.user as any).id
+                    }
+                });
+            } else if (invoice.admissionId) {
+                await tx.hospitalCharge.create({
+                    data: {
+                        admissionId: invoice.admissionId,
+                        description: `Medicine Return - Bill #${invoice.billNo}`,
+                        amount: -actualRefundAmount,
+                        type: 'medicine',
+                        date: new Date(),
+                    }
+                });
+            }
+        });
+
+        revalidatePath('/dashboard/billing');
+        revalidatePath('/dashboard/history');
+        revalidatePath('/dashboard/inventory');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Partial return error:', error);
+        return { error: 'Failed to process partial return: ' + (error.message || 'Unknown error') };
     }
 }

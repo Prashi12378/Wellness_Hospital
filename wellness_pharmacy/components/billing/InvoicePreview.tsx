@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Printer, Trash2, RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
-import { deleteInvoice, returnInvoice } from '@/app/actions/billing';
+import { deleteInvoice, returnInvoice, returnInvoiceItems } from '@/app/actions/billing';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -36,15 +36,73 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
     const [mounted, setMounted] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isReturning, setIsReturning] = useState(false);
-    const [showConfirm, setShowConfirm] = useState<'delete' | 'return' | null>(null);
+    const [showConfirm, setShowConfirm] = useState<'delete' | 'return' | 'partial' | null>(null);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
-        return () => setMounted(false);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            setMounted(false);
+            document.body.style.overflow = 'unset';
+        };
     }, []);
 
     if (!mounted) return null;
+
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            const result = await deleteInvoice(invoice.id);
+            if (result.success) {
+                alert('Invoice deleted successfully');
+                onClose();
+                router.refresh();
+            } else {
+                alert(result.error);
+            }
+        } catch (error) {
+            alert('Failed to delete invoice');
+        } finally {
+            setIsDeleting(false);
+            setShowConfirm(null);
+        }
+    };
+
+    const handleReturn = async () => {
+        setIsReturning(true);
+        try {
+            let result;
+            if (showConfirm === 'partial') {
+                result = await returnInvoiceItems(invoice.id, selectedItems);
+            } else {
+                result = await returnInvoice(invoice.id);
+            }
+
+            if (result.success) {
+                alert(showConfirm === 'partial' ? 'Selected items returned' : 'Invoice returned successfully');
+                onClose();
+                router.refresh();
+            } else {
+                alert(result.error);
+            }
+        } catch (error) {
+            alert('Failed to return invoice');
+        } finally {
+            setIsReturning(false);
+            setShowConfirm(null);
+            setSelectedItems([]);
+        }
+    };
+
+    const toggleItemSelection = (itemId: string) => {
+        setSelectedItems(prev =>
+            prev.includes(itemId)
+                ? prev.filter(id => id !== itemId)
+                : [...prev, itemId]
+        );
+    };
 
     const handlePrint = () => {
         const invoiceEl = printRef.current?.querySelector('.invoice-container') as HTMLElement | null;
@@ -58,122 +116,79 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
         const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
         if (!iframeDoc) { document.body.removeChild(iframe); return; }
 
-        // 2. Copy all stylesheets from the main app so Tailwind classes work in iframe
-        const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-            .map(el => el.outerHTML).join('\n');
+        // 2. Build print styles specialized for A5
+        const styles = `
+            @page { 
+                size: A5 portrait; 
+                margin: 0; 
+            }
+            body { 
+                margin: 0; 
+                padding: 10mm;
+                font-family: system-ui, -apple-system, sans-serif;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .invoice-container {
+                width: 100%;
+                color: #1e293b;
+            }
+            .no-print { display: none !important; }
+            .bg-slate-50 { background-color: #f8fafc !important; }
+            .border-slate-900 { border-color: #0f172a !important; }
+            .font-black { font-weight: 900 !important; }
+            .font-bold { font-weight: 700 !important; }
+            .uppercase { text-transform: uppercase !important; }
+            .text-right { text-align: right !important; }
+            .text-center { text-align: center !important; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 4px; border-bottom: 1px solid #e2e8f0; }
+            .header-container { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; }
+            .patient-info { display: grid; grid-template-cols: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 11px; }
+            .totals-container { margin-top: 20px; border-top: 2px solid #0f172a; padding-top: 10px; }
+            .grand-total { font-size: 14px; font-weight: 900; margin-top: 8px; border-top: 1px solid #0f172a; padding-top: 4px; }
+            .footer { margin-top: 30px; display: flex; justify-content: space-between; font-size: 10px; }
+            .qr-code { width: 60px; height: 60px; border: 1px solid #e2e8f0; }
+            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: -1; }
+            .gst-table { font-size: 9px; margin-top: 10px; }
+            .gst-table th, .gst-table td { border: 1px solid #e2e8f0; text-align: center; }
+        `;
 
-        // 3. Write clean HTML — only the invoice content, no modal chrome
-        iframeDoc.open();
-        iframeDoc.write(`<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    ${styleLinks}
-    <style>
-        @page { size: A5 portrait; margin: 5mm; }
-        html, body {
-            margin: 0 !important; padding: 0 !important;
-            height: auto !important; overflow: visible !important;
-            background: white !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-        .invoice-container {
-            display: block !important; position: static !important;
-            width: 100% !important; max-width: 148mm !important;
-            height: auto !important; overflow: visible !important;
-            margin: 0 auto !important; padding: 5mm !important;
-            border: none !important; box-shadow: none !important; float: none !important;
-        }
-        /* Watermark: fixed so it appears on every printed page */
-        .invoice-watermark {
-            position: fixed !important; inset: 0 !important; opacity: 0.06 !important;
-        }
-        /* Table: allow rows to break across pages */
-        table {
-            width: 100% !important; border-collapse: collapse !important;
-            page-break-inside: auto !important; break-inside: auto !important;
-        }
-        tr {
-            page-break-inside: avoid !important; break-inside: avoid !important;
-            page-break-after: auto !important; break-after: auto !important;
-        }
-        thead { display: table-header-group !important; }
-        tfoot { display: table-footer-group !important; }
-        /* Footer: keep together on one page */
-        .footer-section { page-break-inside: avoid !important; break-inside: avoid !important; }
-        /* Typography */
-        table tr td, table tr th { padding-top: 4px !important; padding-bottom: 4px !important; }
-        h1 { font-size: 12pt !important; margin-bottom: 2px !important; }
-        h2 { font-size: 10pt !important; margin-bottom: 2px !important; }
-        p, span, td, th { font-size: 7.5pt !important; line-height: 1.1 !important; }
-        .header-logo { width: 48px !important; height: 48px !important; }
-        .header-container { margin-bottom: 8px !important; padding-bottom: 8px !important; }
-        .patient-info { margin-bottom: 8px !important; }
-        .items-table { margin-bottom: 8px !important; }
-    </style>
-</head>
-<body>${invoiceEl.outerHTML}</body>
-</html>`);
+        // 3. Clone and Clean HTML
+        const clonedInvoice = invoiceEl.cloneNode(true) as HTMLElement;
+        clonedInvoice.querySelectorAll('.no-print').forEach(el => el.remove());
+        // Remove checkboxes from printed version
+        clonedInvoice.querySelectorAll('.item-checkbox').forEach(el => el.remove());
+
+        iframeDoc.write('<html><head><title>Print Invoice</title><style>' + styles + '</style></head><body>');
+        iframeDoc.write(clonedInvoice.outerHTML);
+        iframeDoc.write('</body></html>');
         iframeDoc.close();
 
-        // 4. Print once iframe CSS is loaded
-        const doPrint = () => {
-            try {
+        // 4. Print & Cleanup
+        iframe.onload = () => {
+            setTimeout(() => {
                 iframe.contentWindow?.focus();
                 iframe.contentWindow?.print();
-            } finally {
-                setTimeout(() => {
-                    if (document.body.contains(iframe)) document.body.removeChild(iframe);
-                }, 1000);
-            }
+                document.body.removeChild(iframe);
+            }, 500);
         };
-
-        if (iframeDoc.readyState === 'complete') {
-            setTimeout(doPrint, 300);
-        } else {
-            iframe.addEventListener('load', () => setTimeout(doPrint, 300));
-        }
     };
 
-    const handleDelete = async () => {
-        setIsDeleting(true);
-        const result = await deleteInvoice(invoice.id);
-        if (result.success) {
-            alert('Invoice deleted successfully');
-            onClose();
-            router.refresh();
-        } else {
-            alert(result.error || 'Failed to delete');
-        }
-        setIsDeleting(false);
-        setShowConfirm(null);
-    };
-
-    const handleReturn = async () => {
-        setIsReturning(true);
-        const result = await returnInvoice(invoice.id);
-        if (result.success) {
-            alert('Invoice marked as returned and stock restored');
-            onClose();
-            router.refresh();
-        } else {
-            alert(result.error || 'Failed to return');
-        }
-        setIsReturning(false);
-        setShowConfirm(null);
-    };
-
-    const taxGroups = invoice.items.reduce((acc: any, item: any) => {
+    const gstGroups = invoice.items.reduce((acc: any, item: any) => {
         const rate = Number(item.gstRate);
-        const amount = Number(item.amount);
-        const gstAmount = (amount * rate) / 100;
+        const mrp = Number(item.mrp);
+        const qty = Number(item.qty);
+
+        const basePrice = mrp / (1 + rate / 100);
+        const gstAmount = (mrp - basePrice) * qty;
+        const amount = mrp * qty;
 
         if (!acc[rate]) {
             acc[rate] = { taxable: 0, cgst: 0, sgst: 0, total: 0 };
         }
 
-        acc[rate].taxable += amount;
+        acc[rate].taxable += amount - gstAmount; // Taxable amount is amount - gstAmount
         acc[rate].cgst += gstAmount / 2;
         acc[rate].sgst += gstAmount / 2;
         acc[rate].total += gstAmount;
@@ -193,12 +208,21 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                     <div className="flex gap-2">
                         {invoice.status !== 'RETURNED' && (
                             <>
+                                {selectedItems.length > 0 && (
+                                    <button
+                                        onClick={() => setShowConfirm('partial')}
+                                        className="bg-amber-500 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-all font-bold text-sm shadow-lg shadow-amber-500/10 animate-in fade-in zoom-in-95"
+                                    >
+                                        <RotateCcw className="w-4 h-4" />
+                                        Return Selected ({selectedItems.length})
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setShowConfirm('return')}
                                     className="bg-orange-500 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-orange-600 transition-all font-bold text-sm shadow-lg shadow-orange-500/10"
                                 >
                                     <RotateCcw className="w-4 h-4" />
-                                    Return Items
+                                    Return All
                                 </button>
                                 <button
                                     onClick={() => setShowConfirm('delete')}
@@ -288,6 +312,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         <table className="w-full border-collapse mb-6 text-[10px] items-table">
                             <thead className="bg-slate-50 border-y-2 border-slate-900">
                                 <tr>
+                                    {invoice.status !== 'RETURNED' && <th className="py-1 px-1 text-left w-6 no-print item-checkbox"></th>}
                                     <th className="py-1 px-1 text-left w-8">S.No</th>
                                     <th className="py-1 px-1 text-left">Item Name</th>
                                     <th className="py-1 px-1 text-left">Hsn Code</th>
@@ -298,132 +323,150 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                     <th className="py-1 px-1 text-right">Amount</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {invoice.items.map((item: any, index: number) => (
-                                    <tr key={index} className="border-b border-slate-200">
-                                        <td className="py-1 px-1">{index + 1}</td>
-                                        <td className="py-1 px-1 font-bold">{item.name}</td>
-                                        <td className="py-1 px-1">{item.hsnCode}</td>
-                                        <td className="py-1 px-1 text-center">{item.qty}</td>
-                                        <td className="py-1 px-1 uppercase text-right">{item.batchNo}</td>
-                                        <td className="py-1 px-1 text-right">
-                                            {(Number(item.mrp) / (1 + Number(item.gstRate) / 100)).toFixed(2)}
-                                        </td>
-                                        <td className="py-1 px-1 text-right">{item.gstRate}</td>
-                                        <td className="py-1 px-1 text-right font-bold">
-                                            {Number(item.amount).toFixed(2)}
-                                        </td>
+                            <tbody className="divide-y divide-slate-200">
+                                {invoice.items.map((item: any, idx: number) => (
+                                    <tr key={idx} className={cn(
+                                        "hover:bg-slate-50 transition-colors",
+                                        selectedItems.includes(item.id) && "bg-amber-50"
+                                    )}>
+                                        {invoice.status !== 'RETURNED' && (
+                                            <td className="py-1.5 px-1 no-print item-checkbox">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedItems.includes(item.id)}
+                                                    onChange={() => toggleItemSelection(item.id)}
+                                                    className="w-3.5 h-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500 transition-all cursor-pointer"
+                                                />
+                                            </td>
+                                        )}
+                                        <td className="py-1.5 px-1 text-slate-500">{idx + 1}</td>
+                                        <td className="py-1.5 px-1 font-bold">{item.name}</td>
+                                        <td className="py-1.5 px-1 text-slate-500 uppercase">{item.hsnCode}</td>
+                                        <td className="py-1.5 px-1 text-center font-bold">{item.qty}</td>
+                                        <td className="py-1.5 px-1 text-right uppercase text-slate-600 font-medium">{item.batchNo}</td>
+                                        <td className="py-1.5 px-1 text-right">₹{Number(item.mrp).toFixed(2)}</td>
+                                        <td className="py-1.5 px-1 text-right">{item.gstRate}%</td>
+                                        <td className="py-1.5 px-1 text-right font-black">₹{Number(item.amount).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
 
-                        {/* Footer Section */}
-                        <div className="footer-section pt-4">
-                            <div className="flex justify-between items-start gap-8">
-                                {/* Terms */}
-                                <div className="w-1/2">
-                                    <div className="mt-2 text-[9px] leading-tight opacity-70">
-                                        <p>1. Major Credit/Debit/Digital Cards accepted.</p>
-                                        <p>2. E & O E Goods Once Sold Cannot Be Exchanged.</p>
-                                    </div>
+                        {/* Summary Totals */}
+                        <div className="flex justify-between items-start totals-container">
+                            <div className="w-1/2">
+                                <h3 className="text-[9px] font-black uppercase tracking-wider mb-2 border-b-2 border-slate-900 inline-block">GST Analysis</h3>
+                                <table className="w-full text-center gst-table">
+                                    <thead className="bg-slate-100">
+                                        <tr>
+                                            <th className="py-1">Rate</th>
+                                            <th className="py-1">Taxable Amt</th>
+                                            <th className="py-1">CGST</th>
+                                            <th className="py-1">SGST</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200 font-medium border border-slate-200">
+                                        {Object.entries(gstGroups).map(([rate, vals]: [string, any]) => (
+                                            <tr key={rate}>
+                                                <td className="py-1 font-bold">{rate}%</td>
+                                                <td className="py-1">₹{vals.taxable.toFixed(2)}</td>
+                                                <td className="py-1">₹{vals.cgst.toFixed(2)}</td>
+                                                <td className="py-1">₹{vals.sgst.toFixed(2)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <div className="mt-4 text-[9px] text-slate-500 italic">
+                                    <p>Note: MRP is inclusive of all taxes (GST).</p>
+                                    <p>Method of Payment: {invoice.paymentMethod}</p>
                                 </div>
-
-                                {/* Totals & Signature */}
-                                <div className="w-1/2 flex flex-col items-end">
-                                    <div className="w-full space-y-0.5 text-sm border-t-2 border-slate-900 pt-1 mb-4">
-                                        <div className="flex justify-between">
-                                            <span>Sub Total :</span>
-                                            <span className="font-bold">{invoice.subTotal.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Total GST :</span>
-                                            <span className="font-bold">{invoice.totalGst.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Total Items :</span>
-                                            <span className="font-bold">{invoice.items.length}</span>
-                                        </div>
-                                        {Number(invoice.discountAmount || 0) > 0 && (
-                                            <div className="flex justify-between text-red-600 font-bold">
-                                                <span>Discount ({invoice.discountRate}%):</span>
-                                                <span>-₹{Number(invoice.discountAmount).toFixed(2)}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between text-xl font-black mt-2 border-t border-slate-200 pt-1">
-                                            <span>Total :</span>
-                                            <span>₹{invoice.grandTotal.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-[10px] font-bold text-slate-500 mt-1 uppercase">
-                                            <span>Mode :</span>
-                                            <span>{invoice.paymentMethod}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="text-center mt-2 w-full max-w-[150px]">
-                                        <div className="h-10 border-b border-slate-400 mb-1">
-                                            {/* Signature Placeholder */}
-                                        </div>
-                                        <p className="text-[10px] font-bold uppercase">Signature</p>
-                                        <p className="text-[8px] text-slate-500 uppercase">Registered Pharmacist</p>
-                                    </div>
+                            </div>
+                            <div className="w-1/3 space-y-1.5 text-right font-medium">
+                                <div className="flex justify-between border-b border-slate-100 pb-1">
+                                    <span className="uppercase text-slate-500 font-bold">Sub total:</span>
+                                    <span className="font-bold">₹{Number(invoice.subTotal).toFixed(2)}</span>
                                 </div>
+                                <div className="flex justify-between border-b border-slate-100 pb-1">
+                                    <span className="uppercase text-slate-500 font-bold">Total GST:</span>
+                                    <span className="font-bold">₹{Number(invoice.totalGst).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-red-600 border-b border-slate-100 pb-1">
+                                    <span className="uppercase font-bold">Discount:</span>
+                                    <span className="font-bold">-₹{Number(invoice.discountAmount).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between bg-slate-900 text-white p-2 rounded grand-total">
+                                    <span className="uppercase text-[10px] font-black">Grand Total:</span>
+                                    <span className="text-sm font-black tracking-tight">₹{Number(invoice.grandTotal).toFixed(2)}</span>
+                                </div>
+                                <div className="pt-2 text-[10px] text-slate-400 font-bold flex justify-between uppercase">
+                                    <span>Quantity:</span>
+                                    <span>{invoice.items.reduce((acc, item) => acc + item.qty, 0)} Items</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Signature */}
+                        <div className="mt-12 flex justify-between items-end footer">
+                            <div className="text-center w-32 border-t border-slate-900 pt-2">
+                                <p className="font-bold uppercase">Customer Sign</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="w-20 h-20 qr-code mx-auto mb-2 flex items-center justify-center bg-slate-50 text-[10px] text-slate-300">
+                                    QR CODE
+                                </div>
+                                <p className="text-[8px] font-bold text-slate-400">Scan to Verify</p>
+                            </div>
+                            <div className="text-center w-40 border-t border-slate-900 pt-6 relative">
+                                <p className="font-black italic text-slate-400 text-[10px] absolute top-1 left-0 w-full text-center pointer-events-none opacity-20">Pharmacist Seal</p>
+                                <p className="font-bold uppercase">Auth. Pharmacist</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Confirmation Dialogs */}
-            {showConfirm && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100000] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6">
-                        <div className={cn(
-                            "w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4",
-                            showConfirm === 'delete' ? "bg-red-50 text-red-500" : "bg-orange-50 text-orange-500"
-                        )}>
-                            <AlertTriangle className="w-8 h-8" />
-                        </div>
-
-                        <div className="text-center space-y-2">
-                            <h4 className="text-xl font-bold text-slate-900">
-                                {showConfirm === 'delete' ? 'Delete this Invoice?' : 'Process Item Return?'}
-                            </h4>
-                            <p className="text-slate-500 text-sm leading-relaxed">
+                {/* Confirm Dialog */}
+                {showConfirm && (
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] z-[1000] flex items-center justify-center p-4 rounded-2xl no-print">
+                        <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full animate-in zoom-in-95 duration-200">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${showConfirm === 'delete' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
+                                    <AlertTriangle className="w-6 h-6" />
+                                </div>
+                                <h4 className="text-xl font-bold text-slate-900">
+                                    {showConfirm === 'delete' ? 'Delete Bill?' : showConfirm === 'partial' ? 'Return Items?' : 'Return Invoice?'}
+                                </h4>
+                            </div>
+                            <p className="text-slate-600 mb-6 leading-relaxed">
                                 {showConfirm === 'delete'
-                                    ? 'This will completely remove the bill from records and restore item stock. This action cannot be undone.'
-                                    : 'This will mark the bill as RETURNED and restore items to stock. A reversal entry will be added to the ledger.'}
+                                    ? 'This will permanently remove the invoice and restore stock. This action cannot be undone.'
+                                    : showConfirm === 'partial'
+                                        ? `You are returning ${selectedItems.length} selected item(s). The invoice totals will be adjusted.`
+                                        : 'This will mark the entire invoice as returned and restore all stock.'}
                             </p>
-                        </div>
-
-                        <div className="flex gap-3 pt-2">
-                            <button
-                                onClick={() => setShowConfirm(null)}
-                                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all"
-                                disabled={isDeleting || isReturning}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={showConfirm === 'delete' ? handleDelete : handleReturn}
-                                className={cn(
-                                    "flex-1 py-3 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2",
-                                    showConfirm === 'delete'
-                                        ? "bg-red-500 hover:bg-red-600 shadow-red-500/20"
-                                        : "bg-orange-500 hover:bg-orange-600 shadow-orange-500/20"
-                                )}
-                                disabled={isDeleting || isReturning}
-                            >
-                                {(isDeleting || isReturning) ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    showConfirm === 'delete' ? 'Delete Bill' : 'Confirm Return'
-                                )}
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => { setShowConfirm(null); setSelectedItems([]); }}
+                                    className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all text-sm uppercase tracking-wide"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={showConfirm === 'delete' ? handleDelete : handleReturn}
+                                    disabled={isDeleting || isReturning}
+                                    className={`flex-1 py-3 text-white font-bold rounded-xl transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 ${showConfirm === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'
+                                        }`}
+                                >
+                                    {(isDeleting || isReturning) ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        showConfirm === 'delete' ? 'Delete Bill' : showConfirm === 'partial' ? 'Return Selected' : 'Confirm Return'
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>,
         document.body
     );
