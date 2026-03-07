@@ -203,7 +203,9 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
 
     const handlePrint = () => window.print();
 
-    return (
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:bg-white print:p-0 print:static print:block" id="invoice-overlay">
             <style dangerouslySetInnerHTML={{
                 __html: `
@@ -265,7 +267,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                             <ReceiptText className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.2</span>
+                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.3</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{type === 'OBS' ? 'Observation' : 'OPD Consultation'}</span>
                         </div>
                     </div>
