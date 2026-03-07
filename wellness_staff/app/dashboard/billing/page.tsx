@@ -263,7 +263,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                             <ReceiptText className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.4</span>
+                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.4.1</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{type === 'OBS' ? 'Observation' : 'OPD Consultation'}</span>
                         </div>
                     </div>
