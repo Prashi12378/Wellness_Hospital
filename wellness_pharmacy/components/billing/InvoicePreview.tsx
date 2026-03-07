@@ -39,7 +39,13 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
     const [isReturning, setIsReturning] = useState(false);
     const [showConfirm, setShowConfirm] = useState<'delete' | 'return' | 'partial' | null>(null);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const router = useRouter();
+
+    const showToast = (message: string, type: 'success' | 'error') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -54,27 +60,29 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
 
     const handleDelete = async () => {
         setIsDeleting(true);
+        let result;
         try {
-            const result = await deleteInvoice(invoice.id);
+            result = await deleteInvoice(invoice.id);
             if (result.success) {
-                alert('Invoice deleted successfully');
-                onClose();
+                showToast('Invoice deleted successfully', 'success');
                 router.refresh();
+                setShowConfirm(null);
+                setTimeout(() => onClose(), 1500);
             } else {
-                alert(result.error);
+                showToast(result.error || 'Failed to delete invoice', 'error');
             }
         } catch (error) {
-            alert('Failed to delete invoice');
+            showToast('Failed to delete invoice', 'error');
         } finally {
             setIsDeleting(false);
-            setShowConfirm(null);
+            if (!result?.success) setShowConfirm(null);
         }
     };
 
     const handleReturn = async () => {
         setIsReturning(true);
+        let result;
         try {
-            let result;
             if (showConfirm === 'partial') {
                 result = await returnInvoiceItems(invoice.id, selectedItems);
             } else {
@@ -82,18 +90,22 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
             }
 
             if (result.success) {
-                alert(showConfirm === 'partial' ? 'Selected items returned' : 'Invoice returned successfully');
-                onClose();
+                showToast(showConfirm === 'partial' ? 'Selected items returned' : 'Invoice returned successfully', 'success');
                 router.refresh();
+                setShowConfirm(null);
+                setSelectedItems([]);
+                setTimeout(() => onClose(), 1500);
             } else {
-                alert(result.error);
+                showToast(result.error || 'Failed to return invoice', 'error');
             }
         } catch (error) {
-            alert('Failed to return invoice');
+            showToast('Failed to return invoice', 'error');
         } finally {
             setIsReturning(false);
-            setShowConfirm(null);
-            setSelectedItems([]);
+            if (!result?.success) {
+                setShowConfirm(null);
+                setSelectedItems([]);
+            }
         }
     };
 
@@ -465,6 +477,21 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                                 </button>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* Toast Notification */}
+                {toast && (
+                    <div className={cn(
+                        "absolute top-4 left-1/2 -translate-x-1/2 z-[2000] px-6 py-3 rounded-xl shadow-2xl animate-in slide-in-from-top-4 fade-in duration-300 flex items-center gap-2 font-bold text-sm",
+                        toast.type === 'success' ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                    )}>
+                        {toast.type === 'success' ? (
+                            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                            <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                        )}
+                        {toast.message}
                     </div>
                 )}
             </div>
