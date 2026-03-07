@@ -194,37 +194,43 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
     const handlePrint = () => window.print();
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:bg-white print:p-0 print:block" id="invoice-overlay">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:bg-white print:p-0 print:static" id="invoice-overlay">
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @media print {
-                    @page { 
-                        size: auto;
-                        margin: 0 !important; 
+                    @page {
+                        size: A4;
+                        margin: 10mm !important;
                     }
                     html, body {
                         margin: 0 !important;
                         padding: 0 !important;
-                        height: 100%;
+                        height: auto !important;
+                        background: white !important;
                         -webkit-print-color-adjust: exact;
                     }
                     body * { visibility: hidden; }
                     #print-invoice, #print-invoice * { visibility: visible; }
                     #print-invoice {
-                        position: absolute;
+                        position: relative;
                         left: 0;
                         top: 0;
-                        width: 210mm; /* A4 Width */
-                        min-height: 297mm; /* A4 Height */
-                        padding: 20mm !important;
+                        width: 100%;
+                        padding: 0 !important;
                         margin: 0 !important;
                         box-sizing: border-box;
+                        background: white !important;
+                        visibility: visible !important;
+                    }
+                    #invoice-overlay {
+                        position: static !important;
+                        padding: 0 !important;
                         background: white !important;
                     }
                 }
             ` }} />
 
-            <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none transition-all duration-500">
+            <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none transition-all duration-500 print:w-full print:max-w-none">
                 {/* Top bar (Hidden in print) */}
                 <div className="bg-slate-900 text-white px-8 py-5 flex items-center justify-between print:hidden">
                     <div className="flex items-center gap-3">
@@ -232,7 +238,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                             <ReceiptText className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                            <span className="font-black tracking-tight block leading-none">Invoice Generated</span>
+                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.1</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{type === 'OBS' ? 'Observation' : 'OPD Consultation'}</span>
                         </div>
                     </div>
@@ -247,7 +253,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                 </div>
 
                 {/* Bill body */}
-                <div className="p-10 space-y-10 bg-white relative overflow-hidden" id="print-invoice">
+                <div className="p-10 space-y-10 bg-white relative overflow-hidden print:p-0" id="print-invoice">
                     {/* Watermark Logo */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.05] select-none print:opacity-[0.07] z-0">
                         <img src="/logo.png" alt="Watermark" className="w-[500px] h-[500px] object-contain" />
