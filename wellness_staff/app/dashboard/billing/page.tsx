@@ -194,43 +194,56 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
     const handlePrint = () => window.print();
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:bg-white print:p-0 print:static" id="invoice-overlay">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:bg-white print:p-0 print:static print:block" id="invoice-overlay">
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @media print {
-                    @page {
+                    @page { 
                         size: A4;
-                        margin: 10mm !important;
+                        margin: 0 !important; 
                     }
                     html, body {
                         margin: 0 !important;
                         padding: 0 !important;
                         height: auto !important;
                         background: white !important;
-                        -webkit-print-color-adjust: exact;
                     }
-                    body * { visibility: hidden; }
-                    #print-invoice, #print-invoice * { visibility: visible; }
-                    #print-invoice {
-                        position: relative;
-                        left: 0;
-                        top: 0;
-                        width: 100%;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        box-sizing: border-box;
-                        background: white !important;
-                        visibility: visible !important;
+                    /* Hide everything else */
+                    body > *:not(#invoice-overlay) {
+                        display: none !important;
                     }
                     #invoice-overlay {
                         position: static !important;
+                        margin: 0 !important;
                         padding: 0 !important;
                         background: white !important;
+                        display: block !important;
+                        width: 100% !important;
+                        height: auto !important;
+                    }
+                    #invoice-overlay > div:not(#print-invoice-container) {
+                        display: none !important;
+                    }
+                    #print-invoice-container {
+                        width: 100% !important;
+                        max-width: none !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        border-radius: 0 !important;
+                        box-shadow: none !important;
+                        display: block !important;
+                    }
+                    #print-invoice {
+                        padding: 20mm !important;
+                        width: 100% !important;
+                        min-height: 297mm;
+                        background: white !important;
+                        display: block !important;
                     }
                 }
             ` }} />
 
-            <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none transition-all duration-500 print:w-full print:max-w-none">
+            <div id="print-invoice-container" className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none transition-all duration-500 print:w-full print:max-w-none">
                 {/* Top bar (Hidden in print) */}
                 <div className="bg-slate-900 text-white px-8 py-5 flex items-center justify-between print:hidden">
                     <div className="flex items-center gap-3">
