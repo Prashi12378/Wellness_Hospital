@@ -334,3 +334,140 @@ export async function searchAdmittedPatients(query: string) {
         return { error: 'Search failed' };
     }
 }
+export async function deleteInvoice(invoiceId: string) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { error: 'Authentication required' };
+        }
+
+        const invoice = await db.invoice.findUnique({
+            where: { id: invoiceId },
+            include: { items: true }
+        });
+
+        if (!invoice) return { error: 'Invoice not found' };
+        if (invoice.status === 'RETURNED') return { error: 'Already returned, cannot delete' };
+
+        await db.$transaction(async (tx) => {
+            // 1. Restore Stock
+            for (const item of invoice.items) {
+                await tx.pharmacyInventory.update({
+                    where: { id: item.medicineId },
+                    data: {
+                        stock: {
+                            increment: item.qty
+                        }
+                    }
+                });
+            }
+
+            // 2. Remove Financial Records
+            if (invoice.paymentMethod === 'CREDIT' && invoice.admissionId) {
+                await tx.hospitalCharge.deleteMany({
+                    where: {
+                        admissionId: invoice.admissionId,
+                        description: `Pharmacy Bill #${invoice.billNo}`
+                    }
+                });
+            } else {
+                await tx.ledger.deleteMany({
+                    where: {
+                        description: {
+                            contains: `Bill #${invoice.billNo}`
+                        }
+                    }
+                });
+            }
+
+            // 3. Delete Invoice (Cascade will handle items if configured, but let's be explicit if not sure)
+            await tx.invoice.delete({
+                where: { id: invoiceId }
+            });
+        });
+
+        revalidatePath('/dashboard/billing');
+        revalidatePath('/dashboard/history');
+        revalidatePath('/dashboard/inventory');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Delete invoice error:', error);
+        return { error: 'Failed to delete: ' + (error.message || 'Unknown error') };
+    }
+}
+
+export async function returnInvoice(invoiceId: string) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { error: 'Authentication required' };
+        }
+
+        const invoice = await db.invoice.findUnique({
+            where: { id: invoiceId },
+            include: { items: true }
+        });
+
+        if (!invoice) return { error: 'Invoice not found' };
+        if (invoice.status === 'RETURNED') return { error: 'Already returned' };
+
+        await db.$transaction(async (tx) => {
+            // 1. Restore Stock
+            for (const item of invoice.items) {
+                await tx.pharmacyInventory.update({
+                    where: { id: item.medicineId },
+                    data: {
+                        stock: {
+                            increment: item.qty
+                        }
+                    }
+                });
+            }
+
+            // 2. Update Invoice Status
+            await tx.invoice.update({
+                where: { id: invoiceId },
+                data: { status: 'RETURNED' }
+            });
+
+            // 3. Add reversal ledger entry
+            if (invoice.paymentMethod !== 'CREDIT') {
+                await tx.ledger.create({
+                    data: {
+                        transactionType: 'expense', // Or treat as negative income
+                        category: 'pharmacy',
+                        description: `Return - Bill #${invoice.billNo} (${invoice.patientName})`,
+                        amount: invoice.grandTotal,
+                        paymentMethod: invoice.paymentMethod,
+                        transactionDate: new Date(),
+                        recordedBy: (session.user as any).id
+                    }
+                });
+            } else if (invoice.admissionId) {
+                // For IPD, we should probably mark the charge as reversed or delete it
+                // To keep audit trail in IPD charges, we add a negative charge?
+                // Or just delete the original charge to avoid confusion on settlement.
+                // Let's go with adding a reversal charge.
+                await tx.hospitalCharge.create({
+                    data: {
+                        admissionId: invoice.admissionId,
+                        description: `Return - Pharmacy Bill #${invoice.billNo}`,
+                        amount: -invoice.grandTotal,
+                        type: 'medicine',
+                        date: new Date(),
+                    }
+                });
+            }
+        });
+
+        revalidatePath('/dashboard/billing');
+        revalidatePath('/dashboard/history');
+        revalidatePath('/dashboard/inventory');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Return invoice error:', error);
+        return { error: 'Failed to return: ' + (error.message || 'Unknown error') };
+    }
+}

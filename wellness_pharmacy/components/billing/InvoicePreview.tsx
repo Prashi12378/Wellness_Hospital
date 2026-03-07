@@ -4,10 +4,14 @@ import React, { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Printer } from 'lucide-react';
+import { Printer, Trash2, RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
+import { deleteInvoice, returnInvoice } from '@/app/actions/billing';
+import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface InvoicePreviewProps {
     invoice: {
+        id: string; // Added id
         billNo: string;
         date: Date | string;
         patientName: string;
@@ -21,6 +25,7 @@ interface InvoicePreviewProps {
         discountRate?: number;
         discountAmount?: number;
         paymentMethod: string;
+        status?: string; // Added status
         items: any[];
     };
     onClose: () => void;
@@ -29,6 +34,10 @@ interface InvoicePreviewProps {
 export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
     const printRef = useRef<HTMLDivElement>(null);
     const [mounted, setMounted] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isReturning, setIsReturning] = useState(false);
+    const [showConfirm, setShowConfirm] = useState<'delete' | 'return' | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
@@ -127,6 +136,34 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
         }
     };
 
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        const result = await deleteInvoice(invoice.id);
+        if (result.success) {
+            alert('Invoice deleted successfully');
+            onClose();
+            router.refresh();
+        } else {
+            alert(result.error || 'Failed to delete');
+        }
+        setIsDeleting(false);
+        setShowConfirm(null);
+    };
+
+    const handleReturn = async () => {
+        setIsReturning(true);
+        const result = await returnInvoice(invoice.id);
+        if (result.success) {
+            alert('Invoice marked as returned and stock restored');
+            onClose();
+            router.refresh();
+        } else {
+            alert(result.error || 'Failed to return');
+        }
+        setIsReturning(false);
+        setShowConfirm(null);
+    };
+
     const taxGroups = invoice.items.reduce((acc: any, item: any) => {
         const rate = Number(item.gstRate);
         const amount = Number(item.amount);
@@ -144,7 +181,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
         return acc;
     }, {});
 
-    const modalContent = (
+    return createPortal(
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 invoice-modal-overlay">
             <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col invoice-modal-container relative">
                 {/* Modal Header */}
@@ -154,6 +191,24 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pharmacy Billing System</p>
                     </div>
                     <div className="flex gap-2">
+                        {invoice.status !== 'RETURNED' && (
+                            <>
+                                <button
+                                    onClick={() => setShowConfirm('return')}
+                                    className="bg-orange-500 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-orange-600 transition-all font-bold text-sm shadow-lg shadow-orange-500/10"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Return Items
+                                </button>
+                                <button
+                                    onClick={() => setShowConfirm('delete')}
+                                    className="bg-red-500 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-red-600 transition-all font-bold text-sm shadow-lg shadow-red-500/10"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Bill
+                                </button>
+                            </>
+                        )}
                         <button
                             onClick={handlePrint}
                             className="bg-primary text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all font-bold text-sm"
@@ -170,9 +225,17 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                     </div>
                 </div>
 
+                {/* Status Badge (Overlay) */}
+                {invoice.status === 'RETURNED' && (
+                    <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[100] rotate-[-12deg] pointer-events-none">
+                        <div className="border-[6px] border-red-500/80 px-8 py-2 rounded-xl text-red-500/80 font-black text-4xl uppercase tracking-widest backdrop-blur-[2px]">
+                            Returned
+                        </div>
+                    </div>
+                )}
+
                 {/* Print Area — for screen preview only */}
                 <div ref={printRef} className="flex-1 overflow-auto p-8 bg-white" id="print-area">
-
                     {/* Invoice Paper Design for A5 */}
                     <div className="invoice-container relative max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm bg-white text-xs">
                         {/* Watermark */}
@@ -187,7 +250,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                     <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-contain" />
                                 </div>
                                 <div>
-                                    <h1 className="text-lg font-black uppercase tracking-tight text-slate-900 leading-none mb-1">Wellness Hospital &amp; Pharmacy</h1>
+                                    <h1 className="text-lg font-black uppercase tracking-tight text-slate-900 leading-none mb-1">Wellness Hospital & Pharmacy</h1>
                                     <p className="text-[9px] leading-tight max-w-[260px] text-slate-600">
                                         Beside friend function hall, Gowribidnur main road, Palanjoghalli,<br />
                                         Doddaballapur - 561203, Karnataka, India<br />
@@ -243,7 +306,6 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                         <td className="py-1 px-1">{item.hsnCode}</td>
                                         <td className="py-1 px-1 text-center">{item.qty}</td>
                                         <td className="py-1 px-1 uppercase text-right">{item.batchNo}</td>
-                                        {/* MRP col: show base price (GST-exclusive) since MRP on strip includes GST */}
                                         <td className="py-1 px-1 text-right">
                                             {(Number(item.mrp) / (1 + Number(item.gstRate) / 100)).toFixed(2)}
                                         </td>
@@ -263,7 +325,7 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                                 <div className="w-1/2">
                                     <div className="mt-2 text-[9px] leading-tight opacity-70">
                                         <p>1. Major Credit/Debit/Digital Cards accepted.</p>
-                                        <p>2. E &amp; O E Goods Once Sold Cannot Be Exchanged.</p>
+                                        <p>2. E & O E Goods Once Sold Cannot Be Exchanged.</p>
                                     </div>
                                 </div>
 
@@ -311,8 +373,58 @@ export default function InvoicePreview({ invoice, onClose }: InvoicePreviewProps
                     </div>
                 </div>
             </div>
-        </div>
-    );
 
-    return createPortal(modalContent, document.body);
+            {/* Confirmation Dialogs */}
+            {showConfirm && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100000] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6">
+                        <div className={cn(
+                            "w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4",
+                            showConfirm === 'delete' ? "bg-red-50 text-red-500" : "bg-orange-50 text-orange-500"
+                        )}>
+                            <AlertTriangle className="w-8 h-8" />
+                        </div>
+
+                        <div className="text-center space-y-2">
+                            <h4 className="text-xl font-bold text-slate-900">
+                                {showConfirm === 'delete' ? 'Delete this Invoice?' : 'Process Item Return?'}
+                            </h4>
+                            <p className="text-slate-500 text-sm leading-relaxed">
+                                {showConfirm === 'delete'
+                                    ? 'This will completely remove the bill from records and restore item stock. This action cannot be undone.'
+                                    : 'This will mark the bill as RETURNED and restore items to stock. A reversal entry will be added to the ledger.'}
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setShowConfirm(null)}
+                                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all"
+                                disabled={isDeleting || isReturning}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={showConfirm === 'delete' ? handleDelete : handleReturn}
+                                className={cn(
+                                    "flex-1 py-3 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2",
+                                    showConfirm === 'delete'
+                                        ? "bg-red-500 hover:bg-red-600 shadow-red-500/20"
+                                        : "bg-orange-500 hover:bg-orange-600 shadow-orange-500/20"
+                                )}
+                                disabled={isDeleting || isReturning}
+                            >
+                                {(isDeleting || isReturning) ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    showConfirm === 'delete' ? 'Delete Bill' : 'Confirm Return'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>,
+        document.body
+    );
 }
