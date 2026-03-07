@@ -191,6 +191,15 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
     const billNo = invoice?.billNo ?? '';
     const date = invoice?.date ? format(new Date(invoice.date), 'dd MMM yyyy, hh:mm a') : format(new Date(), 'dd MMM yyyy, hh:mm a');
 
+    // Scroll lock
+    useEffect(() => {
+        const originalStyle = window.getComputedStyle(document.body).overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = originalStyle;
+        };
+    }, []);
+
     const handlePrint = () => window.print();
 
     return (
@@ -200,52 +209,49 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                 @media print {
                     @page { 
                         size: A4;
-                        margin: 0mm !important; 
+                        margin: 0 !important; 
                     }
                     html, body {
                         margin: 0 !important;
                         padding: 0 !important;
                         height: auto !important;
+                        visibility: hidden !important;
                         background: white !important;
-                        -webkit-print-color-adjust: exact;
                     }
-                    /* Hide entire app UI */
-                    body > * {
-                        display: none !important;
-                    }
-                    /* Show only the invoice overlay and its contents */
-                    body > #invoice-overlay {
+                    #invoice-overlay {
+                        visibility: visible !important;
                         display: block !important;
                         position: absolute !important;
-                        top: 0 !important;
                         left: 0 !important;
+                        top: 0 !important;
                         width: 100% !important;
                         height: auto !important;
                         background: white !important;
                         margin: 0 !important;
                         padding: 0 !important;
+                        z-index: 9999 !important;
                     }
                     #invoice-overlay * {
-                        visibility: hidden !important;
-                    }
-                    #print-invoice-container, #print-invoice-container * {
                         visibility: visible !important;
-                        display: block !important;
+                    }
+                    #print-invoice-container {
+                        width: 100% !important;
+                        max-width: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        box-shadow: none !important;
+                        border-radius: 0 !important;
                     }
                     #print-invoice {
-                        visibility: visible !important;
-                        display: block !important;
-                        position: absolute !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                        width: 100% !important;
                         padding: 20mm !important;
+                        width: 100% !important;
                         box-sizing: border-box !important;
                         background: white !important;
+                        min-height: 297mm;
                     }
-                    /* Hide the top bar and close buttons in print */
                     .print\\:hidden {
                         display: none !important;
+                        visibility: hidden !important;
                     }
                 }
             ` }} />
@@ -258,7 +264,7 @@ function InvoiceModal({ invoice, patientName, doctorName, paymentMethod, type, o
                             <ReceiptText className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.1</span>
+                            <span className="font-black tracking-tight block leading-none">Invoice Generated v1.2</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{type === 'OBS' ? 'Observation' : 'OPD Consultation'}</span>
                         </div>
                     </div>
