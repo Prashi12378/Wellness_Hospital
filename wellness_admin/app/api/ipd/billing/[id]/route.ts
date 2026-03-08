@@ -15,7 +15,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
         const admissionId = id;
         const body = await req.json();
-        const { discountAmount = 0, paymentMethod = "CASH" } = body;
+        const { discountAmount = 0, paymentMethod = "CASH", date } = body;
 
         const result = await prisma.$transaction(async (tx) => {
             // 1. Get admission and charges
@@ -48,6 +48,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     paymentMethod,
                     status: "PAID",
                     admissionId: admissionId,
+                    createdAt: date ? new Date(date) : new Date(),
                     items: {
                         create: admission.HospitalCharge.map(charge => ({
                             name: charge.description,

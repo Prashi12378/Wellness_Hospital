@@ -150,28 +150,24 @@ export default function LedgerPage() {
                     <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm relative">
                         <Calendar className="w-4 h-4 text-slate-400" />
                         <div className="flex items-center gap-2 text-sm">
-                            <div className="flex items-center relative group">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-slate-400 font-medium">Start:</span>
                                 <input
                                     type="date"
                                     value={dateRange.start}
                                     onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                    className="outline-none text-slate-700 font-medium bg-transparent cursor-pointer w-[120px]"
+                                    className="outline-none text-slate-700 font-medium bg-transparent cursor-pointer w-[125px]"
                                 />
-                                {!dateRange.start && (
-                                    <span className="absolute inset-0 bg-white pointer-events-none flex items-center text-slate-400 font-medium">Start Date</span>
-                                )}
                             </div>
                             <span className="text-slate-300">to</span>
-                            <div className="flex items-center relative">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-slate-400 font-medium">End:</span>
                                 <input
                                     type="date"
                                     value={dateRange.end}
                                     onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                                    className="outline-none text-slate-700 font-medium bg-transparent cursor-pointer w-[120px]"
+                                    className="outline-none text-slate-700 font-medium bg-transparent cursor-pointer w-[125px]"
                                 />
-                                {!dateRange.end && (
-                                    <span className="absolute inset-0 bg-white pointer-events-none flex items-center text-slate-400 font-medium">End Date</span>
-                                )}
                             </div>
                         </div>
                         {(dateRange.start || dateRange.end !== getLocalDateString(new Date())) && (

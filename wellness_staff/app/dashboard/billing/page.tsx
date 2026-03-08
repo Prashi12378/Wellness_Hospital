@@ -394,6 +394,7 @@ function OPDBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSuccess: (
     const [doctor, setDoctor] = useState('');
     const [items, setItems] = useState<LineItem[]>([newItem()]);
     const [payment, setPayment] = useState('CASH');
+    const [dateOut, setDateOut] = useState(new Date().toISOString().split('T')[0]);
     const [loading, setLoading] = useState(false);
     const [invoice, setInvoice] = useState<any>(null);
 
@@ -423,6 +424,7 @@ function OPDBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSuccess: (
             totalGst: 0,
             grandTotal: total,
             paymentMethod: payment,
+            date: dateOut,
             items: items.map(i => ({ name: i.name, qty: i.qty, mrp: i.amount, gstRate: 0, amount: i.amount * i.qty }))
         });
 
@@ -447,26 +449,41 @@ function OPDBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSuccess: (
                     <PatientSearch onSelect={setPatient} />
                 </div>
 
-                {/* Doctor */}
+
                 <div className={cn("bg-white p-6 rounded-3xl shadow-sm border border-slate-100 transition-all", !patient && 'opacity-50 pointer-events-none')}>
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Stethoscope className="w-4 h-4" /> Step 2 · Select Doctor (Optional)
+                        <Stethoscope className="w-4 h-4" /> Step 2 · Details
                     </h3>
-                    <select
-                        value={doctor}
-                        onChange={e => handleDoctorChange(e.target.value)}
-                        className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
-                    >
-                        <option value="">—  No doctor / Walk-in  —</option>
-                        {doctors.map(d => (
-                            <option key={d.id} value={d.id}>
-                                Dr. {d.firstName} {d.lastName}
-                                {d.specialization ? ` (${d.specialization})` : ''}
-                                {d.consultationFee ? ` · ₹${d.consultationFee}` : ''}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Doctor (Optional)</label>
+                            <select
+                                value={doctor}
+                                onChange={e => handleDoctorChange(e.target.value)}
+                                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                            >
+                                <option value="">—  No doctor / Walk-in  —</option>
+                                {doctors.map(d => (
+                                    <option key={d.id} value={d.id}>
+                                        Dr. {d.firstName} {d.lastName}
+                                        {d.specialization ? ` (${d.specialization})` : ''}
+                                        {d.consultationFee ? ` · ₹${d.consultationFee}` : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bill Date</label>
+                            <input
+                                type="date"
+                                value={dateOut}
+                                onChange={e => setDateOut(e.target.value)}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+                    </div>
                 </div>
+
 
                 {/* Line Items */}
                 <div className={cn("bg-white p-6 rounded-3xl shadow-sm border border-slate-100 transition-all", !patient && 'opacity-50 pointer-events-none')}>
@@ -539,6 +556,7 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
     const [doctor, setDoctor] = useState('');
     const [ward, setWard] = useState('');
     const [hours, setHours] = useState<number>(6);
+    const [dateOut, setDateOut] = useState(new Date().toISOString().split('T')[0]);
     const [items, setItems] = useState<LineItem[]>([{ id: crypto.randomUUID(), name: 'Observation / Bed Charges', qty: 1, amount: 0 }]);
     const [payment, setPayment] = useState('CASH');
     const [loading, setLoading] = useState(false);
@@ -563,6 +581,7 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
             totalGst: 0,
             grandTotal: total,
             paymentMethod: payment,
+            date: dateOut,
             items: items.map(i => ({ name: i.name, qty: i.qty, mrp: i.amount, gstRate: 0, amount: i.amount * i.qty }))
         });
 
@@ -614,6 +633,7 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
                                 />
                             </div>
                         </div>
+
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attending Doctor</label>
                             <select
@@ -627,6 +647,16 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
                                 ))}
                             </select>
                         </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bill Date</label>
+                            <input
+                                type="date"
+                                value={dateOut}
+                                onChange={e => setDateOut(e.target.value)}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+
                     </div>
                 </div>
 

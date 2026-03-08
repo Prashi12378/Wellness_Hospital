@@ -11,6 +11,7 @@ export async function searchMedicines(query: string) {
     try {
         const medicines = await db.pharmacyInventory.findMany({
             where: {
+                isDeleted: false,
                 OR: [
                     { name: { contains: query, mode: 'insensitive' } },
                     { batchNo: { contains: query, mode: 'insensitive' } }
@@ -147,7 +148,7 @@ export async function createInvoice(data: {
                     doctorName: data.doctorName,
                     insuranceNo: data.insuranceNo,
                     admissionId: data.admissionId,
-                    date: data.date ? new Date(data.date) : new Date(),
+                    createdAt: data.date ? new Date(data.date) : new Date(),
                     subTotal: subTotal,
                     totalGst: totalGst,
                     grandTotal: grandTotal,

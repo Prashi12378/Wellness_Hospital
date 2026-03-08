@@ -16,6 +16,7 @@ export default function AllBillsPage() {
     const [billingModalOpen, setBillingModalOpen] = useState(false);
     const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
     const [discountAmount, setDiscountAmount] = useState(0);
+    const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0]);
     const [processing, setProcessing] = useState(false);
 
     useLockBodyScroll(billingModalOpen);
@@ -49,7 +50,8 @@ export default function AllBillsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     discountAmount,
-                    paymentMethod: 'CASH'
+                    paymentMethod: 'CASH',
+                    date: billDate
                 })
             });
 

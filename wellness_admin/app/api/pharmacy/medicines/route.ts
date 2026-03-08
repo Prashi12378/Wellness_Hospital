@@ -12,6 +12,7 @@ export async function GET(req: Request) {
         }
 
         const medicines = await prisma.pharmacyInventory.findMany({
+            where: { isDeleted: false },
             orderBy: {
                 name: 'asc'
             }
@@ -100,8 +101,9 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: "Medicine ID is required" }, { status: 400 });
         }
 
-        await prisma.pharmacyInventory.delete({
-            where: { id }
+        await prisma.pharmacyInventory.update({
+            where: { id },
+            data: { isDeleted: true }
         });
 
         return NextResponse.json({ success: true });

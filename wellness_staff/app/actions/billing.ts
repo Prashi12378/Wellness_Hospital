@@ -120,6 +120,7 @@ interface OPDInvoiceData {
         gstRate: number;
         amount: number;
     }[];
+    date?: string;
 }
 
 export async function generateOPDInvoice(data: OPDInvoiceData) {
@@ -143,6 +144,7 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
                 grandTotal: data.grandTotal,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
+                createdAt: data.date ? new Date(data.date) : new Date(),
                 status: 'PAID',
                 items: {
                     create: data.items.map(item => ({
@@ -217,6 +219,7 @@ interface ObservationInvoiceData {
         gstRate: number;
         amount: number;
     }[];
+    date?: string;
 }
 
 export async function generateObservationInvoice(data: ObservationInvoiceData) {
@@ -239,6 +242,7 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
                 grandTotal: data.grandTotal,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
+                createdAt: data.date ? new Date(data.date) : new Date(),
                 status: 'PAID',
                 items: {
                     create: data.items.map(item => ({

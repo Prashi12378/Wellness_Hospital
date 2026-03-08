@@ -7,6 +7,7 @@ import { createNotification } from './notifications';
 export async function getInventory() {
     try {
         const medicines = await db.pharmacyInventory.findMany({
+            where: { isDeleted: false },
             orderBy: {
                 name: 'asc',
             },
@@ -61,8 +62,9 @@ export async function addMedicine(formData: any) {
 
 export async function deleteMedicine(id: string) {
     try {
-        await db.pharmacyInventory.delete({
+        await db.pharmacyInventory.update({
             where: { id },
+            data: { isDeleted: true },
         });
         revalidatePath('/dashboard/inventory');
         return { success: true };
