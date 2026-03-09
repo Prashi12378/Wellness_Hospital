@@ -144,7 +144,7 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
                 grandTotal: data.grandTotal,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
-                createdAt: data.date ? new Date(data.date) : new Date(),
+                date: data.date ? new Date(data.date) : new Date(),
                 status: 'PAID',
                 items: {
                     create: data.items.map(item => ({
@@ -242,7 +242,7 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
                 grandTotal: data.grandTotal,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
-                createdAt: data.date ? new Date(data.date) : new Date(),
+                date: data.date ? new Date(data.date) : new Date(),
                 status: 'PAID',
                 items: {
                     create: data.items.map(item => ({

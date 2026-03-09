@@ -148,7 +148,7 @@ export async function createInvoice(data: {
                     doctorName: data.doctorName,
                     insuranceNo: data.insuranceNo,
                     admissionId: data.admissionId,
-                    createdAt: data.date ? new Date(data.date) : new Date(),
+                    date: data.date ? new Date(data.date) : new Date(),
                     subTotal: subTotal,
                     totalGst: totalGst,
                     grandTotal: grandTotal,

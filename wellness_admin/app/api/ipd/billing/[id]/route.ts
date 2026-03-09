@@ -48,7 +48,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     paymentMethod,
                     status: "PAID",
                     admissionId: admissionId,
-                    createdAt: date ? new Date(date) : new Date(),
+                    date: date ? new Date(date) : new Date(),
                     items: {
                         create: admission.HospitalCharge.map(charge => ({
                             name: charge.description,
