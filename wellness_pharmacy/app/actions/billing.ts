@@ -136,81 +136,102 @@ export async function createInvoice(data: {
 
         console.log('Final Totals:', { subTotal, totalGst, discountAmount, grandTotal });
 
-        // Start transaction
-        const invoice = await db.$transaction(async (tx) => {
-            console.log('Creating invoice record with billNo:', nextBillNo);
-            // 1. Create Invoice
-            const newInvoice = await tx.invoice.create({
-                data: {
-                    billNo: nextBillNo,
-                    patientName: data.patientName,
-                    patientPhone: data.patientPhone,
-                    doctorName: data.doctorName,
-                    insuranceNo: data.insuranceNo,
-                    admissionId: data.admissionId,
-                    date: data.date ? new Date(data.date) : new Date(),
-                    subTotal: subTotal,
-                    totalGst: totalGst,
-                    grandTotal: grandTotal,
-                    discountRate: Number(data.discountRate || 0),
-                    discountAmount: discountAmount,
-                    paymentMethod: data.paymentMethod,
-                    status: data.paymentMethod === 'CREDIT' ? 'UNPAID' : 'PAID',
-                    items: {
-                        create: invoiceItems
-                    }
-                } as any,
-                include: {
-                    items: true
-                }
-            }) as any;
+        // Start transaction with retry loop for unique constraints
+        let attempts = 0;
+        let invoice;
 
-            console.log('Invoice created, deducting stock...');
-
-            // 2. Deduct Stock
-            for (const item of data.items) {
-                await tx.pharmacyInventory.update({
-                    where: { id: item.medicineId },
-                    data: {
-                        stock: {
-                            decrement: Number(item.qty)
+        while (attempts < 10) {
+            try {
+                invoice = await db.$transaction(async (tx) => {
+                    console.log(`Attempt ${attempts + 1}: Creating invoice record with billNo:`, nextBillNo);
+                    // 1. Create Invoice
+                    const newInvoice = await tx.invoice.create({
+                        data: {
+                            billNo: nextBillNo,
+                            patientName: data.patientName,
+                            patientPhone: data.patientPhone,
+                            doctorName: data.doctorName,
+                            insuranceNo: data.insuranceNo,
+                            admissionId: data.admissionId,
+                            date: data.date ? new Date(data.date) : new Date(),
+                            subTotal: subTotal,
+                            totalGst: totalGst,
+                            grandTotal: grandTotal,
+                            discountRate: Number(data.discountRate || 0),
+                            discountAmount: discountAmount,
+                            paymentMethod: data.paymentMethod,
+                            status: data.paymentMethod === 'CREDIT' ? 'UNPAID' : 'PAID',
+                            items: {
+                                create: invoiceItems
+                            }
+                        } as any,
+                        include: {
+                            items: true
                         }
+                    }) as any;
+
+                    console.log('Invoice created, deducting stock...');
+
+                    // 2. Deduct Stock
+                    for (const item of data.items) {
+                        await tx.pharmacyInventory.update({
+                            where: { id: item.medicineId },
+                            data: {
+                                stock: {
+                                    decrement: Number(item.qty)
+                                }
+                            }
+                        });
                     }
+
+                    console.log('Stock deduction complete.');
+
+                    // 3. Handle Payment Logic
+                    if (data.paymentMethod === 'CREDIT' && data.admissionId) {
+                        console.log('Creating hospital charge for IPD Credit...');
+                        await tx.hospitalCharge.create({
+                            data: {
+                                admissionId: data.admissionId,
+                                description: `Pharmacy Bill #${nextBillNo}`,
+                                amount: grandTotal,
+                                type: 'medicine',
+                                date: new Date(),
+                            }
+                        });
+                        // No Ledger entry for Credit bills (revenue recognized at discharge/settlement)
+                    } else {
+                        console.log('Creating ledger entry for pharmacy sale...');
+                        await tx.ledger.create({
+                            data: {
+                                transactionType: 'income',
+                                category: 'pharmacy',
+                                description: `Pharmacy Sale - Bill #${nextBillNo} (${data.patientName})`,
+                                amount: grandTotal,
+                                paymentMethod: data.paymentMethod,
+                                transactionDate: new Date(),
+                                recordedBy: (session.user as any).id
+                            }
+                        });
+                    }
+
+                    return newInvoice;
                 });
+
+                // If transaction succeeds, break out of retry loop
+                break;
+
+            } catch (error: any) {
+                if (error.code === 'P2002' && error.meta?.target?.includes('billNo')) {
+                    console.warn(`BillNo ${nextBillNo} already exists (collision). Incrementing and retrying...`);
+                    const lastNo = parseInt(nextBillNo.split('-')[1]);
+                    nextBillNo = `S-${lastNo + 1}`;
+                    attempts++;
+                    if (attempts >= 10) throw new Error("Could not find a unique Bill No after multiple attempts.");
+                } else {
+                    throw error;
+                }
             }
-
-            console.log('Stock deduction complete.');
-
-            // 3. Handle Payment Logic
-            if (data.paymentMethod === 'CREDIT' && data.admissionId) {
-                console.log('Creating hospital charge for IPD Credit...');
-                await tx.hospitalCharge.create({
-                    data: {
-                        admissionId: data.admissionId,
-                        description: `Pharmacy Bill #${nextBillNo}`,
-                        amount: grandTotal,
-                        type: 'medicine',
-                        date: new Date(),
-                    }
-                });
-                // No Ledger entry for Credit bills (revenue recognized at discharge/settlement)
-            } else {
-                console.log('Creating ledger entry for pharmacy sale...');
-                await tx.ledger.create({
-                    data: {
-                        transactionType: 'income',
-                        category: 'pharmacy',
-                        description: `Pharmacy Sale - Bill #${nextBillNo} (${data.patientName})`,
-                        amount: grandTotal,
-                        paymentMethod: data.paymentMethod,
-                        transactionDate: new Date(),
-                        recordedBy: (session.user as any).id
-                    }
-                });
-            }
-
-            return newInvoice;
-        });
+        }
 
         revalidatePath('/dashboard/billing');
         revalidatePath('/dashboard/inventory');
