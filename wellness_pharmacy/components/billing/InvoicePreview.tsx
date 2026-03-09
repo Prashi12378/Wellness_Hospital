@@ -161,8 +161,11 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
             .totals-container { margin-top: 20px; border-top: 2px solid #0f172a; padding-top: 10px; }
             .grand-total { font-size: 14px; font-weight: 900; margin-top: 8px; border-top: 1px solid #0f172a; padding-top: 4px; }
             .footer { margin-top: 30px; display: flex; justify-content: space-between; font-size: 10px; }
-            .qr-code { width: 60px; height: 60px; border: 1px solid #e2e8f0; }
-            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: -1; }
+            .header-logo { width: 48px !important; height: 48px !important; }
+            .header-logo img { width: 48px !important; height: 48px !important; object-contain: fit !important; }
+            .footer { margin-top: 20px; display: flex; justify-content: flex-end; font-size: 10px; }
+            .watermark { display: none !important; }
+            .invoice-watermark { display: none !important; }
             .gst-table { font-size: 9px; margin-top: 10px; }
             .gst-table th, .gst-table td { border: 1px solid #e2e8f0; text-align: center; }
         `;
@@ -275,10 +278,7 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                 <div ref={printRef} className="flex-1 overflow-auto p-8 bg-white" id="print-area">
                     {/* Invoice Paper Design for A5 */}
                     <div className="invoice-container relative max-w-[148mm] mx-auto text-slate-800 font-sans border border-slate-200 p-4 sm:p-6 shadow-sm bg-white text-xs">
-                        {/* Watermark */}
-                        <div className="invoice-watermark absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0 select-none overflow-hidden">
-                            <img src="/logo.png" alt="Watermark" className="w-[60%] max-w-[300px] object-contain" />
-                        </div>
+                        {/* Watermark removed for cleaner print */}
 
                         {/* Hospital Header */}
                         <div className="relative z-10 flex justify-between items-start mb-4 border-b-2 border-slate-900 pb-4 header-container">
@@ -419,17 +419,8 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                         </div>
 
                         {/* Footer Signature */}
-                        <div className="mt-12 flex justify-between items-end footer">
-                            <div className="text-center w-32 border-t border-slate-900 pt-2">
-                                <p className="font-bold uppercase">Customer Sign</p>
-                            </div>
-                            <div className="text-center">
-                                <div className="w-20 h-20 qr-code mx-auto mb-2 flex items-center justify-center bg-slate-50 text-[10px] text-slate-300">
-                                    QR CODE
-                                </div>
-                                <p className="text-[8px] font-bold text-slate-400">Scan to Verify</p>
-                            </div>
-                            <div className="text-center w-40 border-t border-slate-900 pt-6 relative">
+                        <div className="mt-12 flex justify-end items-end footer">
+                            <div className="text-center w-48 border-t border-slate-900 pt-6 relative">
                                 <p className="font-black italic text-slate-400 text-[10px] absolute top-1 left-0 w-full text-center pointer-events-none opacity-20">Pharmacist Seal</p>
                                 <p className="font-bold uppercase">Auth. Pharmacist</p>
                             </div>
