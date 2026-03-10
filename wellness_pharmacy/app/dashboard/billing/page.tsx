@@ -161,6 +161,25 @@ export default function BillingPage() {
         };
     }, [showPreview]);
 
+    const handleSearchKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && searchTerm.trim().length > 2) {
+            e.preventDefault();
+            setIsSearching(true);
+            const { data } = await searchMedicines(searchTerm.trim());
+            setIsSearching(false);
+
+            if (data && data.length > 0) {
+                const exactMatch = data.find((m: any) =>
+                    m.batchNo?.toLowerCase() === searchTerm.trim().toLowerCase() ||
+                    m.name?.toLowerCase() === searchTerm.trim().toLowerCase()
+                );
+                const item = exactMatch || data[0];
+                addToCart(item);
+                // The addToCart function already clears searchTerm and searchResults
+            }
+        }
+    };
+
     const addToCart = (medicine: any) => {
         const existing = cart.find(item => item.medicineId === medicine.id);
         if (existing) {
@@ -453,8 +472,9 @@ export default function BillingPage() {
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
                                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg"
-                                placeholder="Search medicine by name..."
+                                placeholder="Search medicine by name or scan barcode..."
                             />
                             {isSearching && (
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
