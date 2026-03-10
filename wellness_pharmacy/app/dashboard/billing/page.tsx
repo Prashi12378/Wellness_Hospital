@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, FileText, Loader2, Hospital } from 'lucide-react';
 import { searchMedicines, createInvoice, getPharmacySettings, searchPatients, searchAdmittedPatients } from '@/app/actions/billing';
+import { fetchMedicineDetailsFromBarcode } from '@/app/actions/barcode';
 import InvoicePreview from '@/components/billing/InvoicePreview';
 import { cn } from '@/lib/utils';
 
@@ -113,7 +114,7 @@ export default function BillingPage() {
                         const { data } = await searchMedicines(buffer);
                         if (data && data.length > 0) {
                             // Try exact match on batchNo
-                            const exactMatch = data.find(m => m.batchNo?.toLowerCase() === buffer.toLowerCase());
+                            const exactMatch = data.find((m: any) => m.batchNo?.toLowerCase() === buffer.toLowerCase());
                             const item = exactMatch || (data.length === 1 ? data[0] : null);
 
                             if (item) {
@@ -123,7 +124,16 @@ export default function BillingPage() {
                                 setSearchTerm(buffer);
                             }
                         } else {
-                            setSearchTerm(buffer);
+                            setIsSearching(true);
+                            const searchResult = await fetchMedicineDetailsFromBarcode(buffer);
+                            setIsSearching(false);
+                            if (searchResult.data && searchResult.data.name) {
+                                alert(`Unregistered item scanned: ${searchResult.data.name}\nPlease add it in Inventory before billing.`);
+                                setSearchTerm('');
+                            } else {
+                                setSearchTerm(buffer);
+                                alert(`Item not found in inventory or online. Please add to inventory manually.`);
+                            }
                         }
                     };
                     processScan();
@@ -166,7 +176,6 @@ export default function BillingPage() {
             e.preventDefault();
             setIsSearching(true);
             const { data } = await searchMedicines(searchTerm.trim());
-            setIsSearching(false);
 
             if (data && data.length > 0) {
                 const exactMatch = data.find((m: any) =>
@@ -175,7 +184,17 @@ export default function BillingPage() {
                 );
                 const item = exactMatch || data[0];
                 addToCart(item);
+                setIsSearching(false);
                 // The addToCart function already clears searchTerm and searchResults
+            } else {
+                const searchResult = await fetchMedicineDetailsFromBarcode(searchTerm.trim());
+                setIsSearching(false);
+                if (searchResult.data && searchResult.data.name) {
+                    alert(`Unregistered item scanned: ${searchResult.data.name}\nPlease add it in Inventory before billing.`);
+                    setSearchTerm('');
+                } else {
+                    alert(`Item not found in inventory or online. Please add to inventory manually.`);
+                }
             }
         }
     };

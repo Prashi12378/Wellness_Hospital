@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getInventory, addMedicine, updateStock } from '@/app/actions/inventory';
+import { fetchMedicineDetailsFromBarcode } from '@/app/actions/barcode';
 import { getUnreadCount } from '@/app/actions/notifications';
 import { Plus, Search, X, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
@@ -93,7 +94,7 @@ export default function InventoryPage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [medicines]); // Reverted dependencies to medicines only
 
-    const handleBarcodeScan = (code: string) => {
+    const handleBarcodeScan = async (code: string) => {
         console.log('Scanned:', code);
         // Find if medicine exists (by batchNo or name)
         const existing = medicines.find(m =>
@@ -107,10 +108,19 @@ export default function InventoryPage() {
             const expiryStr = existing.expiryDate ? format(new Date(existing.expiryDate), 'MMM yyyy') : 'N/A';
             showAlert('Item Found', `Scanned: ${existing.name}\nBatch: ${existing.batchNo}\nExpiry: ${expiryStr}\nPrice: ₹${existing.price}\n\nEnter quantity to add.`, 'info');
         } else {
-            // Open Add New Modal
-            setFormData(prev => ({ ...prev, batchNo: code }));
-            setIsModalOpen(true);
-            showAlert('New Item', `Item not found. Batch No "${code}" pre-filled.`, 'info');
+            // Not found locally. Try fetching online.
+            showAlert('Scanning Web...', `Looking up "${code}" online...`, 'info');
+            const searchResult = await fetchMedicineDetailsFromBarcode(code);
+
+            if (searchResult.data && searchResult.data.name) {
+                setFormData(prev => ({ ...prev, batchNo: code, name: searchResult.data.name }));
+                setIsModalOpen(true);
+                showAlert('Match Found Online', `Found: ${searchResult.data.name}\nPlease verify details and add to stock.`, 'success');
+            } else {
+                setFormData(prev => ({ ...prev, batchNo: code, name: '' }));
+                setIsModalOpen(true);
+                showAlert('New Item', `Item not found anywhere. Batch No "${code}" pre-filled.`, 'info');
+            }
         }
     };
 
