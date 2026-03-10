@@ -194,12 +194,12 @@ export default function BillingPage() {
         setCart(cart.filter(item => item.medicineId !== medicineId));
     };
 
-    const updateQty = (medicineId: string, qty: number) => {
-        if (qty < 1) return;
+    const updateQty = (medicineId: string, qty: number | string) => {
+        if (qty !== '' && Number(qty) < 1) return;
         setCart(cart.map(item => {
             if (item.medicineId === medicineId) {
                 // Ensure qty doesn't exceed stock
-                if (qty > item.stock) return item;
+                if (qty !== '' && Number(qty) > item.stock) return item;
                 return { ...item, qty };
             }
             return item;
@@ -209,11 +209,11 @@ export default function BillingPage() {
     // Calculations — MRP is GST-inclusive, so extract GST from MRP
     const subTotal = cart.reduce((acc, item) => {
         const base = item.mrp / (1 + item.gstRate / 100);
-        return acc + (item.qty * base);
+        return acc + ((Number(item.qty) || 0) * base);
     }, 0);
     const totalGst = cart.reduce((acc, item) => {
         const base = item.mrp / (1 + item.gstRate / 100);
-        return acc + (item.qty * (item.mrp - base));
+        return acc + ((Number(item.qty) || 0) * (item.mrp - base));
     }, 0);
     const discountAmount = (subTotal + totalGst) * (discountRate / 100);
     const grandTotal = subTotal + totalGst - discountAmount;
@@ -221,6 +221,10 @@ export default function BillingPage() {
     const handleCreateBilling = async () => {
         if (!patientInfo.name || cart.length === 0) {
             alert('Please enter patient name and add at least one item');
+            return;
+        }
+        if (cart.some(item => !item.qty || Number(item.qty) < 1)) {
+            alert('Please ensure all items have a valid quantity greater than 0');
             return;
         }
 
@@ -509,12 +513,20 @@ export default function BillingPage() {
                                                 <td className="py-4">
                                                     <div className="flex items-center justify-center gap-3">
                                                         <button
-                                                            onClick={() => updateQty(item.medicineId, item.qty - 1)}
+                                                            onClick={() => updateQty(item.medicineId, (Number(item.qty) || 1) - 1)}
                                                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 transition-all text-slate-600"
                                                         >-</button>
-                                                        <span className="font-bold w-6 text-center">{item.qty}</span>
+                                                        <input
+                                                            type="text"
+                                                            value={item.qty}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                updateQty(item.medicineId, val === '' ? '' : Number(val));
+                                                            }}
+                                                            className="w-12 text-center font-bold bg-transparent outline-none focus:ring-2 focus:ring-primary/20 rounded"
+                                                        />
                                                         <button
-                                                            onClick={() => updateQty(item.medicineId, item.qty + 1)}
+                                                            onClick={() => updateQty(item.medicineId, (Number(item.qty) || 0) + 1)}
                                                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 transition-all text-slate-600"
                                                         >+</button>
                                                     </div>
