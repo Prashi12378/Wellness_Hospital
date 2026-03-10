@@ -215,7 +215,7 @@ export default function BillingPage() {
         const base = item.mrp / (1 + item.gstRate / 100);
         return acc + (item.qty * (item.mrp - base));
     }, 0);
-    const discountAmount = isIpdEnabled ? (subTotal + totalGst) * (discountRate / 100) : 0;
+    const discountAmount = (subTotal + totalGst) * (discountRate / 100);
     const grandTotal = subTotal + totalGst - discountAmount;
 
     const handleCreateBilling = async () => {
@@ -567,26 +567,24 @@ export default function BillingPage() {
                                 <span>Total Tax (GST)</span>
                                 <span className="font-bold text-emerald-400">+₹{totalGst.toFixed(2)}</span>
                             </div>
-                            {isIpdEnabled && (
-                                <div className="flex justify-between items-center text-slate-400">
-                                    <div className="flex items-center gap-2">
-                                        <span>Discount</span>
-                                        <div className="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1">
-                                            <input
-                                                type="number"
-                                                value={discountRate}
-                                                onChange={(e) => setDiscountRate(Number(e.target.value))}
-                                                className="w-12 bg-transparent text-white font-bold outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                placeholder="0"
-                                                min="0"
-                                                max="100"
-                                            />
-                                            <span className="text-primary-light font-bold text-xs">%</span>
-                                        </div>
+                            <div className="flex justify-between items-center text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <span>Discount</span>
+                                    <div className="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1">
+                                        <input
+                                            type="number"
+                                            value={discountRate}
+                                            onChange={(e) => setDiscountRate(Number(e.target.value))}
+                                            className="w-12 bg-transparent text-white font-bold outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            placeholder="0"
+                                            min="0"
+                                            max="100"
+                                        />
+                                        <span className="text-primary-light font-bold text-xs">%</span>
                                     </div>
-                                    <span className="font-bold text-red-400">-₹{discountAmount.toFixed(2)}</span>
                                 </div>
-                            )}
+                                <span className="font-bold text-red-400">-₹{discountAmount.toFixed(2)}</span>
+                            </div>
                             <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
                                 <span className="text-lg font-bold">Grand Total</span>
                                 <span className="text-3xl font-black text-primary-light">₹{grandTotal.toFixed(2)}</span>
