@@ -80,7 +80,7 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
             <div id="printable-report" className="bg-white relative p-8 md:p-12 rounded-[48px] border border-slate-100 shadow-sm print:shadow-none print:border-0 print:p-0 print:rounded-none min-h-[1000px] flex flex-col font-sans mb-10 print:bg-transparent">
                 {/* Watermark */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] print:opacity-[0.1] pointer-events-none z-0 select-none overflow-hidden print:fixed print:inset-0">
-                    <img src="/logo.png" alt="Watermark" className="w-[50%] max-w-[400px] object-contain grayscale-0" />
+                    <img src="/hospital-logo.png" alt="Watermark" className="w-[50%] max-w-[400px] object-contain grayscale-0" />
                 </div>
 
                 {/* Polished Header */}
@@ -121,7 +121,7 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Age/Gender</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
                             <span className="font-black text-slate-900 uppercase">
-                                {request.patient?.dateOfBirth ? `${new Date().getFullYear() - new Date(request.patient.dateOfBirth).getFullYear()} Y` : 'N/A'} / {request.patient?.gender || 'N/A'}
+                                {request.patient?.dob ? `${new Date().getFullYear() - new Date(request.patient.dob).getFullYear()} Y` : 'N/A'} / {request.patient?.gender || 'N/A'}
                             </span>
                         </div>
                         <div className="flex text-[10px] leading-tight items-baseline">
