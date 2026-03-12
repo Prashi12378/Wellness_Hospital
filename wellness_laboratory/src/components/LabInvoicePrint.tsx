@@ -11,8 +11,9 @@ export default function LabInvoicePrint({ invoice }: { invoice: any }) {
                     <div>
                         <h1 className="text-3xl font-black uppercase tracking-tight">Wellness Lab</h1>
                         <p className="text-sm text-slate-600 font-medium">Diagnostic & Pathology Center</p>
-                        <p className="text-xs text-slate-500 mt-1">123 Health Avenue, Medical District</p>
-                        <p className="text-xs text-slate-500">Phone: +91 98765 43210</p>
+                        <p className="text-xs text-slate-500 mt-1">Beside friend function hall, Gowribidnur main road, Palanjoghalli</p>
+                        <p className="text-xs text-slate-500">Doddaballapur - 561203, Karnataka</p>
+                        <p className="text-xs text-slate-500">Phone: +91 81056 66338</p>
                     </div>
                 </div>
                 <div className="text-right">
