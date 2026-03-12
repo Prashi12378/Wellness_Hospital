@@ -1,5 +1,4 @@
 import * as React from "react"
-import { slot } from "lucide-react"
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'

@@ -3,10 +3,10 @@
 import { useState, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Plus, Trash2, Printer, CheckCircle2, Search, Calculator } from "lucide-react";
-import { createLabInvoice } from "@/app/actions/billing";
-import LabInvoicePrint from "@/components/LabInvoicePrint";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { createLabInvoice } from "../../actions/billing";
+import LabInvoicePrint from "../../../components/LabInvoicePrint";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
 
 export default function LabBillingPage() {
     const [patientInfo, setPatientInfo] = useState({ name: "", phone: "", doctor: "" });
@@ -19,7 +19,7 @@ export default function LabBillingPage() {
 
     const printRef = useRef<HTMLDivElement>(null);
     const handlePrint = useReactToPrint({
-        content: () => printRef.current,
+        contentRef: printRef,
         documentTitle: `Lab_Invoice_${generatedInvoice?.billNo || "Draft"}`,
     });
 
@@ -135,15 +135,15 @@ export default function LabBillingPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-semibold text-slate-500">Patient Name *</label>
-                                <Input value={patientInfo.name} onChange={e => setPatientInfo({ ...patientInfo, name: e.target.value })} placeholder="Full Name" />
+                                <Input value={patientInfo.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatientInfo({ ...patientInfo, name: e.target.value })} placeholder="Full Name" />
                             </div>
                             <div>
                                 <label className="text-xs font-semibold text-slate-500">Phone Number</label>
-                                <Input value={patientInfo.phone} onChange={e => setPatientInfo({ ...patientInfo, phone: e.target.value })} placeholder="+91..." />
+                                <Input value={patientInfo.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatientInfo({ ...patientInfo, phone: e.target.value })} placeholder="+91..." />
                             </div>
                             <div className="col-span-2">
                                 <label className="text-xs font-semibold text-slate-500">Referring Doctor</label>
-                                <Input value={patientInfo.doctor} onChange={e => setPatientInfo({ ...patientInfo, doctor: e.target.value })} placeholder="Dr. Name (Leave blank for Self)" />
+                                <Input value={patientInfo.doctor} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatientInfo({ ...patientInfo, doctor: e.target.value })} placeholder="Dr. Name (Leave blank for Self)" />
                             </div>
                         </div>
                     </div>
@@ -156,15 +156,15 @@ export default function LabBillingPage() {
                         <div className="flex gap-3 items-end">
                             <div className="flex-1">
                                 <label className="text-xs font-semibold text-slate-500">Test Name</label>
-                                <Input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} placeholder="e.g. Complete Blood Count (CBC)" />
+                                <Input value={newItem.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewItem({ ...newItem, name: e.target.value })} placeholder="e.g. Complete Blood Count (CBC)" />
                             </div>
                             <div className="w-32">
                                 <label className="text-xs font-semibold text-slate-500">Price (₹)</label>
-                                <Input type="number" value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} placeholder="0.00" />
+                                <Input type="number" value={newItem.price} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewItem({ ...newItem, price: e.target.value })} placeholder="0.00" />
                             </div>
                             <div className="w-24">
                                 <label className="text-xs font-semibold text-slate-500">GST %</label>
-                                <select className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm" value={newItem.gst} onChange={e => setNewItem({ ...newItem, gst: e.target.value })}>
+                                <select className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm" value={newItem.gst} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewItem({ ...newItem, gst: e.target.value })}>
                                     <option value="0">0%</option>
                                     <option value="5">5%</option>
                                     <option value="12">12%</option>
@@ -229,7 +229,7 @@ export default function LabBillingPage() {
                                     <select
                                         className="h-9 px-2 border border-slate-200 rounded-md text-xs bg-slate-50"
                                         value={discount.type}
-                                        onChange={e => setDiscount({ ...discount, type: e.target.value })}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDiscount({ ...discount, type: e.target.value })}
                                     >
                                         <option value="percentage">% off</option>
                                         <option value="flat">₹ flat</option>
@@ -239,7 +239,7 @@ export default function LabBillingPage() {
                                         className="h-9 text-right"
                                         placeholder="0"
                                         value={discount.value}
-                                        onChange={e => setDiscount({ ...discount, value: e.target.value })}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiscount({ ...discount, value: e.target.value })}
                                     />
                                 </div>
                                 {totals.discountAmount > 0 && (
