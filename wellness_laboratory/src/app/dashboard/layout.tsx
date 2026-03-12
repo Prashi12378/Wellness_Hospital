@@ -10,7 +10,7 @@ import {
     LayoutDashboard,
     ClipboardList,
     History,
-    Receipt,
+    CreditCard,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const navItems = [
         { name: "Clinical Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { name: "Billing", href: "/dashboard/billing", icon: Receipt },
+        { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
         { name: "Active Diagnostics", href: "/dashboard/requests", icon: ClipboardList },
         { name: "Results Archive", href: "/dashboard/history", icon: History },
     ];
