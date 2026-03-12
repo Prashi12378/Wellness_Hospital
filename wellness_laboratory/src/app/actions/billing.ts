@@ -59,8 +59,8 @@ export async function createLabInvoice(data: any) {
             if (systemUser) {
                 await prisma.ledger.create({
                     data: {
-                        transactionType: "INCOME",
-                        category: "Lab Billing",
+                        transactionType: "income",
+                        category: "lab",
                         description: `Invoice ${billNo} - ${data.patientName}`,
                         amount: data.grandTotal,
                         paymentMethod: data.paymentMethod,
