@@ -34,6 +34,7 @@ export async function addMedicine(formData: any) {
             data: {
                 name: formData.name,
                 batchNo: formData.batchNo,
+                barcode: formData.barcode || null,
                 hsnCode: formData.hsnCode,
                 expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : null,
                 price: parseFloat(formData.price),
@@ -97,5 +98,19 @@ export async function updateStock(id: string, qty: number) {
     } catch (error) {
         console.error('Error updating stock:', error);
         return { error: 'Failed to update stock' };
+    }
+}
+
+export async function updateBarcode(id: string, barcode: string) {
+    try {
+        await db.pharmacyInventory.update({
+            where: { id },
+            data: { barcode }
+        });
+        revalidatePath('/dashboard/inventory');
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating barcode:', error);
+        return { error: 'Failed to update barcode' };
     }
 }

@@ -97,7 +97,10 @@ export default async function PatientsPage({
                             </div>
                         </div>
                         <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-end">
-                            <PatientActions patientId={patient.id} />
+                            <PatientActions 
+                                patientId={patient.id} 
+                                patientName={`${patient.firstName} ${patient.lastName}`}
+                            />
                         </div>
                     </div>
                 ))}

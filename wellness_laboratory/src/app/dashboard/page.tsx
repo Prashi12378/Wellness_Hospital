@@ -20,7 +20,8 @@ import {
     User as UserIcon,
     FileText,
     Printer,
-    Download
+    Download,
+    ReceiptText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getLabRequests, updateLabRequestStatus } from "@/app/actions/lab";
@@ -253,6 +254,15 @@ export default function LabDashboardPage() {
                                                     title="View Report"
                                                 >
                                                     <Printer className="w-5 h-5" />
+                                                </Link>
+                                            )}
+                                            {!req.isBilled && (
+                                                <Link
+                                                    href={`/dashboard/billing?requestId=${req.id}`}
+                                                    className="p-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-100 rounded-2xl transition-all group-hover:scale-105"
+                                                    title="Generate Bill"
+                                                >
+                                                    <ReceiptText className="w-5 h-5" />
                                                 </Link>
                                             )}
                                         </div>

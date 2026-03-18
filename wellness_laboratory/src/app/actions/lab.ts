@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { serializeData } from "@/lib/serialization";
 
 export async function getLabRequests() {
     try {
@@ -21,7 +22,7 @@ export async function getLabRequests() {
             }
         });
         console.log(`[LabActions] Found ${requests.length} requests.`);
-        return { success: true, data: requests };
+        return { success: true, data: serializeData(requests) };
     } catch (error: any) {
         console.error("[LabActions] getLabRequests Error:", error);
         return { success: false, error: error.message };
@@ -59,7 +60,7 @@ export async function getLabRequestById(id: string) {
                 patient: true
             }
         });
-        return { success: true, data: request };
+        return { success: true, data: serializeData(request) };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -143,7 +144,7 @@ export async function createLabRequest(data: {
         });
 
         revalidatePath("/dashboard");
-        return { success: true, data: result };
+        return { success: true, data: serializeData(result) };
     } catch (error: any) {
         console.error("[LabActions] createLabRequest Error:", error);
         return { success: false, error: error.message };
@@ -163,6 +164,40 @@ export async function updateUserProfile(userId: string, data: { name: string }) 
         return { success: true };
     } catch (error: any) {
         console.error("[LabActions] updateUserProfile Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getUnbilledLabRequests(searchQuery?: string) {
+    try {
+        console.log(`[LabActions] Fetching unbilled requests with search: "${searchQuery || 'none'}"`);
+        const requests = await prisma.labRequest.findMany({
+            where: {
+                isBilled: false,
+                status: { in: ['processing', 'completed'] },
+                OR: searchQuery ? [
+                    { patientName: { contains: searchQuery, mode: 'insensitive' } },
+                    { testName: { contains: searchQuery, mode: 'insensitive' } }
+                ] : undefined
+            },
+            include: {
+                patient: {
+                    select: {
+                        uhid: true,
+                        firstName: true,
+                        lastName: true,
+                        gender: true,
+                        dob: true,
+                        phone: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 20
+        });
+        return { success: true, data: serializeData(requests) };
+    } catch (error: any) {
+        console.error("[LabActions] getUnbilledLabRequests Error:", error);
         return { success: false, error: error.message };
     }
 }

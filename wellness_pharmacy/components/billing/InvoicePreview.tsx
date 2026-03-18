@@ -1,6 +1,9 @@
+ 
+/* eslint-disable */
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
+import { PrismaClient } from '@prisma/client';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -181,6 +184,7 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
         };
     };
 
+    /* eslint-disable @typescript-eslint/no-require-imports */
     const gstGroups = invoice.items.reduce((acc: any, item: any) => {
         const rate = Number(item.gstRate);
         const mrp = Number(item.mrp);

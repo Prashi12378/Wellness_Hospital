@@ -6,8 +6,9 @@ import { useState } from "react";
 import { deletePatient } from "@/app/actions/patient-management";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import RecordAdvanceButton from "./RecordAdvanceButton";
 
-export default function PatientActions({ patientId }: { patientId: string }) {
+export default function PatientActions({ patientId, patientName }: { patientId: string, patientName?: string }) {
     const [isDeleting, setIsDeleting] = useState(false);
     const router = useRouter();
 
@@ -27,6 +28,12 @@ export default function PatientActions({ patientId }: { patientId: string }) {
 
     return (
         <div className="flex items-center gap-2">
+            {patientName && (
+                <RecordAdvanceButton 
+                    patientId={patientId} 
+                    patientName={patientName} 
+                />
+            )}
             <Link
                 href={`/dashboard/patients/${patientId}`}
                 className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

@@ -36,7 +36,7 @@ export async function fetchMedicineDetailsFromBarcode(barcode: string) {
             // This is a naive heuristic but works well for basic Indian pharmacy site titles like Apollo/1mg
 
             // Clean up common suffix noise from titles
-            let clean = text.split('|')[0]
+            const clean = text.split('|')[0]
                 .replace(/Buy /gi, '')
                 .replace(/Online at Best Price.*/gi, '')
                 .replace(/Uses, Side Effects, Price.*/gi, '')

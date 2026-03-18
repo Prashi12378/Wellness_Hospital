@@ -113,6 +113,8 @@ interface OPDInvoiceData {
     grandTotal: number;
     paymentMethod: string;
     discountAmount?: number;
+    advanceAmount?: number;
+    advancePaymentId?: string;
     items: {
         name: string;
         qty: number;
@@ -142,6 +144,7 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
                 subTotal: data.subTotal,
                 totalGst: data.totalGst,
                 grandTotal: data.grandTotal,
+                advanceAmount: data.advanceAmount || 0,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
                 date: data.date ? new Date(data.date) : new Date(),
@@ -158,6 +161,17 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
                 }
             }
         });
+
+        // 2. If advance payment was used, update its status
+        if (data.advancePaymentId) {
+            await (prisma as any).advancePayment.update({
+                where: { id: data.advancePaymentId },
+                data: {
+                    status: 'CONSUMED',
+                    invoiceId: invoice.id
+                }
+            });
+        }
 
         // Record to Ledger
         await prisma.ledger.create({
@@ -211,7 +225,8 @@ interface ObservationInvoiceData {
     paymentMethod: string;
     discountAmount?: number;
     observationHours?: number;
-    ward?: string;
+    advanceAmount?: number;
+    advancePaymentId?: string;
     items: {
         name: string;
         qty: number;
@@ -240,12 +255,13 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
                 subTotal: data.subTotal,
                 totalGst: data.totalGst,
                 grandTotal: data.grandTotal,
+                advanceAmount: data.advanceAmount || 0,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
                 date: data.date ? new Date(data.date) : new Date(),
                 status: 'PAID',
                 items: {
-                    create: data.items.map(item => ({
+                    create: data.items.map((item: any) => ({
                         medicineId: 'OBSERVATION',
                         name: item.name,
                         qty: item.qty,
@@ -256,6 +272,17 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
                 }
             }
         });
+
+        // 2. If advance payment was used, update its status
+        if (data.advancePaymentId) {
+            await (prisma as any).advancePayment.update({
+                where: { id: data.advancePaymentId },
+                data: {
+                    status: 'CONSUMED',
+                    invoiceId: invoice.id
+                }
+            });
+        }
 
         // Record to Ledger
         await prisma.ledger.create({

@@ -14,7 +14,8 @@ export async function searchMedicines(query: string) {
                 isDeleted: false,
                 OR: [
                     { name: { contains: query, mode: 'insensitive' } },
-                    { batchNo: { contains: query, mode: 'insensitive' } }
+                    { batchNo: { contains: query, mode: 'insensitive' } },
+                    { barcode: { contains: query, mode: 'insensitive' } }
                 ],
                 stock: {
                     gt: 0,
@@ -70,6 +71,8 @@ export async function createInvoice(data: {
     paymentMethod: string;
     discountRate?: number;
     discountAmount?: number;
+    advanceAmount?: number;
+    advancePaymentId?: string;
     date?: Date | string;
 }) {
     try {
@@ -157,6 +160,7 @@ export async function createInvoice(data: {
                             subTotal: subTotal,
                             totalGst: totalGst,
                             grandTotal: grandTotal,
+                            advanceAmount: data.advanceAmount || 0,
                             discountRate: Number(data.discountRate || 0),
                             discountAmount: discountAmount,
                             paymentMethod: data.paymentMethod,
@@ -170,7 +174,18 @@ export async function createInvoice(data: {
                         }
                     }) as any;
 
-                    console.log('Invoice created, deducting stock...');
+                    console.log('Invoice created, deducting stock and updating advance...');
+
+                    // 1b. Update AdvancePayment if used
+                    if (data.advancePaymentId) {
+                        await tx.advancePayment.update({
+                            where: { id: data.advancePaymentId },
+                            data: {
+                                status: 'CONSUMED',
+                                invoiceId: newInvoice.id
+                            }
+                        });
+                    }
 
                     // 2. Deduct Stock
                     for (const item of data.items) {

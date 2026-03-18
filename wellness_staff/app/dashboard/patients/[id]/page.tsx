@@ -3,6 +3,7 @@ import { User, Phone, Mail, Calendar, Hash, CheckCircle2, Navigation2, FileText,
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import RecordAdvanceButton from "@/components/RecordAdvanceButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -32,14 +33,21 @@ export default async function PatientViewPage({
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-10">
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard/patients" className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <ArrowLeft className="w-5 h-5 text-slate-600" />
-                </Link>
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Patient Details</h1>
-                    <p className="text-slate-500 font-medium">View complete information for {patient.firstName} {patient.lastName}.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard/patients" className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                        <ArrowLeft className="w-5 h-5 text-slate-600" />
+                    </Link>
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Patient Details</h1>
+                        <p className="text-slate-500 font-medium">View complete information for {patient.firstName} {patient.lastName}.</p>
+                    </div>
                 </div>
+
+                <RecordAdvanceButton 
+                    patientId={patient.id} 
+                    patientName={`${patient.firstName} ${patient.lastName}`} 
+                />
             </div>
 
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">

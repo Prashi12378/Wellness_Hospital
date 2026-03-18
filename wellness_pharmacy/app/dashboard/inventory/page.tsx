@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getInventory, addMedicine, updateStock } from '@/app/actions/inventory';
+import { getInventory, addMedicine, updateStock, updateBarcode } from '@/app/actions/inventory';
 import { fetchMedicineDetailsFromBarcode } from '@/app/actions/barcode';
 import { getUnreadCount } from '@/app/actions/notifications';
-import { Plus, Search, X, RefreshCw } from 'lucide-react';
+import { Plus, Search, X, RefreshCw, ScanBarcode } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -34,8 +34,17 @@ export default function InventoryPage() {
     });
     const [stockToAdd, setStockToAdd] = useState('');
 
+    // Quick Link Modal State
+    const [quickLinkModal, setQuickLinkModal] = useState<{ isOpen: boolean; id: string; name: string; barcode: string }>({
+        isOpen: false,
+        id: '',
+        name: '',
+        barcode: ''
+    });
+
     const [formData, setFormData] = useState({
         name: '',
+        barcode: '',
         batchNo: '',
         hsnCode: '',
         expiryDate: '',
@@ -51,7 +60,7 @@ export default function InventoryPage() {
 
     // Scroll Lock Logic
     useEffect(() => {
-        const isAnyModalOpen = isModalOpen || alertConfig.isOpen || stockModal.isOpen;
+        const isAnyModalOpen = isModalOpen || alertConfig.isOpen || stockModal.isOpen || quickLinkModal.isOpen;
         if (isAnyModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -81,8 +90,9 @@ export default function InventoryPage() {
             lastKeyTime = currentTime;
 
             if (char === 'Enter') {
-                if (buffer.length > 2) {
-                    handleBarcodeScan(buffer);
+                const query = buffer.trim();
+                if (query.length > 2) {
+                    handleBarcodeScan(query);
                     buffer = '';
                 }
             } else if (char.length === 1) {
@@ -95,11 +105,13 @@ export default function InventoryPage() {
     }, [medicines]); // Reverted dependencies to medicines only
 
     const handleBarcodeScan = async (code: string) => {
-        console.log('Scanned:', code);
+        const query = code.trim();
+        console.log('Scanned:', query);
         // Find if medicine exists (by batchNo or name)
         const existing = medicines.find(m =>
-            (m.batchNo && m.batchNo.toLowerCase() === code.toLowerCase()) ||
-            (m.name.toLowerCase() === code.toLowerCase())
+            (m.barcode && m.barcode.trim().toLowerCase() === query.toLowerCase()) ||
+            (m.batchNo && m.batchNo.trim().toLowerCase() === query.toLowerCase()) ||
+            (m.name.trim().toLowerCase() === query.toLowerCase())
         );
 
         if (existing) {
@@ -109,17 +121,17 @@ export default function InventoryPage() {
             showAlert('Item Found', `Scanned: ${existing.name}\nBatch: ${existing.batchNo}\nExpiry: ${expiryStr}\nPrice: ₹${existing.price}\n\nEnter quantity to add.`, 'info');
         } else {
             // Not found locally. Try fetching online.
-            showAlert('Scanning Web...', `Looking up "${code}" online...`, 'info');
-            const searchResult = await fetchMedicineDetailsFromBarcode(code);
+            showAlert('Scanning Web...', `Looking up "${query}" online...`, 'info');
+            const searchResult = await fetchMedicineDetailsFromBarcode(query);
 
             if (searchResult.data && searchResult.data.name) {
-                setFormData(prev => ({ ...prev, batchNo: code, name: searchResult.data.name }));
+                setFormData(prev => ({ ...prev, barcode: query, name: searchResult.data.name }));
                 setIsModalOpen(true);
                 showAlert('Match Found Online', `Found: ${searchResult.data.name}\nPlease verify details and add to stock.`, 'success');
             } else {
-                setFormData(prev => ({ ...prev, batchNo: code, name: '' }));
+                setFormData(prev => ({ ...prev, barcode: query, name: '' }));
                 setIsModalOpen(true);
-                showAlert('New Item', `Item not found anywhere. Batch No "${code}" pre-filled.`, 'info');
+                showAlert('New Item', `Item not found anywhere. Barcode "${query}" pre-filled.`, 'info');
             }
         }
     };
@@ -139,6 +151,22 @@ export default function InventoryPage() {
         setAlertConfig({ isOpen: true, title, message, type });
     };
 
+    const handleQuickLinkSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!quickLinkModal.barcode || quickLinkModal.barcode.length < 5) return;
+
+        try {
+            const result = await updateBarcode(quickLinkModal.id, quickLinkModal.barcode);
+            if (result.error) throw new Error(result.error);
+
+            setQuickLinkModal({ ...quickLinkModal, isOpen: false });
+            fetchInventory();
+            showAlert('Barcode Linked!', `Successfully linked barcode to ${quickLinkModal.name}`, 'success');
+        } catch (error: any) {
+            showAlert('Link Failed', error.message, 'error');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -147,7 +175,7 @@ export default function InventoryPage() {
             if (result.error) throw new Error(result.error);
 
             setIsModalOpen(false);
-            setFormData({ name: '', batchNo: '', hsnCode: '', expiryDate: '', price: '', gstRate: '5', stock: '', location: '' });
+            setFormData({ name: '', barcode: '', batchNo: '', hsnCode: '', expiryDate: '', price: '', gstRate: '5', stock: '', location: '' });
             fetchInventory();
             showAlert('Success', 'Medicine added successfully to inventory.', 'success');
         } catch (error: any) {
@@ -258,6 +286,7 @@ export default function InventoryPage() {
                         <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100 uppercase tracking-tighter text-[11px]">
                             <tr>
                                 <th className="px-8 py-5">Medicine Name</th>
+                                <th className="px-6 py-5">Barcode</th>
                                 <th className="px-6 py-5">Batch / HSN</th>
                                 <th className="px-6 py-5">Expiry</th>
                                 <th className="px-6 py-5">Price (GST%)</th>
@@ -276,6 +305,9 @@ export default function InventoryPage() {
                                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-8 py-4">
                                             <p className="font-bold text-slate-900">{item.name}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <p className="text-slate-600 font-mono text-xs tracking-wider">{item.barcode || '-'}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <p className="text-slate-700 font-medium">{item.batchNo || '-'}</p>
@@ -300,6 +332,15 @@ export default function InventoryPage() {
                                         </td>
                                         <td className="px-6 py-4 text-slate-500 font-medium">{item.location || '-'}</td>
                                         <td className="px-8 py-4 text-right flex items-center justify-end gap-2">
+                                            {!item.barcode && (
+                                                <button
+                                                    onClick={() => setQuickLinkModal({ isOpen: true, id: item.id, name: item.name, barcode: '' })}
+                                                    className="p-1 text-slate-300 hover:text-emerald-500 transition-colors"
+                                                    title="Quick Link Barcode"
+                                                >
+                                                    <ScanBarcode className="w-4 h-4" />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => openStockModal(item)}
                                                 className="p-1 text-slate-300 hover:text-blue-500 transition-colors"
@@ -388,6 +429,19 @@ export default function InventoryPage() {
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center justify-between">
+                                        Scanner Barcode
+                                        <span className="text-[9px] text-slate-300 normal-case tracking-normal font-medium">(Optional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full h-11 px-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 focus:bg-white focus:border-primary-light outline-none transition-all font-mono"
+                                        placeholder="Scan item or type 13-digit EAN..."
+                                        value={formData.barcode}
+                                        onChange={e => setFormData({ ...formData, barcode: e.target.value })}
+                                    />
+                                </div>
                                 <div>
                                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Batch No</label>
                                     <input
@@ -488,6 +542,49 @@ export default function InventoryPage() {
                 </div>
             )}
 
+            {/* Quick Link Modal */}
+            {quickLinkModal.isOpen && (
+                <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><ScanBarcode className="w-5 h-5 text-emerald-600" /> Quick Link</h2>
+                            <button onClick={() => setQuickLinkModal({ ...quickLinkModal, isOpen: false })} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleQuickLinkSubmit} className="p-6 space-y-4">
+                            <div>
+                                <p className="text-sm text-slate-500 mb-4">Scan the physical box for <span className="font-bold text-slate-900">{quickLinkModal.name}</span></p>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Scanner Input</label>
+                                <input
+                                    type="text"
+                                    required
+                                    autoFocus
+                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-mono tracking-widest focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:tracking-normal placeholder:font-sans"
+                                    placeholder="Shoot scanner now..."
+                                    value={quickLinkModal.barcode}
+                                    onChange={e => setQuickLinkModal({ ...quickLinkModal, barcode: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setQuickLinkModal({ ...quickLinkModal, isOpen: false })}
+                                    className="flex-1 h-11 border border-slate-200 text-slate-600 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-lg shadow-emerald-500/20 transition-colors"
+                                >
+                                    Link Item
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Branded Alert Modal */}
             {alertConfig.isOpen && (

@@ -81,6 +81,7 @@ model Profile {
   labRequests           LabRequest[]   @relation("PatientLabRequests")
   prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
+  advancePayments       AdvancePayment[] @relation("PatientAdvancePayments")
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -147,6 +148,7 @@ model Otp {
 model PharmacyInventory {
   id               String    @id @default(cuid())
   name             String
+  barcode          String?   @unique
   batchNo          String?   @map("batch_no")
   expiryDate       DateTime? @map("expiry_date")
   price            Decimal
@@ -194,8 +196,10 @@ model Invoice {
   discountRate   Decimal       @default(0)
   admissionId    String?
   appointmentId  String?
-  admission      Admission?    @relation(fields: [admissionId], references: [id])
-  Appointment    Appointment?  @relation(fields: [appointmentId], references: [id])
+  advanceAmount  Decimal         @default(0)
+  admission      Admission?      @relation(fields: [admissionId], references: [id])
+  Appointment    Appointment?    @relation(fields: [appointmentId], references: [id])
+  advancePayment AdvancePayment? @relation("InvoiceAdvance")
   items          InvoiceItem[]
 }
 
@@ -361,6 +365,21 @@ model Message {
   message   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AdvancePayment {
+  id            String   @id @default(cuid())
+  patientId     String
+  amount        Decimal
+  date          DateTime @default(now())
+  description   String?
+  paymentMethod String   @default("CASH")
+  status        String   @default("AVAILABLE") // AVAILABLE, CONSUMED
+  invoiceId     String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  patient       Profile  @relation("PatientAdvancePayments", fields: [patientId], references: [id], onDelete: Cascade)
+  invoice       Invoice? @relation("InvoiceAdvance", fields: [invoiceId], references: [id])
 }
 
 enum HealthPackageType {

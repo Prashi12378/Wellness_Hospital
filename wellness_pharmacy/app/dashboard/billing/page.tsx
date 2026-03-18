@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, FileText, Loader2, Hospital } from 'lucide-react';
 import { searchMedicines, createInvoice, getPharmacySettings, searchPatients, searchAdmittedPatients } from '@/app/actions/billing';
+import { getPatientAdvanceBalance } from '@/app/actions/patient-billing';
 import { fetchMedicineDetailsFromBarcode } from '@/app/actions/barcode';
 import InvoicePreview from '@/components/billing/InvoicePreview';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,10 @@ export default function BillingPage() {
     const [createdInvoice, setCreatedInvoice] = useState<any>(null);
     const [showPreview, setShowPreview] = useState(false);
     const [discountRate, setDiscountRate] = useState<number>(0);
+    const [advanceBalance, setAdvanceBalance] = useState<number>(0);
+    const [patientAdvances, setPatientAdvances] = useState<any[]>([]);
+    const [useAdvance, setUseAdvance] = useState(false);
+    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
     // Patient Lookup State
     const [patientSearchTerm, setPatientSearchTerm] = useState('');
@@ -74,6 +79,24 @@ export default function BillingPage() {
         return () => clearTimeout(delayDebounceFn);
     }, [patientSearchTerm]);
 
+    // Fetch Advance Balance when patient is selected
+    useEffect(() => {
+        if (selectedPatientId) {
+            const fetchBalance = async () => {
+                const res = await getPatientAdvanceBalance(selectedPatientId);
+                if (res.success) {
+                    setAdvanceBalance(res.balance);
+                    setPatientAdvances(res.advances || []);
+                }
+            };
+            fetchBalance();
+        } else {
+            setAdvanceBalance(0);
+            setPatientAdvances([]);
+            setUseAdvance(false);
+        }
+    }, [selectedPatientId]);
+
     // Admitted Patient Search logic
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
@@ -109,29 +132,33 @@ export default function BillingPage() {
             lastKeyTime = currentTime;
 
             if (char === 'Enter') {
-                if (buffer.length > 2) {
+                const query = buffer.trim();
+                if (query.length > 2) {
                     const processScan = async () => {
-                        const { data } = await searchMedicines(buffer);
+                        const { data } = await searchMedicines(query);
                         if (data && data.length > 0) {
-                            // Try exact match on batchNo
-                            const exactMatch = data.find((m: any) => m.batchNo?.toLowerCase() === buffer.toLowerCase());
+                            const exactMatch = data.find((m: any) =>
+                                m.barcode?.toLowerCase().trim() === query.toLowerCase() ||
+                                m.batchNo?.toLowerCase().trim() === query.toLowerCase() ||
+                                m.name?.toLowerCase().trim() === query.toLowerCase()
+                            );
                             const item = exactMatch || (data.length === 1 ? data[0] : null);
 
                             if (item) {
                                 addToCart(item);
                                 console.log(`Auto-added: ${item.name} | Price: ₹${item.price}`);
                             } else {
-                                setSearchTerm(buffer);
+                                setSearchTerm(query);
                             }
                         } else {
                             setIsSearching(true);
-                            const searchResult = await fetchMedicineDetailsFromBarcode(buffer);
+                            const searchResult = await fetchMedicineDetailsFromBarcode(query);
                             setIsSearching(false);
                             if (searchResult.data && searchResult.data.name) {
                                 alert(`Unregistered item scanned: ${searchResult.data.name}\nPlease add it in Inventory before billing.`);
                                 setSearchTerm('');
                             } else {
-                                setSearchTerm(buffer);
+                                setSearchTerm(query);
                                 alert(`Item not found in inventory or online. Please add to inventory manually.`);
                             }
                         }
@@ -172,22 +199,24 @@ export default function BillingPage() {
     }, [showPreview]);
 
     const handleSearchKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && searchTerm.trim().length > 2) {
+        const query = e.currentTarget.value.trim();
+        if (e.key === 'Enter' && query.length > 2) {
             e.preventDefault();
             setIsSearching(true);
-            const { data } = await searchMedicines(searchTerm.trim());
+            const { data } = await searchMedicines(query);
 
             if (data && data.length > 0) {
                 const exactMatch = data.find((m: any) =>
-                    m.batchNo?.toLowerCase() === searchTerm.trim().toLowerCase() ||
-                    m.name?.toLowerCase() === searchTerm.trim().toLowerCase()
+                    m.barcode?.toLowerCase().trim() === query.toLowerCase() ||
+                    m.batchNo?.toLowerCase().trim() === query.toLowerCase() ||
+                    m.name?.toLowerCase().trim() === query.toLowerCase()
                 );
                 const item = exactMatch || data[0];
                 addToCart(item);
                 setIsSearching(false);
                 // The addToCart function already clears searchTerm and searchResults
             } else {
-                const searchResult = await fetchMedicineDetailsFromBarcode(searchTerm.trim());
+                const searchResult = await fetchMedicineDetailsFromBarcode(query);
                 setIsSearching(false);
                 if (searchResult.data && searchResult.data.name) {
                     alert(`Unregistered item scanned: ${searchResult.data.name}\nPlease add it in Inventory before billing.`);
@@ -266,7 +295,9 @@ export default function BillingPage() {
             return;
         }
 
-        setIsSubmitting(true);
+        const appliedAdvance = useAdvance ? Math.min(grandTotal, advanceBalance) : 0;
+        const selectedAdvance = appliedAdvance > 0 ? patientAdvances[0] : null;
+
         const result = await createInvoice({
             patientName: patientInfo.name,
             patientPhone: patientInfo.phone,
@@ -277,6 +308,8 @@ export default function BillingPage() {
             items: cart,
             discountRate,
             discountAmount,
+            advanceAmount: appliedAdvance,
+            advancePaymentId: selectedAdvance?.id,
             date: billDate
         });
 
@@ -378,6 +411,7 @@ export default function BillingPage() {
                                                             doctor: '',
                                                             insurance: '',
                                                         });
+                                                        setSelectedPatientId(p.id);
                                                         setPatientSearchTerm('');
                                                         setPatientSearchResults([]);
                                                     }}
@@ -636,9 +670,40 @@ export default function BillingPage() {
                                 </div>
                                 <span className="font-bold text-red-400">-₹{discountAmount.toFixed(2)}</span>
                             </div>
+                            <div className="pt-4 border-t border-slate-100 space-y-3">
+                                <div className="flex justify-between items-center text-slate-400">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Advance Balance</span>
+                                        <span className={cn("text-sm font-black", advanceBalance > 0 ? "text-emerald-600" : "text-slate-400")}>
+                                            ₹{advanceBalance.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    {advanceBalance > 0 ? (
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={useAdvance}
+                                                onChange={(e) => setUseAdvance(e.target.checked)}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-10 h-6 bg-slate-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                        </label>
+                                    ) : (
+                                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter bg-slate-50 px-2 py-1 rounded">No Balance</span>
+                                    )}
+                                </div>
+                                {useAdvance && advanceBalance > 0 && (
+                                    <div className="flex justify-between items-center text-xs font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
+                                        <span className="uppercase tracking-widest">Advance Deducted</span>
+                                        <span>- ₹{Math.min(grandTotal, advanceBalance).toLocaleString()}</span>
+                                    </div>
+                                )}
+                            </div>
                             <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
                                 <span className="text-lg font-bold">Grand Total</span>
-                                <span className="text-3xl font-black text-primary-light">₹{grandTotal.toFixed(2)}</span>
+                                <span className="text-3xl font-black text-primary-light">
+                                    ₹{(grandTotal - (useAdvance ? Math.min(grandTotal, advanceBalance) : 0)).toFixed(2)}
+                                </span>
                             </div>
                         </div>
 
