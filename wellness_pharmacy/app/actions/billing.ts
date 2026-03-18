@@ -3,7 +3,8 @@
 import { prisma as db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
+import { serializeData } from '@/lib/serialization';
 
 export async function searchMedicines(query: string) {
     if (!query) return { data: [] };
@@ -30,7 +31,7 @@ export async function searchMedicines(query: string) {
             gstRate: Number(m.gstRate),
         }));
 
-        return { data: serialized };
+        return { data: serializeData(serialized) };
     } catch (error) {
         console.error('Search medicines error:', error);
         return { error: 'Search failed' };
@@ -54,7 +55,7 @@ export async function searchPatients(query: string) {
             take: 5,
         });
 
-        return { data: patients };
+        return { data: serializeData(patients) };
     } catch (error) {
         console.error('Search patients error:', error);
         return { error: 'Search failed' };
@@ -365,7 +366,7 @@ export async function searchAdmittedPatients(query: string) {
             ward: adm.ward,
         }));
 
-        return { data: serialized };
+        return { data: serializeData(serialized) };
     } catch (error) {
         console.error('Search admitted patients error:', error);
         return { error: 'Search failed' };

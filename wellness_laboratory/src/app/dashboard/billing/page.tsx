@@ -12,7 +12,9 @@ import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { cn } from "@/lib/utils";
 
-export default function LabBillingPage() {
+import { Suspense } from "react";
+
+function LabBillingPageContent() {
     const searchParams = useSearchParams();
     const requestIdParam = searchParams.get("requestId");
 
@@ -533,5 +535,18 @@ export default function LabBillingPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LabBillingPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
+                <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Loading...</p>
+            </div>
+        }>
+            <LabBillingPageContent />
+        </Suspense>
     );
 }
