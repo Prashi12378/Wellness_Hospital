@@ -46,7 +46,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Pencil } from 'lucide-react';
-import RecordAdvanceButton from '@/components/RecordAdvanceButton';
+import RecordDepositButton from '@/components/RecordDepositButton';
 
 type TabType = 'overview' | 'billing' | 'clinical' | 'files';
 
@@ -64,8 +64,8 @@ export default function AdmissionDetailPage() {
     const [modalType, setModalType] = useState<string | null>(null);
     const [editingItem, setEditingItem] = useState<any>(null);
 
-    const [advanceBalance, setAdvanceBalance] = useState(0);
-    const [patientAdvances, setPatientAdvances] = useState<any[]>([]);
+    const [depositBalance, setDepositBalance] = useState(0);
+    const [patientDeposits, setPatientDeposits] = useState<any[]>([]);
 
     useEffect(() => {
         fetchDetails();
@@ -92,11 +92,11 @@ export default function AdmissionDetailPage() {
     };
 
     const fetchAdvanceBalance = async () => {
-        const { getPatientAdvanceBalance } = await import('@/app/actions/patient-billing');
-        const res = await getPatientAdvanceBalance(admission.patientId);
+        const { getPatientDepositBalance } = await import('@/app/actions/patient-billing');
+        const res = await getPatientDepositBalance(admission.patientId);
         if (res.success) {
-            setAdvanceBalance(res.balance);
-            setPatientAdvances(res.advances || []);
+            setDepositBalance(res.balance);
+            setPatientDeposits(res.deposits || []);
         }
     };
 
@@ -236,7 +236,7 @@ export default function AdmissionDetailPage() {
                     </div>
                 </div>
                     <div className="flex items-center gap-3">
-                        <RecordAdvanceButton 
+                        <RecordDepositButton 
                             patientId={admission.patientId} 
                             patientName={`${admission.patient.firstName} ${admission.patient.lastName}`} 
                         />
@@ -372,10 +372,10 @@ export default function AdmissionDetailPage() {
                                             <span className="text-slate-400">Hospital Fees</span>
                                             <span>₹{(admission.charges?.filter((c: any) => c.type !== 'medicine').reduce((a: number, c: any) => a + Number(c.amount), 0) || 0).toLocaleString()}</span>
                                         </div>
-                                        {advanceBalance > 0 && (
+                                        {depositBalance > 0 && (
                                             <div className="flex justify-between items-center text-sm font-bold text-emerald-400 pt-2 border-t border-slate-800">
-                                                <span>Available Advance</span>
-                                                <span>- ₹{advanceBalance.toLocaleString()}</span>
+                                                <span>Available Deposit</span>
+                                                <span>- ₹{depositBalance.toLocaleString()}</span>
                                             </div>
                                         )}
                                     </div>
@@ -459,18 +459,18 @@ export default function AdmissionDetailPage() {
                                     )}
                                 </tbody>
                                 <tfoot>
-                                    {advanceBalance > 0 && (
+                                    {depositBalance > 0 && (
                                         <tr className="bg-emerald-50 text-emerald-700 font-bold border-t border-emerald-100">
-                                            <td colSpan={3} className="px-6 py-4 text-[10px] uppercase tracking-widest">Available Patient Advance Credit</td>
-                                            <td className="px-6 py-4 text-right"> - ₹{advanceBalance.toLocaleString()}</td>
+                                            <td colSpan={3} className="px-6 py-4 text-[10px] uppercase tracking-widest">Available Patient Deposit Credit</td>
+                                            <td className="px-6 py-4 text-right"> - ₹{depositBalance.toLocaleString()}</td>
                                             <td className="px-6 py-4"></td>
                                         </tr>
                                     )}
                                     <tr className="bg-slate-900 text-white rounded-2xl overflow-hidden">
                                         <td colSpan={3} className="px-6 py-5 text-lg font-black tracking-tight text-slate-400 lowercase">T O T A L   B I L L</td>
                                         <td className="px-6 py-5 text-right text-2xl font-black">
-                                            ₹{Math.max(0, totalBill - advanceBalance).toLocaleString()}
-                                            {advanceBalance > 0 && totalBill > advanceBalance && <span className="text-xs block text-slate-400 font-medium">After deducting advance</span>}
+                                            ₹{Math.max(0, totalBill - depositBalance).toLocaleString()}
+                                            {depositBalance > 0 && totalBill > depositBalance && <span className="text-xs block text-slate-400 font-medium">After deducting advance</span>}
                                         </td>
                                         <td className="px-6 py-5"></td>
                                     </tr>

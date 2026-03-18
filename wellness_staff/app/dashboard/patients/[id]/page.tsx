@@ -3,7 +3,7 @@ import { User, Phone, Mail, Calendar, Hash, CheckCircle2, Navigation2, FileText,
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import RecordAdvanceButton from "@/components/RecordAdvanceButton";
+import RecordDepositButton from "@/components/RecordDepositButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +44,7 @@ export default async function PatientViewPage({
                     </div>
                 </div>
 
-                <RecordAdvanceButton 
+                <RecordDepositButton 
                     patientId={patient.id} 
                     patientName={`${patient.firstName} ${patient.lastName}`} 
                 />

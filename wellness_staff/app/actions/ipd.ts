@@ -368,17 +368,17 @@ export async function dischargePatient(admissionId: string, data?: {
         // 2. Calculate Total Bill
         const totalAmount = admissionWithPatient.HospitalCharge.reduce((sum, charge) => sum + Number(charge.amount), 0);
         
-        // 3. Fetch available advances
-        const advances = await (prisma as any).advancePayment.findMany({
+        // 3. Fetch available deposits
+        const deposits = await (prisma as any).deposit.findMany({
             where: {
                 patientId: admissionWithPatient.patientId,
                 status: "AVAILABLE"
             }
         });
         
-        const totalAdvance = advances.reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
-        const appliedAdvance = Math.min(totalAmount, totalAdvance);
-        const finalPayable = totalAmount - appliedAdvance;
+        const totalAdvance = deposits.reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
+        const appliedDeposit = Math.min(totalAmount, totalAdvance);
+        const finalPayable = totalAmount - appliedDeposit;
         const paymentMethod = data?.paymentMethod || 'CASH';
 
         // 4. Perform atomic update and ledger recording
@@ -405,7 +405,7 @@ export async function dischargePatient(admissionId: string, data?: {
                 data: {
                     transactionType: 'income',
                     category: 'staff',
-                    description: `IPD Discharge - Bill for ${admissionWithPatient.patient.firstName} ${admissionWithPatient.patient.lastName} (IP-${admissionId.slice(-6).toUpperCase()})${appliedAdvance > 0 ? ` [Used Advance: ₹${appliedAdvance}]` : ''}`,
+                    description: `IPD Discharge - Bill for ${admissionWithPatient.patient.firstName} ${admissionWithPatient.patient.lastName} (IP-${admissionId.slice(-6).toUpperCase()})${appliedDeposit > 0 ? ` [Used Advance: ₹${appliedDeposit}]` : ''}`,
                     amount: finalPayable,
                     paymentMethod: paymentMethod,
                     transactionDate: new Date(),
@@ -415,16 +415,16 @@ export async function dischargePatient(admissionId: string, data?: {
         ];
 
         // Update advance payments if any applied
-        if (appliedAdvance > 0) {
-            let remainingToDeduct = appliedAdvance;
-            for (const adv of advances) {
+        if (appliedDeposit > 0) {
+            let remainingToDeduct = appliedDeposit;
+            for (const adv of deposits) {
                 if (remainingToDeduct <= 0) break;
                 const deductFromThis = Math.min(Number(adv.amount), remainingToDeduct);
                 
                 // If the whole advance is used
                 if (deductFromThis >= Number(adv.amount)) {
                     transactions.push(
-                        (prisma as any).advancePayment.update({
+                        (prisma as any).deposit.update({
                             where: { id: adv.id },
                             data: { status: "CONSUMED", invoiceId: admissionId, updatedAt: new Date() }
                         })
@@ -434,7 +434,7 @@ export async function dischargePatient(admissionId: string, data?: {
                     // but for now we mark as CONSUMED if any part is used or implement partial logic)
                     // Given the simple schema, we mark as CONSUMED.
                     transactions.push(
-                        (prisma as any).advancePayment.update({
+                        (prisma as any).deposit.update({
                             where: { id: adv.id },
                             data: { status: "CONSUMED", invoiceId: admissionId, updatedAt: new Date() }
                         })

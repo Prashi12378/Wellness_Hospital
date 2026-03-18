@@ -72,8 +72,8 @@ export async function createInvoice(data: {
     paymentMethod: string;
     discountRate?: number;
     discountAmount?: number;
-    advanceAmount?: number;
-    advancePaymentId?: string;
+    depositAmount?: number;
+    depositId?: string;
     date?: Date | string;
 }) {
     try {
@@ -161,7 +161,7 @@ export async function createInvoice(data: {
                             subTotal: subTotal,
                             totalGst: totalGst,
                             grandTotal: grandTotal,
-                            advanceAmount: data.advanceAmount || 0,
+                            depositAmount: data.depositAmount || 0,
                             discountRate: Number(data.discountRate || 0),
                             discountAmount: discountAmount,
                             paymentMethod: data.paymentMethod,
@@ -175,12 +175,12 @@ export async function createInvoice(data: {
                         }
                     }) as any;
 
-                    console.log('Invoice created, deducting stock and updating advance...');
+                    console.log('Invoice created, deducting stock and updating deposit...');
 
-                    // 1b. Update AdvancePayment if used
-                    if (data.advancePaymentId) {
-                        await tx.advancePayment.update({
-                            where: { id: data.advancePaymentId },
+                    // 1b. Update Deposit if used
+                    if (data.depositId) {
+                        await tx.deposit.update({
+                            where: { id: data.depositId },
                             data: {
                                 status: 'CONSUMED',
                                 invoiceId: newInvoice.id
@@ -257,11 +257,15 @@ export async function createInvoice(data: {
             success: true,
             invoice: {
                 ...invoice,
+                date: invoice.date ? invoice.date.toISOString() : null,
+                createdAt: invoice.createdAt ? invoice.createdAt.toISOString() : null,
+                updatedAt: invoice.updatedAt ? invoice.updatedAt.toISOString() : null,
                 subTotal: Number(invoice.subTotal),
                 totalGst: Number(invoice.totalGst),
                 grandTotal: Number(invoice.grandTotal),
                 discountRate: Number(invoice.discountRate || 0),
                 discountAmount: Number(invoice.discountAmount || 0),
+                depositAmount: Number(invoice.depositAmount || 0),
                 items: (invoice as any).items.map((item: any) => ({
                     ...item,
                     mrp: Number(item.mrp),
@@ -311,11 +315,15 @@ export async function getInvoices() {
 
         const serialized = (invoices as any[]).map(invoice => ({
             ...invoice,
+            date: invoice.date ? invoice.date.toISOString() : null,
+            createdAt: invoice.createdAt ? invoice.createdAt.toISOString() : null,
+            updatedAt: invoice.updatedAt ? invoice.updatedAt.toISOString() : null,
             subTotal: Number(invoice.subTotal),
             totalGst: Number(invoice.totalGst),
             grandTotal: Number(invoice.grandTotal),
             discountRate: Number(invoice.discountRate || 0),
             discountAmount: Number(invoice.discountAmount || 0),
+            depositAmount: Number(invoice.depositAmount || 0),
             items: (invoice.items || []).map((item: any) => ({
                 ...item,
                 mrp: Number(item.mrp),

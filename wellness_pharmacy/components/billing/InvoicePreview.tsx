@@ -27,6 +27,7 @@ interface InvoicePreviewProps {
         grandTotal: number;
         discountRate?: number;
         discountAmount?: number;
+        depositAmount?: number;
         paymentMethod: string;
         status?: string; // Added status
         items: any[];
@@ -151,14 +152,14 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                 print-color-adjust: exact !important;
                 color: #000;
             }
-            .invoice-container { width: 100%; border: none !important; }
+            .invoice-container { width: 100%; border: none !important; page-break-inside: avoid; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            /* Make sure table rows don't break across pages if possible */
             tr { page-break-inside: avoid; }
-            .totals-container { page-break-inside: avoid; }
-            .footer { page-break-inside: avoid; margin-top: 30px !important; }
-            /* Hide the screen scrollbar area in print */
+            .totals-container { page-break-inside: avoid; break-inside: avoid; }
+            .footer { page-break-inside: avoid; break-inside: avoid; page-break-before: avoid; break-before: avoid; margin-top: 12px !important; }
+            .items-table { page-break-inside: auto; }
+            .gst-table { page-break-inside: avoid; break-inside: avoid; }
             #print-area { padding: 0 !important; background: transparent !important; }
         `;
 
@@ -308,7 +309,7 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                         </div>
 
                         {/* Patient Info */}
-                        <div className="grid grid-cols-3 gap-6 mb-6 text-sm patient-info bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div className="grid grid-cols-3 gap-4 mb-4 text-sm patient-info bg-slate-50 p-3 rounded-lg border border-slate-200">
                             <div className="info-block flex flex-col gap-1">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Patient Details</span>
                                 <span className="font-bold text-slate-900">{invoice.patientName}</span>
@@ -324,7 +325,7 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                         </div>
 
                         {/* Items Table - Clean styling */}
-                        <div className="min-h-[220px] rounded-xl border border-slate-200 overflow-hidden mb-6">
+                        <div className="rounded-xl border border-slate-200 overflow-hidden mb-4">
                             <table className="w-full border-collapse text-xs items-table">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-slate-200 text-slate-500">
@@ -372,7 +373,7 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                         </div>
 
                         {/* Summary Totals */}
-                        <div className="flex gap-6 totals-container">
+                        <div className="flex gap-4 totals-container">
                             <div className="w-7/12">
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wide flex items-center gap-2">
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -420,6 +421,12 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                                             <span className="font-medium text-slate-500">Total Tax (GST)</span>
                                             <span className="font-bold text-slate-800">₹{Number(invoice.totalGst).toFixed(2)}</span>
                                         </div>
+                                        {Number(invoice.depositAmount || 0) > 0 && (
+                                            <div className="flex justify-between items-center text-primary-dark text-sm border-t border-slate-200 pt-3">
+                                                <span className="font-bold">Deposit Deducted</span>
+                                                <span className="font-bold">-₹{Number(invoice.depositAmount).toFixed(2)}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between items-center text-red-600 text-sm border-t border-slate-200 pt-3">
                                             <span className="font-bold">Discount</span>
                                             <span className="font-bold">-₹{Number(invoice.discountAmount).toFixed(2)}</span>
@@ -440,7 +447,7 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                         </div>
 
                         {/* Footer Signature */}
-                        <div className="mt-12 pt-6 flex justify-between items-end border-t border-slate-200 footer">
+                        <div className="mt-4 pt-4 flex justify-between items-end border-t border-slate-200 footer" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                             <div className="text-[10px] text-slate-500 max-w-[60%] leading-relaxed">
                                 <p className="font-bold text-slate-700 mb-1 uppercase tracking-wider">Terms & Conditions:</p>
                                 <ol className="list-decimal pl-3 space-y-0.5">

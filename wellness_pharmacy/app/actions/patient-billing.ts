@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { serializeData } from "@/lib/serialization";
 
-export async function recordAdvancePayment(data: {
+export async function recordDeposit(data: {
     patientId: string;
     amount: number;
     paymentMethod: string;
@@ -19,13 +19,13 @@ export async function recordAdvancePayment(data: {
             return { success: false, error: "Unauthorized" };
         }
 
-        const advance = await (prisma as any).advancePayment.create({
+        const deposit = await (prisma as any).deposit.create({
             data: {
                 id: randomUUID(),
                 patientId: data.patientId,
                 amount: data.amount,
                 paymentMethod: data.paymentMethod,
-                description: data.description || "Advance Payment",
+                description: data.description || "Deposit Payment",
                 status: "AVAILABLE",
             }
         });
@@ -34,8 +34,8 @@ export async function recordAdvancePayment(data: {
         await prisma.ledger.create({
             data: {
                 transactionType: 'income',
-                category: 'advance',
-                description: `Advance Payment - ${data.description || 'General'}`,
+                category: 'deposit',
+                description: `Deposit Payment - ${data.description || 'General'}`,
                 amount: data.amount,
                 paymentMethod: data.paymentMethod,
                 transactionDate: new Date(),
@@ -44,26 +44,26 @@ export async function recordAdvancePayment(data: {
         });
 
         revalidatePath(`/dashboard/patients/${data.patientId}`);
-        return { success: true, advance: serializeData(advance) };
+        return { success: true, deposit: serializeData(deposit) };
     } catch (error: any) {
-        console.error("Failed to record advance payment:", error);
-        return { success: false, error: error.message || "Failed to record advance payment" };
+        console.error("Failed to record deposit payment:", error);
+        return { success: false, error: error.message || "Failed to record deposit payment" };
     }
 }
 
-export async function getPatientAdvanceBalance(patientId: string) {
+export async function getPatientDepositBalance(patientId: string) {
     try {
-        const advances = await (prisma as any).advancePayment.findMany({
+        const deposits = await (prisma as any).deposit.findMany({
             where: {
                 patientId,
                 status: "AVAILABLE"
             }
         });
 
-        const totalBalance = advances.reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
-        return { success: true, balance: totalBalance, advances: serializeData(advances) };
+        const totalBalance = deposits.reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
+        return { success: true, balance: totalBalance, deposits: serializeData(deposits) };
     } catch (error) {
-        console.error("Failed to fetch advance balance:", error);
+        console.error("Failed to fetch deposit balance:", error);
         return { success: false, error: "Failed to fetch balance" };
     }
 }

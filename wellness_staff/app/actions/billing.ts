@@ -113,8 +113,8 @@ interface OPDInvoiceData {
     grandTotal: number;
     paymentMethod: string;
     discountAmount?: number;
-    advanceAmount?: number;
-    advancePaymentId?: string;
+    depositAmount?: number;
+    depositId?: string;
     items: {
         name: string;
         qty: number;
@@ -144,7 +144,7 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
                 subTotal: data.subTotal,
                 totalGst: data.totalGst,
                 grandTotal: data.grandTotal,
-                advanceAmount: data.advanceAmount || 0,
+                depositAmount: data.depositAmount || 0,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
                 date: data.date ? new Date(data.date) : new Date(),
@@ -163,9 +163,9 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
         });
 
         // 2. If advance payment was used, update its status
-        if (data.advancePaymentId) {
-            await (prisma as any).advancePayment.update({
-                where: { id: data.advancePaymentId },
+        if (data.depositId) {
+            await (prisma as any).deposit.update({
+                where: { id: data.depositId },
                 data: {
                     status: 'CONSUMED',
                     invoiceId: invoice.id
@@ -226,8 +226,8 @@ interface ObservationInvoiceData {
     discountAmount?: number;
     observationHours?: number;
     ward?: string;
-    advanceAmount?: number;
-    advancePaymentId?: string;
+    depositAmount?: number;
+    depositId?: string;
     items: {
         name: string;
         qty: number;
@@ -256,7 +256,7 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
                 subTotal: data.subTotal,
                 totalGst: data.totalGst,
                 grandTotal: data.grandTotal,
-                advanceAmount: data.advanceAmount || 0,
+                depositAmount: data.depositAmount || 0,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
                 ward: data.ward || undefined,
@@ -276,9 +276,9 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
         });
 
         // 2. If advance payment was used, update its status
-        if (data.advancePaymentId) {
-            await (prisma as any).advancePayment.update({
-                where: { id: data.advancePaymentId },
+        if (data.depositId) {
+            await (prisma as any).deposit.update({
+                where: { id: data.depositId },
                 data: {
                     status: 'CONSUMED',
                     invoiceId: invoice.id

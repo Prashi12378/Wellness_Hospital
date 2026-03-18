@@ -26,7 +26,7 @@ import {
     generateOPDInvoice,
     getAllDoctors
 } from '@/app/actions/billing';
-import { getPatientAdvanceBalance } from '@/app/actions/patient-billing';
+import { getPatientDepositBalance } from '@/app/actions/patient-billing';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -41,9 +41,9 @@ export default function OPDBillingPage() {
     const [modalType, setModalType] = useState<string | null>(null);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [paymentMethod, setPaymentMethod] = useState<string>('CASH');
-    const [advanceBalance, setAdvanceBalance] = useState<number>(0);
-    const [patientAdvances, setPatientAdvances] = useState<any[]>([]);
-    const [useAdvance, setUseAdvance] = useState(false);
+    const [depositBalance, setDepositBalance] = useState<number>(0);
+    const [patientDeposits, setPatientDeposits] = useState<any[]>([]);
+    const [useDeposit, setUseDeposit] = useState(false);
 
     useEffect(() => {
         fetchDetails();
@@ -56,10 +56,10 @@ export default function OPDBillingPage() {
         if (res.success) {
             setAppointment(res.appointment);
             // Fetch advance balance for the patient
-            const advRes = await getPatientAdvanceBalance(res.appointment.patient.id);
+            const advRes = await getPatientDepositBalance(res.appointment.patient.id);
             if (advRes.success) {
-                setAdvanceBalance(advRes.balance);
-                setPatientAdvances(advRes.advances || []);
+                setDepositBalance(advRes.balance);
+                setPatientDeposits(advRes.deposits || []);
             }
         }
         setIsLoading(false);
@@ -107,8 +107,8 @@ export default function OPDBillingPage() {
             return;
         }
 
-        const appliedAdvance = useAdvance ? Math.min(totalBill, advanceBalance) : 0;
-        const selectedAdvance = appliedAdvance > 0 ? patientAdvances[0] : null; // Simplified: use first available
+        const appliedDeposit = useDeposit ? Math.min(totalBill, depositBalance) : 0;
+        const selectedDeposit = appliedDeposit > 0 ? patientDeposits[0] : null; // Simplified: use first available
 
         const data = {
             appointmentId: id,
@@ -117,9 +117,9 @@ export default function OPDBillingPage() {
             doctorName: appointment.doctor ? `${appointment.doctor.firstName} ${appointment.doctor.lastName}` : undefined,
             subTotal: totalBill,
             totalGst: 0, 
-            grandTotal: totalBill - appliedAdvance,
-            advanceAmount: appliedAdvance,
-            advancePaymentId: selectedAdvance?.id,
+            grandTotal: totalBill - appliedDeposit,
+            depositAmount: appliedDeposit,
+            depositId: selectedDeposit?.id,
             paymentMethod: paymentMethod,
             items: appointment.charges.map((c: any) => ({
                 name: c.description,
@@ -288,36 +288,49 @@ export default function OPDBillingPage() {
                                         <option value="TRANSFER">BANK TRANSFER</option>
                                     </select>
                                 </div>
-                                <div className="pt-4 border-t border-slate-100 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Advance Balance</span>
-                                            <span className={cn("text-sm font-black", advanceBalance > 0 ? "text-emerald-600" : "text-slate-400")}>
-                                                ₹{advanceBalance.toLocaleString()}
-                                            </span>
+                                {/* Deposit Section */}
+                                <div className="pt-4 border-t border-slate-800">
+                                    {depositBalance > 0 && !hasInvoice ? (
+                                        <button
+                                            onClick={() => setUseDeposit(!useDeposit)}
+                                            className={cn(
+                                                "w-full flex items-center justify-between p-3 rounded-2xl border transition-all duration-300",
+                                                useDeposit
+                                                    ? "bg-emerald-500 border-emerald-600"
+                                                    : "bg-slate-800 border-slate-700 hover:border-slate-600"
+                                            )}
+                                        >
+                                            <div className="flex flex-col items-start">
+                                                <span className={cn("text-[10px] font-black uppercase tracking-widest", useDeposit ? "text-white/70" : "text-slate-500")}>
+                                                    Patient Deposit
+                                                </span>
+                                                <span className={cn("text-base font-black tabular-nums", useDeposit ? "text-white" : "text-slate-300")}>
+                                                    ₹{depositBalance.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className={cn(
+                                                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                                                useDeposit
+                                                    ? "bg-white/20 text-white"
+                                                    : "bg-slate-700 text-slate-400"
+                                            )}>
+                                                <span className={cn("w-1.5 h-1.5 rounded-full", useDeposit ? "bg-white" : "bg-slate-500")} />
+                                                {useDeposit ? "Applied" : "Apply"}
+                                            </div>
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800 border border-slate-700">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Patient Deposit</span>
+                                            <span className="text-[10px] font-bold text-slate-600 bg-slate-700 px-2 py-1 rounded-lg">No Balance</span>
                                         </div>
-                                        {advanceBalance > 0 && !hasInvoice ? (
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={useAdvance}
-                                                    onChange={(e) => setUseAdvance(e.target.checked)}
-                                                    className="sr-only peer" 
-                                                />
-                                                <div className="w-10 h-6 bg-slate-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                                                <span className="ml-2 text-xs font-bold text-slate-400">Apply</span>
-                                            </label>
-                                        ) : (
-                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter bg-slate-50 px-2 py-1 rounded">No Balance</span>
-                                        )}
-                                    </div>
+                                    )}
+                                    {useDeposit && !hasInvoice && (
+                                        <div className="mt-2 flex justify-between items-center text-xs font-bold px-1">
+                                            <span className="text-slate-500">Deducted from Total:</span>
+                                            <span className="text-emerald-400">− ₹{Math.min(totalBill, depositBalance).toLocaleString()}</span>
+                                        </div>
+                                    )}
                                 </div>
-                                {useAdvance && !hasInvoice && (
-                                    <div className="pt-2 flex justify-between items-center text-xs font-bold">
-                                        <span className="text-slate-400">Advance Adjusted:</span>
-                                        <span className="text-red-400">- ₹{Math.min(totalBill, advanceBalance).toLocaleString()}</span>
-                                    </div>
-                                )}
                                 <div className="pt-2">
                                     <p className="text-xs font-bold text-slate-500">Status</p>
                                     <p className={cn(

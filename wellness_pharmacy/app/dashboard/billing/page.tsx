@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, FileText, Loader2, Hospital } from 'lucide-react';
 import { searchMedicines, createInvoice, getPharmacySettings, searchPatients, searchAdmittedPatients } from '@/app/actions/billing';
-import { getPatientAdvanceBalance } from '@/app/actions/patient-billing';
+import { getPatientDepositBalance } from '@/app/actions/patient-billing';
 import { fetchMedicineDetailsFromBarcode } from '@/app/actions/barcode';
 import InvoicePreview from '@/components/billing/InvoicePreview';
 import { cn } from '@/lib/utils';
@@ -30,9 +30,9 @@ export default function BillingPage() {
     const [createdInvoice, setCreatedInvoice] = useState<any>(null);
     const [showPreview, setShowPreview] = useState(false);
     const [discountRate, setDiscountRate] = useState<number>(0);
-    const [advanceBalance, setAdvanceBalance] = useState<number>(0);
-    const [patientAdvances, setPatientAdvances] = useState<any[]>([]);
-    const [useAdvance, setUseAdvance] = useState(false);
+    const [depositBalance, setDepositBalance] = useState<number>(0);
+    const [patientDeposits, setPatientDeposits] = useState<any[]>([]);
+    const [useDeposit, setUseDeposit] = useState(false);
     const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
     // Patient Lookup State
@@ -79,21 +79,21 @@ export default function BillingPage() {
         return () => clearTimeout(delayDebounceFn);
     }, [patientSearchTerm]);
 
-    // Fetch Advance Balance when patient is selected
+    // Fetch Deposit Balance when patient is selected
     useEffect(() => {
         if (selectedPatientId) {
             const fetchBalance = async () => {
-                const res = await getPatientAdvanceBalance(selectedPatientId);
+                const res = await getPatientDepositBalance(selectedPatientId);
                 if (res.success) {
-                    setAdvanceBalance(res.balance);
-                    setPatientAdvances(res.advances || []);
+                    setDepositBalance(res.balance);
+                    setPatientDeposits(res.deposits || []);
                 }
             };
             fetchBalance();
         } else {
-            setAdvanceBalance(0);
-            setPatientAdvances([]);
-            setUseAdvance(false);
+            setDepositBalance(0);
+            setPatientDeposits([]);
+            setUseDeposit(false);
         }
     }, [selectedPatientId]);
 
@@ -295,8 +295,8 @@ export default function BillingPage() {
             return;
         }
 
-        const appliedAdvance = useAdvance ? Math.min(grandTotal, advanceBalance) : 0;
-        const selectedAdvance = appliedAdvance > 0 ? patientAdvances[0] : null;
+        const appliedDeposit = useDeposit ? Math.min(grandTotal, depositBalance) : 0;
+        const selectedDeposit = appliedDeposit > 0 ? patientDeposits[0] : null;
 
         const result = await createInvoice({
             patientName: patientInfo.name,
@@ -308,8 +308,8 @@ export default function BillingPage() {
             items: cart,
             discountRate,
             discountAmount,
-            advanceAmount: appliedAdvance,
-            advancePaymentId: selectedAdvance?.id,
+            depositAmount: appliedDeposit,
+            depositId: selectedDeposit?.id,
             date: billDate
         });
 
@@ -670,39 +670,54 @@ export default function BillingPage() {
                                 </div>
                                 <span className="font-bold text-red-400">-₹{discountAmount.toFixed(2)}</span>
                             </div>
-                            <div className="pt-4 border-t border-slate-100 space-y-3">
-                                <div className="flex justify-between items-center text-slate-400">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Advance Balance</span>
-                                        <span className={cn("text-sm font-black", advanceBalance > 0 ? "text-emerald-600" : "text-slate-400")}>
-                                            ₹{advanceBalance.toLocaleString()}
-                                        </span>
+                            {/* Deposit Section */}
+                            <div className="pt-4 border-t border-slate-800">
+                                {depositBalance > 0 ? (
+                                    <button
+                                        onClick={() => setUseDeposit(!useDeposit)}
+                                        className={cn(
+                                            "w-full flex items-center justify-between p-3 rounded-2xl border transition-all duration-300",
+                                            useDeposit
+                                                ? "bg-emerald-500 border-emerald-600"
+                                                : "bg-slate-800 border-slate-700 hover:border-slate-600"
+                                        )}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span className={cn("text-[10px] font-black uppercase tracking-widest", useDeposit ? "text-white/70" : "text-slate-500")}>
+                                                Patient Deposit
+                                            </span>
+                                            <span className={cn("text-base font-black tabular-nums", useDeposit ? "text-white" : "text-slate-300")}>
+                                                ₹{depositBalance.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className={cn(
+                                            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                                            useDeposit
+                                                ? "bg-white/20 text-white"
+                                                : "bg-slate-700 text-slate-400"
+                                        )}>
+                                            <span className={cn("w-1.5 h-1.5 rounded-full", useDeposit ? "bg-white" : "bg-slate-500")} />
+                                            {useDeposit ? "Applied" : "Apply"}
+                                        </div>
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-800 border border-slate-700">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Patient Deposit</span>
+                                        <span className="text-[10px] font-bold text-slate-600 bg-slate-700 px-2 py-1 rounded-lg">No Balance</span>
                                     </div>
-                                    {advanceBalance > 0 ? (
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={useAdvance}
-                                                onChange={(e) => setUseAdvance(e.target.checked)}
-                                                className="sr-only peer"
-                                            />
-                                            <div className="w-10 h-6 bg-slate-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                                        </label>
-                                    ) : (
-                                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter bg-slate-50 px-2 py-1 rounded">No Balance</span>
-                                    )}
-                                </div>
-                                {useAdvance && advanceBalance > 0 && (
-                                    <div className="flex justify-between items-center text-xs font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
-                                        <span className="uppercase tracking-widest">Advance Deducted</span>
-                                        <span>- ₹{Math.min(grandTotal, advanceBalance).toLocaleString()}</span>
+                                )}
+                                {useDeposit && depositBalance > 0 && (
+                                    <div className="mt-2 flex justify-between items-center text-xs font-bold px-1">
+                                        <span className="text-slate-500">Deducted from Total:</span>
+                                        <span className="text-emerald-400">− ₹{Math.min(grandTotal, depositBalance).toLocaleString()}</span>
                                     </div>
                                 )}
                             </div>
+
                             <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
                                 <span className="text-lg font-bold">Grand Total</span>
                                 <span className="text-3xl font-black text-primary-light">
-                                    ₹{(grandTotal - (useAdvance ? Math.min(grandTotal, advanceBalance) : 0)).toFixed(2)}
+                                    ₹{(grandTotal - (useDeposit ? Math.min(grandTotal, depositBalance) : 0)).toFixed(2)}
                                 </span>
                             </div>
                         </div>

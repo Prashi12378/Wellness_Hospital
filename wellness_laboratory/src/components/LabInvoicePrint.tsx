@@ -75,6 +75,12 @@ export default function LabInvoicePrint({ invoice }: { invoice: any }) {
                             <span>₹{(Number(invoice.totalGst) || 0).toFixed(2)}</span>
                         </div>
                     )}
+                    {(Number(invoice.depositAmount) || 0) > 0 && (
+                        <div className="flex justify-between text-primary-dark font-bold">
+                            <span>Deposit Deducted</span>
+                            <span>- ₹{(Number(invoice.depositAmount) || 0).toFixed(2)}</span>
+                        </div>
+                    )}
                     {(Number(invoice.discountAmount) || 0) > 0 && (
                         <div className="flex justify-between text-emerald-600 font-bold">
                             <span>Discount</span>

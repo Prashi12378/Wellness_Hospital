@@ -2,17 +2,17 @@
 
 import { useState } from 'react';
 import { IndianRupee, X, Loader2 } from 'lucide-react';
-import { recordAdvancePayment } from '@/app/actions/patient-billing';
+import { recordDeposit } from '@/app/actions/patient-billing';
 import { toast } from 'react-hot-toast';
 
-interface AdvancePaymentModalProps {
+interface DepositModalProps {
     patientId: string;
     patientName: string;
     isOpen: boolean;
     onClose: () => void;
 }
 
-export default function AdvancePaymentModal({ patientId, patientName, isOpen, onClose }: AdvancePaymentModalProps) {
+export default function DepositModal({ patientId, patientName, isOpen, onClose }: DepositModalProps) {
     const [amount, setAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('CASH');
     const [description, setDescription] = useState('');
@@ -29,7 +29,7 @@ export default function AdvancePaymentModal({ patientId, patientName, isOpen, on
 
         setIsSubmitting(true);
         try {
-            const result = await recordAdvancePayment({
+            const result = await recordDeposit({
                 patientId,
                 amount: parseFloat(amount),
                 paymentMethod,
@@ -37,7 +37,7 @@ export default function AdvancePaymentModal({ patientId, patientName, isOpen, on
             });
 
             if (result.success) {
-                toast.success('Advance payment recorded successfully');
+                toast.success('Deposit payment recorded successfully');
                 onClose();
                 setAmount('');
                 setDescription('');
@@ -56,7 +56,7 @@ export default function AdvancePaymentModal({ patientId, patientName, isOpen, on
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <div>
-                        <h3 className="text-xl font-bold text-slate-900">Record Advance</h3>
+                        <h3 className="text-xl font-bold text-slate-900">Record Deposit</h3>
                         <p className="text-sm text-slate-500 font-medium">For {patientName}</p>
                     </div>
                     <button 

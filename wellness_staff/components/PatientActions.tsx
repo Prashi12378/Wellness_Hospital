@@ -6,7 +6,7 @@ import { useState } from "react";
 import { deletePatient } from "@/app/actions/patient-management";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import RecordAdvanceButton from "./RecordAdvanceButton";
+import RecordDepositButton from "./RecordDepositButton";
 
 export default function PatientActions({ patientId, patientName }: { patientId: string, patientName?: string }) {
     const [isDeleting, setIsDeleting] = useState(false);
@@ -29,7 +29,7 @@ export default function PatientActions({ patientId, patientName }: { patientId: 
     return (
         <div className="flex items-center gap-2">
             {patientName && (
-                <RecordAdvanceButton 
+                <RecordDepositButton 
                     patientId={patientId} 
                     patientName={patientName} 
                 />

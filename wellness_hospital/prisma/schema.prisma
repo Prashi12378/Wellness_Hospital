@@ -81,7 +81,7 @@ model Profile {
   labRequests           LabRequest[]   @relation("PatientLabRequests")
   prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
-  advancePayments       AdvancePayment[] @relation("PatientAdvancePayments")
+  deposits              Deposit[]      @relation("PatientDeposits")
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -196,11 +196,11 @@ model Invoice {
   discountRate   Decimal       @default(0)
   admissionId    String?
   appointmentId  String?
-  advanceAmount  Decimal         @default(0)
+  depositAmount  Decimal         @default(0)
   ward           String?
   admission      Admission?      @relation(fields: [admissionId], references: [id])
   Appointment    Appointment?    @relation(fields: [appointmentId], references: [id])
-  advancePayment AdvancePayment? @relation("InvoiceAdvance")
+  deposit        Deposit?        @relation("InvoiceDeposit")
   items          InvoiceItem[]
 }
 
@@ -368,7 +368,7 @@ model Message {
   updatedAt DateTime @updatedAt
 }
 
-model AdvancePayment {
+model Deposit {
   id            String   @id @default(cuid())
   patientId     String
   amount        Decimal
@@ -379,8 +379,8 @@ model AdvancePayment {
   invoiceId     String?  @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  patient       Profile  @relation("PatientAdvancePayments", fields: [patientId], references: [id], onDelete: Cascade)
-  invoice       Invoice? @relation("InvoiceAdvance", fields: [invoiceId], references: [id])
+  patient       Profile  @relation("PatientDeposits", fields: [patientId], references: [id], onDelete: Cascade)
+  invoice       Invoice? @relation("InvoiceDeposit", fields: [invoiceId], references: [id])
 }
 
 enum HealthPackageType {

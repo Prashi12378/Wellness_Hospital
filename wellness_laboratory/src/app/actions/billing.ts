@@ -13,8 +13,8 @@ interface LabInvoiceData {
     discountAmount?: number;
     discountRate?: number;
     grandTotal: number;
-    advanceAmount?: number;
-    advancePaymentId?: string;
+    depositAmount?: number;
+    depositId?: string;
     paymentMethod: string;
     items: any[];
     requestIds?: string[];
@@ -51,7 +51,7 @@ export async function createLabInvoice(data: LabInvoiceData) {
                 discountAmount: data.discountAmount || 0,
                 discountRate: data.discountRate || 0,
                 grandTotal: data.grandTotal,
-                advanceAmount: data.advanceAmount || 0,
+                depositAmount: data.depositAmount || 0,
                 paymentMethod: data.paymentMethod,
                 status: data.paymentMethod === "CREDIT" ? "PENDING" : "PAID",
                 items: {
@@ -75,10 +75,10 @@ export async function createLabInvoice(data: LabInvoiceData) {
             },
         });
 
-        // Update AdvancePayment if used
-        if (data.advancePaymentId) {
-            await (prisma as any).advancePayment.update({
-                where: { id: data.advancePaymentId },
+        // Update Deposit if used
+        if (data.depositId) {
+            await (prisma as any).deposit.update({
+                where: { id: data.depositId },
                 data: {
                     status: 'CONSUMED',
                     invoiceId: invoice.id
