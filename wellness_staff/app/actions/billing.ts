@@ -225,6 +225,7 @@ interface ObservationInvoiceData {
     paymentMethod: string;
     discountAmount?: number;
     observationHours?: number;
+    ward?: string;
     advanceAmount?: number;
     advancePaymentId?: string;
     items: {
@@ -258,6 +259,7 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
                 advanceAmount: data.advanceAmount || 0,
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
+                ward: data.ward || undefined,
                 date: data.date ? new Date(data.date) : new Date(),
                 status: 'PAID',
                 items: {
