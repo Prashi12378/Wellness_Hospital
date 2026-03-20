@@ -36,8 +36,12 @@ export default function ActiveDiagnosticsPage() {
         setLoading(true);
         const res = await getLabRequests();
         if (res.success) {
-            // Filter only pending and processing
-            const active = (res.data || []).filter((r: any) => r.status === 'pending' || r.status === 'processing');
+            // Filter only pending, processing, OR completed but unlocked
+            const active = (res.data || []).filter((r: any) => 
+                r.status === 'pending' || 
+                r.status === 'processing' || 
+                (r.status === 'completed' && r.editUnlocked === true)
+            );
             setRequests(active);
         }
         setLoading(false);
@@ -135,6 +139,11 @@ export default function ActiveDiagnosticsPage() {
                                         {req.priority === 'urgent' && (
                                             <div className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-tighter bg-red-50 px-2 py-0.5 rounded border border-red-100 inline-block animate-pulse">
                                                 Urgent
+                                            </div>
+                                        )}
+                                        {req.status === 'completed' && req.editUnlocked && (
+                                            <div className="mt-2 text-[10px] font-black text-amber-600 uppercase tracking-tighter bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block ml-2">
+                                                Unlocked
                                             </div>
                                         )}
                                     </td>

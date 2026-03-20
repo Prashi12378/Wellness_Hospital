@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer } from 'lucide-react';
+import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer, Lock, Unlock } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
@@ -18,6 +18,7 @@ export default function AllBillsPage() {
     const [discountAmount, setDiscountAmount] = useState(0);
     const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0]);
     const [processing, setProcessing] = useState(false);
+    const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
     useLockBodyScroll(billingModalOpen);
 
@@ -68,6 +69,27 @@ export default function AllBillsPage() {
             alert('Billing failed. Please check console.');
         } finally {
             setProcessing(false);
+        }
+    };
+
+    const handleToggleLock = async (billId: string, currentStatus: boolean, type?: string) => {
+        setActionLoadingId(billId);
+        try {
+            const apiPath = type === 'LABORATORY' ? `/api/lab-requests/${billId}/unlock` : `/api/invoices/${billId}/unlock`;
+            const res = await fetch(apiPath, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ editUnlocked: !currentStatus })
+            });
+            if (res.ok) {
+                fetchBills();
+            } else {
+                alert('Failed to update lock status');
+            }
+        } catch (error) {
+            alert('Failed to update lock status');
+        } finally {
+            setActionLoadingId(null);
         }
     };
 
@@ -218,9 +240,46 @@ export default function AllBillsPage() {
                                                     >
                                                         <Printer className="w-4 h-4" /> Print
                                                     </button>
+                                                    <button
+                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type)}
+                                                        disabled={actionLoadingId === bill.id}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                                                        title={bill.editUnlocked ? "Lock Editing" : "Unlock Editing"}
+                                                    >
+                                                        {actionLoadingId === bill.id ? (
+                                                            <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+                                                        ) : bill.editUnlocked ? (
+                                                            <><Unlock className="w-4 h-4" /> Unlocked</>
+                                                        ) : (
+                                                            <><Lock className="w-4 h-4" /> Locked</>
+                                                        )}
+                                                    </button>
                                                     <Link
                                                         href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
                                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold rounded-lg transition-colors text-xs"
+                                                    >
+                                                        <Eye className="w-4 h-4" /> View
+                                                    </Link>
+                                                </>
+                                            ) : bill.type === 'LABORATORY' ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type)}
+                                                        disabled={actionLoadingId === bill.id}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                                                        title={bill.editUnlocked ? "Lock Report Editing" : "Unlock Report Editing"}
+                                                    >
+                                                        {actionLoadingId === bill.id ? (
+                                                            <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+                                                        ) : bill.editUnlocked ? (
+                                                            <><Unlock className="w-4 h-4" /> Unlocked</>
+                                                        ) : (
+                                                            <><Lock className="w-4 h-4" /> Locked</>
+                                                        )}
+                                                    </button>
+                                                    <Link
+                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
                                                     >
                                                         <Eye className="w-4 h-4" /> View
                                                     </Link>

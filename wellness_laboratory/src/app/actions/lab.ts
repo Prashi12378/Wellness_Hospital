@@ -78,6 +78,7 @@ export async function updateLabRequestStatus(requestId: string, status: string, 
                 parameters: (parameters?.parameters || parameters || null) as any,
                 technicianName: (parameters as any)?.technicianName || undefined,
                 consultantName: (parameters as any)?.consultantName || undefined,
+                editUnlocked: status === 'completed' ? false : undefined,
                 updatedAt: new Date()
             } as any
         });

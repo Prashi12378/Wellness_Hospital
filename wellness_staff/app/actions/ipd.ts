@@ -473,6 +473,7 @@ export async function updateDischargeSummary(admissionId: string, data: {
             where: { id: admissionId },
             data: {
                 ...data,
+                editUnlocked: false,
                 updatedAt: new Date()
             }
         });

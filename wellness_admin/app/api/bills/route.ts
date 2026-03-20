@@ -38,7 +38,8 @@ export async function GET() {
                 amount: Number(inv.grandTotal),
                 type: type,
                 status: inv.status,
-                paymentMethod: inv.paymentMethod
+                paymentMethod: inv.paymentMethod,
+                editUnlocked: inv.editUnlocked
             };
         });
 
@@ -51,7 +52,8 @@ export async function GET() {
                 amount: Number(lab.amount),
                 type: "LABORATORY",
                 status: lab.status.toUpperCase(), // pending -> PENDING
-                paymentMethod: "CASH" // default assumption for labs without dedicated invoice
+                paymentMethod: "CASH", // default assumption for labs without dedicated invoice
+                editUnlocked: lab.editUnlocked
             };
         });
 
@@ -82,6 +84,7 @@ export async function GET() {
                 type: "IPD",
                 status: "PENDING",
                 paymentMethod: "CASH",
+                editUnlocked: adm.editUnlocked,
                 rawAdmission: adm // Pass this so we can show details in the modal
             };
         });

@@ -19,7 +19,8 @@ import {
     Heart,
     Droplet,
     IndianRupee,
-    ReceiptText
+    ReceiptText,
+    Bed
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Staff Management', href: '/dashboard/staff', icon: Users },
         { name: 'Doctor Management', href: '/dashboard/doctors', icon: Stethoscope },
+        { name: 'IPD Admissions', href: '/dashboard/admissions', icon: Bed },
         { name: 'Health Packages', href: '/dashboard/health-packages', icon: Heart },
         { name: 'Blood@Home', href: '/dashboard/blood-collection', icon: Droplet },
         { name: 'All Bills', href: '/dashboard/all-bills', icon: ReceiptText },

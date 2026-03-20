@@ -17,7 +17,8 @@ import {
     Phone,
     MapPin,
     Activity,
-    RotateCcw
+    RotateCcw,
+    Lock
 } from 'lucide-react';
 import { getAdmissionDetails, undoDischarge } from '@/app/actions/ipd';
 import { format } from 'date-fns';
@@ -170,25 +171,37 @@ export default function DischargeSummaryPage() {
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={handleUndoDischarge}
-                        className="px-6 py-3 bg-red-50 text-red-600 rounded-[20px] font-black hover:bg-red-100 transition-all active:scale-95 flex items-center gap-2 border border-red-100"
-                    >
-                        <RotateCcw className="w-5 h-5" />
-                        Undo Discharge
-                    </button>
-                    <button
-                        onClick={() => router.push(`/dashboard/ipd/${id}?edit=true`)}
-                        className="px-6 py-3 bg-slate-900 text-white rounded-[20px] font-black shadow-lg transition-all active:scale-95 flex items-center gap-2"
-                    >
-                        <Activity className="w-5 h-5 text-primary" />
-                        Edit Summary
-                    </button>
+                    {admission.editUnlocked || admission.status === 'admitted' ? (
+                        <>
+                            <button
+                                onClick={handleUndoDischarge}
+                                className="px-4 py-2 bg-red-50 text-red-600 hover:text-red-700 rounded-xl font-bold text-sm hover:bg-red-100 transition-all active:scale-95 flex items-center gap-2 border border-red-100"
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                                Undo Discharge
+                            </button>
+                            <button
+                                onClick={() => router.push(`/dashboard/ipd/${id}/edit-discharge?type=edit`)}
+                                className="px-4 py-2 bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold text-sm shadow border border-slate-900 transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <Activity className="w-4 h-4 text-primary" />
+                                Edit Summary
+                            </button>
+                        </>
+                    ) : (
+                        <div
+                            className="px-4 py-2 bg-slate-100 text-slate-400 rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 cursor-not-allowed border border-slate-200"
+                            title="Edit locked by Admin"
+                        >
+                            <Lock className="w-4 h-4" />
+                            Locked by Admin
+                        </div>
+                    )}
                     <button
                         onClick={() => window.print()}
-                        className="px-8 py-3 bg-primary text-white rounded-[20px] font-black shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
+                        className="px-5 py-2 bg-primary text-white hover:bg-primary/90 rounded-xl font-bold text-sm shadow shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
                     >
-                        <Printer className="w-5 h-5" />
+                        <Printer className="w-4 h-4" />
                         Print Summary
                     </button>
                 </div>
