@@ -426,7 +426,7 @@ export async function dischargePatient(admissionId: string, data?: {
                     transactions.push(
                         (prisma as any).deposit.update({
                             where: { id: adv.id },
-                            data: { status: "CONSUMED", invoiceId: admissionId, updatedAt: new Date() }
+                            data: { status: "CONSUMED", updatedAt: new Date() }
                         })
                     );
                 } else {
@@ -436,7 +436,7 @@ export async function dischargePatient(admissionId: string, data?: {
                     transactions.push(
                         (prisma as any).deposit.update({
                             where: { id: adv.id },
-                            data: { status: "CONSUMED", invoiceId: admissionId, updatedAt: new Date() }
+                            data: { status: "CONSUMED", updatedAt: new Date() }
                         })
                     );
                 }
