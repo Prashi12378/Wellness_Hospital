@@ -197,12 +197,15 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Collected</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
                             {editingDates ? (
-                                <input
-                                    type="datetime-local"
-                                    value={collectedAt}
-                                    onChange={e => setCollectedAt(e.target.value)}
-                                    className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                />
+                                <>
+                                    <input
+                                        type="datetime-local"
+                                        value={collectedAt}
+                                        onChange={e => setCollectedAt(e.target.value)}
+                                        className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                    />
+                                    <span className="hidden print:inline font-black text-slate-900 uppercase">{collectedAt ? format(new Date(collectedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
+                                </>
                             ) : (
                                 <span className="font-black text-slate-900 uppercase">{collectedAt ? format(new Date(collectedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
                             )}
@@ -211,12 +214,15 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Received</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
                             {editingDates ? (
-                                <input
-                                    type="datetime-local"
-                                    value={receivedAt}
-                                    onChange={e => setReceivedAt(e.target.value)}
-                                    className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                />
+                                <>
+                                    <input
+                                        type="datetime-local"
+                                        value={receivedAt}
+                                        onChange={e => setReceivedAt(e.target.value)}
+                                        className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                    />
+                                    <span className="hidden print:inline font-black text-slate-900 uppercase">{receivedAt ? format(new Date(receivedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
+                                </>
                             ) : (
                                 <span className="font-black text-slate-900 uppercase">{receivedAt ? format(new Date(receivedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
                             )}
@@ -225,12 +231,15 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Reported</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
                             {editingDates ? (
-                                <input
-                                    type="datetime-local"
-                                    value={reportedAt}
-                                    onChange={e => setReportedAt(e.target.value)}
-                                    className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                />
+                                <>
+                                    <input
+                                        type="datetime-local"
+                                        value={reportedAt}
+                                        onChange={e => setReportedAt(e.target.value)}
+                                        className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                    />
+                                    <span className="hidden print:inline font-black text-slate-900 uppercase">{reportedAt ? format(new Date(reportedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
+                                </>
                             ) : (
                                 <span className="font-black text-slate-900 uppercase">{reportedAt ? format(new Date(reportedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
                             )}
