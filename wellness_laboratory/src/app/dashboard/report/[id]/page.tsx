@@ -1,8 +1,8 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 import { getLabRequestById } from "@/app/actions/lab";
-import { Loader2, Printer, ArrowLeft, Download, CheckCircle2, FlaskConical, User, Calendar, Hash } from "lucide-react";
+import { Loader2, Printer, ArrowLeft, Download, CheckCircle2, CalendarClock, Pencil, X } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -11,17 +11,39 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
     const { id } = use(params);
     const [request, setRequest] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [editingDates, setEditingDates] = useState(false);
+    const [collectedAt, setCollectedAt] = useState("");
+    const [receivedAt, setReceivedAt] = useState("");
+    const [reportedAt, setReportedAt] = useState("");
+
+    const toLocalInput = (iso: string | Date) => {
+        const d = new Date(iso);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
 
     useEffect(() => {
         const fetchRequest = async () => {
             const res = await getLabRequestById(id);
-            if (res.success) {
+            if (res.success && res.data) {
                 setRequest(res.data);
+                setCollectedAt(toLocalInput(res.data.createdAt));
+                setReceivedAt(toLocalInput(res.data.createdAt));
+                setReportedAt(toLocalInput(res.data.updatedAt));
             }
             setLoading(false);
         };
         fetchRequest();
     }, [id]);
+
+    const handleCancelEdit = useCallback(() => {
+        if (request) {
+            setCollectedAt(toLocalInput(request.createdAt));
+            setReceivedAt(toLocalInput(request.createdAt));
+            setReportedAt(toLocalInput(request.updatedAt));
+        }
+        setEditingDates(false);
+    }, [request]);
 
     const handlePrint = () => {
         window.print();
@@ -58,7 +80,24 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                     <ArrowLeft className="w-5 h-5" />
                     Back to Worklist
                 </Link>
-                <div className="flex gap-4">
+                <div className="flex gap-3 flex-wrap">
+                    {editingDates ? (
+                        <button
+                            onClick={handleCancelEdit}
+                            className="flex items-center gap-2 bg-red-50 text-red-600 px-6 py-3.5 rounded-2xl font-black text-xs border border-red-200 hover:bg-red-100 transition-all uppercase tracking-widest"
+                        >
+                            <X className="w-4 h-4" />
+                            Cancel Edit
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => setEditingDates(true)}
+                            className="flex items-center gap-2 bg-amber-50 text-amber-700 px-6 py-3.5 rounded-2xl font-black text-xs border border-amber-200 hover:bg-amber-100 transition-all uppercase tracking-widest"
+                        >
+                            <CalendarClock className="w-4 h-4" />
+                            Edit Dates
+                        </button>
+                    )}
                     <button
                         onClick={handlePrint}
                         className="flex items-center gap-3 bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-black text-xs shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
@@ -157,17 +196,44 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                         <div className="flex text-[10px] leading-tight items-baseline">
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Collected</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
-                            <span className="font-black text-slate-900 uppercase">{format(new Date(request.createdAt), 'dd/MMM/yyyy HH:mm')}</span>
+                            {editingDates ? (
+                                <input
+                                    type="datetime-local"
+                                    value={collectedAt}
+                                    onChange={e => setCollectedAt(e.target.value)}
+                                    className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                />
+                            ) : (
+                                <span className="font-black text-slate-900 uppercase">{collectedAt ? format(new Date(collectedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
+                            )}
                         </div>
                         <div className="flex text-[10px] leading-tight items-baseline">
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Received</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
-                            <span className="font-black text-slate-900 uppercase">{format(new Date(request.createdAt), 'dd/MMM/yyyy HH:mm')}</span>
+                            {editingDates ? (
+                                <input
+                                    type="datetime-local"
+                                    value={receivedAt}
+                                    onChange={e => setReceivedAt(e.target.value)}
+                                    className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                />
+                            ) : (
+                                <span className="font-black text-slate-900 uppercase">{receivedAt ? format(new Date(receivedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
+                            )}
                         </div>
                         <div className="flex text-[10px] leading-tight items-baseline">
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Reported</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
-                            <span className="font-black text-slate-900 uppercase">{format(new Date(request.updatedAt), 'dd/MMM/yyyy HH:mm')}</span>
+                            {editingDates ? (
+                                <input
+                                    type="datetime-local"
+                                    value={reportedAt}
+                                    onChange={e => setReportedAt(e.target.value)}
+                                    className="print:hidden font-black text-slate-900 text-[10px] border border-amber-300 rounded px-1 py-0.5 bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                />
+                            ) : (
+                                <span className="font-black text-slate-900 uppercase">{reportedAt ? format(new Date(reportedAt), 'dd/MMM/yyyy HH:mm') : '—'}</span>
+                            )}
                         </div>
                         <div className="flex text-[10px] leading-tight items-baseline">
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Status</span>
