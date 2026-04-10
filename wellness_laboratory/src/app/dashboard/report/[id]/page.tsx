@@ -1,8 +1,8 @@
 "use client";
 
 import { use, useState, useEffect, useCallback } from "react";
-import { getLabRequestById } from "@/app/actions/lab";
-import { Loader2, Printer, ArrowLeft, Download, CheckCircle2, CalendarClock, Pencil, X } from "lucide-react";
+import { getLabRequestById, updatePatientNameOnReport } from "@/app/actions/lab";
+import { Loader2, Printer, ArrowLeft, Download, CheckCircle2, CalendarClock, Pencil, X, Save } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,9 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
     const [collectedAt, setCollectedAt] = useState("");
     const [receivedAt, setReceivedAt] = useState("");
     const [reportedAt, setReportedAt] = useState("");
+    const [editingName, setEditingName] = useState(false);
+    const [patientName, setPatientName] = useState("");
+    const [savingName, setSavingName] = useState(false);
 
     const toLocalInput = (iso: string | Date) => {
         const d = new Date(iso);
@@ -30,6 +33,7 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                 setCollectedAt(toLocalInput(res.data.createdAt));
                 setReceivedAt(toLocalInput(res.data.createdAt));
                 setReportedAt(toLocalInput(res.data.updatedAt));
+                setPatientName(res.data.patientName || "");
             }
             setLoading(false);
         };
@@ -44,6 +48,22 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
         }
         setEditingDates(false);
     }, [request]);
+
+    const handleSaveName = async () => {
+        if (!patientName.trim()) return;
+        setSavingName(true);
+        const res = await updatePatientNameOnReport(id, patientName.trim());
+        if (res.success) {
+            setRequest((prev: any) => ({ ...prev, patientName: patientName.trim() }));
+            setEditingName(false);
+        }
+        setSavingName(false);
+    };
+
+    const handleCancelNameEdit = () => {
+        setPatientName(request?.patientName || "");
+        setEditingName(false);
+    };
 
     const handlePrint = () => {
         window.print();
@@ -81,6 +101,34 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                     Back to Worklist
                 </Link>
                 <div className="flex gap-3 flex-wrap">
+                    {/* Edit Name */}
+                    {editingName ? (
+                        <>
+                            <button
+                                onClick={handleCancelNameEdit}
+                                className="flex items-center gap-2 bg-red-50 text-red-600 px-5 py-3.5 rounded-2xl font-black text-xs border border-red-200 hover:bg-red-100 transition-all uppercase tracking-widest"
+                            >
+                                <X className="w-4 h-4" /> Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveName}
+                                disabled={savingName}
+                                className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black text-xs border border-emerald-700 hover:bg-emerald-700 transition-all uppercase tracking-widest disabled:opacity-60"
+                            >
+                                {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Save Name
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => setEditingName(true)}
+                            className="flex items-center gap-2 bg-slate-50 text-slate-700 px-6 py-3.5 rounded-2xl font-black text-xs border border-slate-200 hover:bg-slate-100 transition-all uppercase tracking-widest"
+                        >
+                            <Pencil className="w-4 h-4" />
+                            Edit Name
+                        </button>
+                    )}
+                    {/* Edit Dates */}
                     {editingDates ? (
                         <button
                             onClick={handleCancelEdit}
@@ -154,7 +202,20 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                         <div className="flex text-[10px] leading-tight items-baseline">
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Patient Name</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
-                            <span className="font-black text-slate-900 uppercase">{request.patientName}</span>
+                            {editingName ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={patientName}
+                                        onChange={e => setPatientName(e.target.value)}
+                                        className="print:hidden font-black text-slate-900 text-[10px] border border-slate-300 rounded px-2 py-0.5 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 uppercase w-48"
+                                        autoFocus
+                                    />
+                                    <span className="hidden print:inline font-black text-slate-900 uppercase">{patientName}</span>
+                                </>
+                            ) : (
+                                <span className="font-black text-slate-900 uppercase">{patientName || request.patientName}</span>
+                            )}
                         </div>
                         <div className="flex text-[10px] leading-tight items-baseline">
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Age/Gender</span>

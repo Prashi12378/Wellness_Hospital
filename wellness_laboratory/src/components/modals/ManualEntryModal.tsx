@@ -42,6 +42,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
     // Shared fields
     const [technicianName, setTechnicianName] = useState("NAVEENA");
     const [consultantName, setConsultantName] = useState("Dr. Somashekar K.");
+    const [requestedByName, setRequestedByName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const testInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +59,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
             setCurrentPriority("normal");
             setTechnicianName("NAVEENA");
             setConsultantName("Dr. Somashekar K.");
+            setRequestedByName("");
             setSuggestions([]);
             setShowSuggestions(false);
         }
@@ -189,6 +191,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                     amount: test.amount,
                     technicianName,
                     consultantName,
+                    requestedByName: requestedByName.trim() || undefined,
                 } as any);
             }
             onSuccess();
@@ -418,27 +421,39 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                                 )}
                             </div>
 
-                            {/* Technician and Consultant */}
-                            <div className="grid grid-cols-2 gap-4 p-5 bg-blue-50/30 rounded-[28px] border border-blue-100/50">
+                            {/* Referring Doctor, Technician and Consultant */}
+                            <div className="space-y-3 p-5 bg-blue-50/30 rounded-[28px] border border-blue-100/50">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Technician</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ref. Doctor / By</label>
                                     <input
                                         type="text"
-                                        value={technicianName}
-                                        onChange={(e) => setTechnicianName(e.target.value)}
-                                        placeholder="Technician Name"
+                                        value={requestedByName}
+                                        onChange={(e) => setRequestedByName(e.target.value)}
+                                        placeholder="e.g. Dr. Ramesh (leave blank if self)"
                                         className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-xs"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Consultant</label>
-                                    <input
-                                        type="text"
-                                        value={consultantName}
-                                        onChange={(e) => setConsultantName(e.target.value)}
-                                        placeholder="Doctor Name"
-                                        className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-xs"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Technician</label>
+                                        <input
+                                            type="text"
+                                            value={technicianName}
+                                            onChange={(e) => setTechnicianName(e.target.value)}
+                                            placeholder="Technician Name"
+                                            className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-xs"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Consultant</label>
+                                        <input
+                                            type="text"
+                                            value={consultantName}
+                                            onChange={(e) => setConsultantName(e.target.value)}
+                                            placeholder="Doctor Name"
+                                            className="w-full px-4 py-3 bg-white border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-xs"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

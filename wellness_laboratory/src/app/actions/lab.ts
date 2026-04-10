@@ -66,6 +66,20 @@ export async function getLabRequestById(id: string) {
     }
 }
 
+export async function updatePatientNameOnReport(id: string, patientName: string) {
+    try {
+        await prisma.labRequest.update({
+            where: { id },
+            data: { patientName }
+        });
+        revalidatePath(`/dashboard/report/${id}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("[LabActions] updatePatientNameOnReport Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function updateLabRequestStatus(requestId: string, status: string, result?: string, reportUrl?: string, parameters?: any) {
     try {
         console.log(`[LabActions] Updating request ${requestId} to status ${status}`);
