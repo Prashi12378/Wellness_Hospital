@@ -80,6 +80,20 @@ export async function updatePatientNameOnReport(id: string, patientName: string)
     }
 }
 
+export async function updateDoctorNameOnReport(id: string, requestedByName: string) {
+    try {
+        await prisma.labRequest.update({
+            where: { id },
+            data: { requestedByName }
+        });
+        revalidatePath(`/dashboard/report/${id}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("[LabActions] updateDoctorNameOnReport Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function updateLabRequestStatus(requestId: string, status: string, result?: string, reportUrl?: string, parameters?: any) {
     try {
         console.log(`[LabActions] Updating request ${requestId} to status ${status}`);

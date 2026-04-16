@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback } from "react";
-import { getLabRequestById, updatePatientNameOnReport } from "@/app/actions/lab";
+import { getLabRequestById, updatePatientNameOnReport, updateDoctorNameOnReport } from "@/app/actions/lab";
 import { Loader2, Printer, ArrowLeft, Download, CheckCircle2, CalendarClock, Pencil, X, Save } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -18,6 +18,9 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
     const [editingName, setEditingName] = useState(false);
     const [patientName, setPatientName] = useState("");
     const [savingName, setSavingName] = useState(false);
+    const [editingDoctor, setEditingDoctor] = useState(false);
+    const [doctorName, setDoctorName] = useState("");
+    const [savingDoctor, setSavingDoctor] = useState(false);
 
     const toLocalInput = (iso: string | Date) => {
         const d = new Date(iso);
@@ -34,6 +37,7 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                 setReceivedAt(toLocalInput(res.data.createdAt));
                 setReportedAt(toLocalInput(res.data.updatedAt));
                 setPatientName(res.data.patientName || "");
+                setDoctorName(res.data.requestedByName || "");
             }
             setLoading(false);
         };
@@ -63,6 +67,22 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
     const handleCancelNameEdit = () => {
         setPatientName(request?.patientName || "");
         setEditingName(false);
+    };
+
+    const handleSaveDoctor = async () => {
+        if (!doctorName.trim()) return;
+        setSavingDoctor(true);
+        const res = await updateDoctorNameOnReport(id, doctorName.trim());
+        if (res.success) {
+            setRequest((prev: any) => ({ ...prev, requestedByName: doctorName.trim() }));
+            setEditingDoctor(false);
+        }
+        setSavingDoctor(false);
+    };
+
+    const handleCancelDoctorEdit = () => {
+        setDoctorName(request?.requestedByName || "");
+        setEditingDoctor(false);
     };
 
     const handlePrint = () => {
@@ -126,6 +146,33 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                         >
                             <Pencil className="w-4 h-4" />
                             Edit Name
+                        </button>
+                    )}
+                    {/* Edit Doctor */}
+                    {editingDoctor ? (
+                        <>
+                            <button
+                                onClick={handleCancelDoctorEdit}
+                                className="flex items-center gap-2 bg-red-50 text-red-600 px-5 py-3.5 rounded-2xl font-black text-xs border border-red-200 hover:bg-red-100 transition-all uppercase tracking-widest"
+                            >
+                                <X className="w-4 h-4" /> Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveDoctor}
+                                disabled={savingDoctor}
+                                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-black text-xs border border-blue-700 hover:bg-blue-700 transition-all uppercase tracking-widest disabled:opacity-60"
+                            >
+                                {savingDoctor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Save Doctor
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => setEditingDoctor(true)}
+                            className="flex items-center gap-2 bg-blue-50 text-blue-700 px-6 py-3.5 rounded-2xl font-black text-xs border border-blue-200 hover:bg-blue-100 transition-all uppercase tracking-widest"
+                        >
+                            <Pencil className="w-4 h-4" />
+                            Edit Doctor
                         </button>
                     )}
                     {/* Edit Dates */}
@@ -237,7 +284,21 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                         <div className="flex text-[10px] leading-tight items-baseline">
                             <span className="w-24 font-bold text-slate-500 uppercase tracking-tight">Ref. By</span>
                             <span className="w-3 font-bold text-slate-400">:</span>
-                            <span className="font-black text-slate-900 uppercase italic text-blue-800">{request.requestedByName || 'SELF'}</span>
+                            {editingDoctor ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={doctorName}
+                                        onChange={e => setDoctorName(e.target.value)}
+                                        className="print:hidden font-black text-blue-800 text-[10px] border border-blue-300 rounded px-2 py-0.5 bg-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-400 uppercase w-48 italic"
+                                        autoFocus
+                                        placeholder="Doctor / Ref. Name"
+                                    />
+                                    <span className="hidden print:inline font-black text-slate-900 uppercase italic text-blue-800">{doctorName || 'SELF'}</span>
+                                </>
+                            ) : (
+                                <span className="font-black text-slate-900 uppercase italic text-blue-800">{doctorName || request.requestedByName || 'SELF'}</span>
+                            )}
                         </div>
                         {request.patient?.phone && (
                             <div className="flex text-[10px] leading-tight items-baseline">
