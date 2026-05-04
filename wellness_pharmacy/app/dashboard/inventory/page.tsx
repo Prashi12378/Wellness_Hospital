@@ -238,7 +238,7 @@ export default function InventoryPage() {
                     <td style="padding:6px 8px;">${m.location || '-'}</td>
                 </tr>`).join('');
 
-            const html = \`<!DOCTYPE html><html><head><title>Pharmacy Stock Report</title>
+            const html = `<!DOCTYPE html><html><head><title>Pharmacy Stock Report</title>
             <style>
                 @page { size: A4 portrait; margin: 12mm; }
                 body { font-family: system-ui, sans-serif; color: #1e293b; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -254,8 +254,8 @@ export default function InventoryPage() {
                 </div>
                 <div style="text-align:right;">
                     <h2 style="margin:0 0 4px;font-size:16px;font-weight:900;color:#1e40af;">INVENTORY STOCK REPORT</h2>
-                    <p style="margin:0;font-size:11px;color:#64748b;">Generated: \${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-                    <p style="margin:2px 0 0;font-size:11px;color:#64748b;">Total Items: \${filteredMedicines.length}</p>
+                    <p style="margin:0;font-size:11px;color:#64748b;">Generated: ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
+                    <p style="margin:2px 0 0;font-size:11px;color:#64748b;">Total Items: ${filteredMedicines.length}</p>
                 </div>
             </div>
             <table>
@@ -263,12 +263,12 @@ export default function InventoryPage() {
                     <th style="width:30px;">#</th>
                     <th>Medicine Name</th><th>Barcode</th><th>Batch</th><th>Expiry</th><th style="text-align:right;">Price</th><th style="text-align:right;">GST</th><th style="text-align:center;">Stock</th><th>Location</th>
                 </tr></thead>
-                <tbody>\${rows}</tbody>
+                <tbody>${rows}</tbody>
             </table>
             <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;text-align:center;font-size:10px;color:#94a3b8;">
                 Physical Stock Verification Report • Wellness Pharmacy
             </div>
-            </body></html>\`;
+            </body></html>`;
 
             iDoc.write(html);
             iDoc.close();
