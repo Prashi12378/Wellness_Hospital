@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getInventory, addMedicine, updateStock, updateBarcode } from '@/app/actions/inventory';
 import { fetchMedicineDetailsFromBarcode } from '@/app/actions/barcode';
 import { getUnreadCount } from '@/app/actions/notifications';
-import { Plus, Search, X, RefreshCw, ScanBarcode } from 'lucide-react';
+import { Plus, Search, X, RefreshCw, ScanBarcode, Download, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ export default function InventoryPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
     // Custom Modal States
     const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'info' }>({
@@ -215,6 +216,76 @@ export default function InventoryPage() {
         (m.batchNo && m.batchNo.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const handleDownloadPdf = () => {
+        setIsDownloadingPdf(true);
+        try {
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:100vw;height:100vh;border:none;';
+            document.body.appendChild(iframe);
+            const iDoc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (!iDoc) { document.body.removeChild(iframe); setIsDownloadingPdf(false); return; }
+
+            const rows = filteredMedicines.map((m, i) => `
+                <tr style="border-bottom:1px solid #e2e8f0;${m.stock < 10 ? 'background:#fef2f2;' : m.stock < 50 ? 'background:#fffbeb;' : ''}">
+                    <td style="padding:6px 8px;text-align:center;color:#94a3b8;">${i + 1}</td>
+                    <td style="padding:6px 8px;font-weight:700;color:#1e293b;">${m.name}</td>
+                    <td style="padding:6px 8px;font-family:monospace;font-size:10px;">${m.barcode || '-'}</td>
+                    <td style="padding:6px 8px;">${m.batchNo || '-'}</td>
+                    <td style="padding:6px 8px;">${m.expiryDate ? format(new Date(m.expiryDate), 'MMM yyyy') : '-'}</td>
+                    <td style="padding:6px 8px;text-align:right;">₹${m.price}</td>
+                    <td style="padding:6px 8px;text-align:right;">${m.gstRate}%</td>
+                    <td style="padding:6px 8px;text-align:center;font-weight:900;color:${m.stock < 10 ? '#dc2626' : '#16a34a'}">${m.stock}</td>
+                    <td style="padding:6px 8px;">${m.location || '-'}</td>
+                </tr>`).join('');
+
+            const html = \`<!DOCTYPE html><html><head><title>Pharmacy Stock Report</title>
+            <style>
+                @page { size: A4 portrait; margin: 12mm; }
+                body { font-family: system-ui, sans-serif; color: #1e293b; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                th { background: #1e293b; color: #fff; padding: 8px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+                th:nth-child(1), th:nth-child(8) { text-align: center; }
+                th:nth-child(6), th:nth-child(7) { text-align: right; }
+            </style></head><body>
+            <div style="margin-bottom:16px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <h1 style="margin:0 0 4px;font-size:20px;font-weight:900;">Wellness Hospital &amp; Pharmacy</h1>
+                    <p style="margin:0;font-size:11px;color:#64748b;">Beside friend function hall, Gowribidnur main road, Palanjoghalli</p>
+                </div>
+                <div style="text-align:right;">
+                    <h2 style="margin:0 0 4px;font-size:16px;font-weight:900;color:#1e40af;">INVENTORY STOCK REPORT</h2>
+                    <p style="margin:0;font-size:11px;color:#64748b;">Generated: \${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
+                    <p style="margin:2px 0 0;font-size:11px;color:#64748b;">Total Items: \${filteredMedicines.length}</p>
+                </div>
+            </div>
+            <table>
+                <thead><tr>
+                    <th style="width:30px;">#</th>
+                    <th>Medicine Name</th><th>Barcode</th><th>Batch</th><th>Expiry</th><th style="text-align:right;">Price</th><th style="text-align:right;">GST</th><th style="text-align:center;">Stock</th><th>Location</th>
+                </tr></thead>
+                <tbody>\${rows}</tbody>
+            </table>
+            <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;text-align:center;font-size:10px;color:#94a3b8;">
+                Physical Stock Verification Report • Wellness Pharmacy
+            </div>
+            </body></html>\`;
+
+            iDoc.write(html);
+            iDoc.close();
+            iframe.onload = () => {
+                setTimeout(() => {
+                    iframe.contentWindow?.focus();
+                    iframe.contentWindow?.print();
+                    document.body.removeChild(iframe);
+                    setIsDownloadingPdf(false);
+                }, 600);
+            };
+        } catch (e) {
+            console.error('PDF error:', e);
+            setIsDownloadingPdf(false);
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -231,8 +302,16 @@ export default function InventoryPage() {
                         Add Medicine
                     </button>
                     <button
+                        onClick={handleDownloadPdf}
+                        disabled={isDownloadingPdf || filteredMedicines.length === 0}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        {isDownloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        <span className="hidden sm:inline">Print Stock</span>
+                    </button>
+                    <button
                         onClick={fetchInventory}
-                        className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+                        className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center"
                         title="Refresh Inventory"
                     >
                         <RefreshCw className="w-5 h-5" />
