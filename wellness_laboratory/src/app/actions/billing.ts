@@ -120,3 +120,42 @@ export async function createLabInvoice(data: LabInvoiceData) {
         return { success: false, error: error.message || "Failed to create invoice" };
     }
 }
+
+export async function getLabInvoices() {
+    try {
+        const invoices = await (prisma as any).invoice.findMany({
+            where: {
+                billNo: { startsWith: 'LAB/' }
+            },
+            include: {
+                items: true,
+            },
+            orderBy: {
+                date: 'desc',
+            },
+        });
+
+        const serialized = (invoices as any[]).map(invoice => ({
+            ...invoice,
+            date: invoice.date ? invoice.date.toISOString() : null,
+            createdAt: invoice.createdAt ? invoice.createdAt.toISOString() : null,
+            updatedAt: invoice.updatedAt ? invoice.updatedAt.toISOString() : null,
+            subTotal: Number(invoice.subTotal || 0),
+            totalGst: Number(invoice.totalGst || 0),
+            grandTotal: Number(invoice.grandTotal || 0),
+            discountAmount: Number(invoice.discountAmount || 0),
+            depositAmount: Number(invoice.depositAmount || 0),
+            items: (invoice.items || []).map((item: any) => ({
+                ...item,
+                mrp: Number(item.mrp || 0),
+                gstRate: Number(item.gstRate || 0),
+                amount: Number(item.amount || 0),
+            }))
+        }));
+
+        return { success: true, invoices: serialized };
+    } catch (error) {
+        console.error('Error fetching lab invoices:', error);
+        return { success: false, error: 'Failed to fetch invoice history' };
+    }
+}

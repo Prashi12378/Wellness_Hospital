@@ -11,6 +11,7 @@ import {
     ClipboardList,
     History,
     CreditCard,
+    FileText,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
         { name: "Active Diagnostics", href: "/dashboard/requests", icon: ClipboardList },
         { name: "Results Archive", href: "/dashboard/history", icon: History },
+        { name: "Audit Bills", href: "/dashboard/bills", icon: FileText },
     ];
 
     return (
