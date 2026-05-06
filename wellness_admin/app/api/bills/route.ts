@@ -17,7 +17,8 @@ export async function GET() {
         // Find lab requests that have costs associated, essentially generating a bill.
         const labRequests = await prisma.labRequest.findMany({
             where: {
-                amount: { gt: 0 }
+                amount: { gt: 0 },
+                isBilled: false
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -26,9 +27,10 @@ export async function GET() {
         // billNo, date, patientName, grandTotal, paymentMethod, status
         const invoiceBills = invoicesResult.map((inv: any) => {
             let type = "OTHER";
-            if (inv.billNo.startsWith("OPD-")) type = "OPD";
+            if (inv.billNo.startsWith("OPD-") || inv.billNo.startsWith("OBS-")) type = "OPD";
             else if (inv.billNo.startsWith("S-")) type = "PHARMACY";
             else if (inv.billNo.startsWith("INV-IPD-")) type = "IPD";
+            else if (inv.billNo.startsWith("LAB/")) type = "LABORATORY";
 
             return {
                 id: inv.id,
@@ -39,7 +41,8 @@ export async function GET() {
                 type: type,
                 status: inv.status,
                 paymentMethod: inv.paymentMethod,
-                editUnlocked: inv.editUnlocked
+                editUnlocked: inv.editUnlocked,
+                isInvoice: true
             };
         });
 
@@ -53,7 +56,8 @@ export async function GET() {
                 type: "LABORATORY",
                 status: lab.status.toUpperCase(), // pending -> PENDING
                 paymentMethod: "CASH", // default assumption for labs without dedicated invoice
-                editUnlocked: lab.editUnlocked
+                editUnlocked: lab.editUnlocked,
+                isInvoice: false
             };
         });
 

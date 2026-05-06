@@ -72,10 +72,10 @@ export default function AllBillsPage() {
         }
     };
 
-    const handleToggleLock = async (billId: string, currentStatus: boolean, type?: string) => {
+    const handleToggleLock = async (billId: string, currentStatus: boolean, type?: string, isInvoice?: boolean) => {
         setActionLoadingId(billId);
         try {
-            const apiPath = type === 'LABORATORY' ? `/api/lab-requests/${billId}/unlock` : `/api/invoices/${billId}/unlock`;
+            const apiPath = (type === 'LABORATORY' && !isInvoice) ? `/api/lab-requests/${billId}/unlock` : `/api/invoices/${billId}/unlock`;
             const res = await fetch(apiPath, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -241,7 +241,7 @@ export default function AllBillsPage() {
                                                         <Printer className="w-4 h-4" /> Print
                                                     </button>
                                                     <button
-                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type)}
+                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)}
                                                         disabled={actionLoadingId === bill.id}
                                                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                                                         title={bill.editUnlocked ? "Lock Editing" : "Unlock Editing"}
@@ -264,7 +264,7 @@ export default function AllBillsPage() {
                                             ) : bill.type === 'LABORATORY' ? (
                                                 <>
                                                     <button
-                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type)}
+                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)}
                                                         disabled={actionLoadingId === bill.id}
                                                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                                                         title={bill.editUnlocked ? "Lock Report Editing" : "Unlock Report Editing"}

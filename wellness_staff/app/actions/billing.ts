@@ -390,3 +390,36 @@ export async function getAllFrontDeskInvoices() {
         return { success: false, error: 'Failed to fetch invoice history' };
     }
 }
+
+export async function deleteObservationInvoice(id: string) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { success: false, error: "Unauthorized" };
+        }
+        
+        const invoice = await prisma.invoice.findUnique({
+            where: { id }
+        });
+
+        if (!invoice) return { success: false, error: "Invoice not found" };
+
+        if (!invoice.billNo.startsWith('OBS-')) {
+             return { success: false, error: "Only observation bills can be deleted" };
+        }
+
+        await prisma.invoice.delete({
+            where: { id }
+        });
+
+        await prisma.ledger.deleteMany({
+            where: { description: { startsWith: `Observation Bill #${invoice.billNo}` } }
+        });
+
+        revalidatePath('/dashboard/billing');
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete observation invoice:", error);
+        return { success: false, error: "Failed to delete observation invoice" };
+    }
+}

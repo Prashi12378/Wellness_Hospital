@@ -12,7 +12,8 @@ import {
     generateObservationInvoice,
     getAllDoctors,
     searchPatientsForBilling,
-    getRecentOPDAndObservationBills
+    getRecentOPDAndObservationBills,
+    deleteObservationInvoice
 } from '@/app/actions/billing';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -736,12 +737,101 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
     );
 }
 
+function SwipeableTableRow({ bill, isDeleting, onDelete, onPrint }: { bill: Invoice, isDeleting: boolean, onDelete: () => void, onPrint: () => void }) {
+    const isObs = bill.items?.some((i: any) => i.medicineId === 'OBSERVATION');
+    const [offsetX, setOffsetX] = useState(0);
+    const startX = useRef<number | null>(null);
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if (!isObs) return;
+        startX.current = e.clientX;
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!isObs || startX.current === null) return;
+        const delta = e.clientX - startX.current;
+        if (delta > 0 && delta < 120) { // Only right swipe, max 120px
+            setOffsetX(delta);
+        }
+    };
+
+    const handlePointerUp = () => {
+        if (!isObs || startX.current === null) return;
+        if (offsetX > 60) {
+            onDelete();
+        }
+        setOffsetX(0);
+        startX.current = null;
+    };
+
+    return (
+        <tr
+            className="hover:bg-slate-50/60 transition-colors relative"
+            style={{ transform: `translateX(${offsetX}px)`, transition: startX.current ? 'none' : 'transform 0.3s ease', touchAction: 'pan-y' }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+        >
+            <td className="px-6 py-4 text-sm font-black text-slate-800 relative">
+                {/* Background layer revealed on right swipe */}
+                {isObs && offsetX > 0 && (
+                    <div 
+                        className="absolute top-0 bottom-0 left-0 bg-red-500 flex items-center px-4 text-white rounded-r-xl"
+                        style={{ transform: 'translateX(-100%)', width: '120px' }}
+                    >
+                        <Trash2 className="w-5 h-5 mr-2" />
+                        <span className="text-xs font-bold">{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                    </div>
+                )}
+                {bill.billNo}
+            </td>
+            <td className="px-6 py-4 text-sm font-medium text-slate-700">{bill.patientName}</td>
+            <td className="px-6 py-4">
+                <span className={cn(
+                    'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest',
+                    isObs ? 'bg-amber-50 text-amber-700' : 'bg-primary/10 text-primary'
+                )}>
+                    {isObs ? 'Observation' : 'OPD'}
+                </span>
+            </td>
+            <td className="px-6 py-4 text-right text-sm font-black text-slate-900">₹{Number(bill.grandTotal).toLocaleString()}</td>
+            <td className="px-6 py-4 text-sm text-slate-500 font-medium">{bill.paymentMethod}</td>
+            <td className="px-6 py-4 text-sm text-slate-500 font-medium">{format(new Date(bill.date), 'dd MMM yy, hh:mm a')}</td>
+            <td className="px-6 py-4 text-center">
+                <button
+                    onClick={onPrint}
+                    className="p-2 rounded-xl text-slate-300 hover:text-primary hover:bg-primary/5 transition-all"
+                    title="Print"
+                >
+                    <Printer className="w-4 h-4" />
+                </button>
+            </td>
+        </tr>
+    );
+}
+
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function BillingHubPage() {
     const [tab, setTab] = useState<'opd' | 'obs'>('opd');
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [bills, setBills] = useState<Invoice[]>([]);
     const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+    const handleDeleteObsBill = async (id: string) => {
+        setDeleteConfirmId(null);
+        setIsDeleting(id);
+        const res = await deleteObservationInvoice(id);
+        if (res.success) {
+            fetchBills();
+        } else {
+            alert('Failed to delete bill: ' + res.error);
+        }
+        setIsDeleting(null);
+    };
 
     const fetchDoctors = useCallback(async () => {
         const res = await getAllDoctors();
@@ -834,36 +924,15 @@ export default function BillingHubPage() {
                                     </td>
                                 </tr>
                             )}
-                            {bills.map(bill => {
-                                const isObs = bill.items?.some(i => i.medicineId === 'OBSERVATION');
-                                return (
-                                    <tr key={bill.id} className="hover:bg-slate-50/60 transition-colors">
-                                        <td className="px-6 py-4 text-sm font-black text-slate-800">{bill.billNo}</td>
-                                        <td className="px-6 py-4 text-sm font-medium text-slate-700">{bill.patientName}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={cn(
-                                                'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest',
-                                                isObs
-                                                    ? 'bg-amber-50 text-amber-700'
-                                                    : 'bg-primary/10 text-primary'
-                                            )}>
-                                                {isObs ? 'Observation' : 'OPD'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right text-sm font-black text-slate-900">₹{Number(bill.grandTotal).toLocaleString()}</td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">{bill.paymentMethod}</td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">{format(new Date(bill.date), 'dd MMM yy, hh:mm a')}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => setPrintInvoice(bill)}
-                                                className="p-2 rounded-xl text-slate-300 hover:text-primary hover:bg-primary/5 transition-all"
-                                            >
-                                                <Printer className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {bills.map(bill => (
+                                <SwipeableTableRow 
+                                    key={bill.id} 
+                                    bill={bill} 
+                                    isDeleting={isDeleting === bill.id} 
+                                    onDelete={() => setDeleteConfirmId(bill.id)} 
+                                    onPrint={() => setPrintInvoice(bill)} 
+                                />
+                            ))}
                         </tbody>
                     </table>
                 </div>
@@ -878,6 +947,35 @@ export default function BillingHubPage() {
                     type={printInvoice.items?.some(i => i.medicineId === 'OBSERVATION') ? 'OBS' : 'OPD'}
                     onClose={() => setPrintInvoice(null)}
                 />
+            )}
+
+            {/* Custom Delete Confirmation Modal */}
+            {deleteConfirmId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 fade-in duration-200">
+                        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-6 h-6 text-red-600" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 text-center mb-2">Delete Observation Bill?</h3>
+                        <p className="text-sm text-slate-500 text-center mb-6">
+                            Are you sure you want to delete this observation bill? This action cannot be undone and the record will be removed from the ledger.
+                        </p>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDeleteObsBill(deleteConfirmId)}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
