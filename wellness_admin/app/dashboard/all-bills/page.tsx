@@ -1,10 +1,140 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer, Lock, Unlock } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer, Lock, Unlock, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
+
+function BillRow({
+    bill,
+    onDelete,
+    actionLoadingId,
+    handleToggleLock,
+    onFinalize
+}: {
+    bill: any;
+    onDelete: (id: string, type: string, isInvoice: boolean) => Promise<void>;
+    actionLoadingId: string | null;
+    handleToggleLock: (id: string, status: boolean, type?: string, isInvoice?: boolean) => void;
+    onFinalize: (bill: any) => void;
+}) {
+    const [offsetX, setOffsetX] = useState(0);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const startX = useRef<number | null>(null);
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+        startX.current = e.clientX;
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (startX.current === null) return;
+        const delta = e.clientX - startX.current;
+        if (delta > 0 && delta < 120) { // Only right swipe, max 120px
+            setOffsetX(delta);
+        }
+    };
+
+    const handlePointerUp = async () => {
+        if (startX.current === null) return;
+        if (offsetX > 60 && !isDeleting) {
+            setIsDeleting(true);
+            try {
+                await onDelete(bill.id, bill.type, !!bill.isInvoice);
+            } catch (error) {
+                console.error("Delete failed:", error);
+            } finally {
+                if (startX.current !== null) {
+                    // if component wasn't unmounted (i.e. delete failed)
+                    setIsDeleting(false);
+                    setOffsetX(0);
+                }
+            }
+        } else {
+            setOffsetX(0);
+        }
+        startX.current = null;
+    };
+
+    return (
+        <tr
+            className="hover:bg-slate-50 transition-colors group relative"
+            style={{ transform: `translateX(${offsetX}px)`, transition: startX.current ? 'none' : 'transform 0.3s ease', touchAction: 'pan-y' }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+        >
+            <td className="px-6 py-4 relative">
+                {/* Background layer revealed on right swipe */}
+                {offsetX > 0 && (
+                    <div 
+                        className="absolute top-0 bottom-0 left-0 bg-red-500 flex items-center px-4 text-white rounded-r-xl"
+                        style={{ transform: 'translateX(-100%)', width: '120px' }}
+                    >
+                        <Trash2 className="w-5 h-5 mr-2" />
+                        <span className="text-xs font-bold">{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                    </div>
+                )}
+                <span className="font-mono text-sm font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
+                    {bill.billNo}
+                </span>
+            </td>
+            <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                {format(new Date(bill.date), 'dd MMM yyyy')}
+            </td>
+            <td className="px-6 py-4">
+                <p className="font-bold text-slate-900">{bill.patientName}</p>
+            </td>
+            <td className="px-6 py-4">
+                <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border ${bill.type === 'IPD' ? 'bg-blue-50 text-blue-700 border-blue-200' : bill.type === 'OPD' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : bill.type === 'PHARMACY' ? 'bg-purple-50 text-purple-700 border-purple-200' : bill.type === 'LABORATORY' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                    {bill.type}
+                </span>
+            </td>
+            <td className="px-6 py-4">
+                <p className="font-bold text-slate-900">₹{bill.amount.toLocaleString()}</p>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{bill.paymentMethod}</p>
+            </td>
+            <td className="px-6 py-4 text-right">
+                <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${bill.status === 'PAID' || bill.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                    {bill.status}
+                </span>
+            </td>
+            <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                {bill.type === 'IPD' && bill.status === 'PENDING' ? (
+                    <button onClick={() => onFinalize(bill)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs" title="Discount & Finalize">
+                        <FileText className="w-4 h-4" /> Finalize
+                    </button>
+                ) : bill.type === 'IPD' && (bill.status === 'PAID' || bill.status === 'COMPLETED') ? (
+                    <>
+                        <button onClick={() => window.open(`/dashboard/ipd-billing/invoice/${bill.id}`, '_blank')} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold rounded-lg transition-colors text-xs" title="Print Invoice">
+                            <Printer className="w-4 h-4" /> Print
+                        </button>
+                        <button onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)} disabled={actionLoadingId === bill.id} className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`} title={bill.editUnlocked ? "Lock Editing" : "Unlock Editing"}>
+                            {actionLoadingId === bill.id ? <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : bill.editUnlocked ? <><Unlock className="w-4 h-4" /> Unlocked</> : <><Lock className="w-4 h-4" /> Locked</>}
+                        </button>
+                        <Link href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold rounded-lg transition-colors text-xs">
+                            <Eye className="w-4 h-4" /> View
+                        </Link>
+                    </>
+                ) : bill.type === 'LABORATORY' ? (
+                    <>
+                        <button onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)} disabled={actionLoadingId === bill.id} className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`} title={bill.editUnlocked ? "Lock Report Editing" : "Unlock Report Editing"}>
+                            {actionLoadingId === bill.id ? <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : bill.editUnlocked ? <><Unlock className="w-4 h-4" /> Unlocked</> : <><Lock className="w-4 h-4" /> Locked</>}
+                        </button>
+                        <Link href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs">
+                            <Eye className="w-4 h-4" /> View
+                        </Link>
+                    </>
+                ) : (
+                    <Link href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs">
+                        <Eye className="w-4 h-4" /> View
+                    </Link>
+                )}
+            </td>
+        </tr>
+    );
+}
 
 export default function AllBillsPage() {
     const [bills, setBills] = useState<any[]>([]);
@@ -38,6 +168,23 @@ export default function AllBillsPage() {
             console.error("Error fetching bills:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteBill = async (id: string, type: string, isInvoice: boolean) => {
+        try {
+            const res = await fetch(`/api/bills/${id}?type=${type}&isInvoice=${isInvoice}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                fetchBills();
+            } else {
+                const data = await res.json();
+                alert('Failed to delete: ' + data.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Failed to delete bill.');
         }
     };
 
@@ -183,117 +330,18 @@ export default function AllBillsPage() {
                                 </tr>
                             ) : (
                                 filteredBills.map((bill) => (
-                                    <tr key={bill.id} className="hover:bg-slate-50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <span className="font-mono text-sm font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
-                                                {bill.billNo}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
-                                            {format(new Date(bill.date), 'dd MMM yyyy')}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="font-bold text-slate-900">{bill.patientName}</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border
-                                                ${bill.type === 'IPD' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                    bill.type === 'OPD' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                                        bill.type === 'PHARMACY' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                                            bill.type === 'LABORATORY' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                                                'bg-slate-50 text-slate-700 border-slate-200'}`}
-                                            >
-                                                {bill.type}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="font-bold text-slate-900">₹{bill.amount.toLocaleString()}</p>
-                                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{bill.paymentMethod}</p>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
-                                                ${bill.status === 'PAID' || bill.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
-                                                    'bg-amber-100 text-amber-800'}`}
-                                            >
-                                                {bill.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                                            {bill.type === 'IPD' && bill.status === 'PENDING' ? (
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedAdmission(bill);
-                                                        setDiscountAmount(0);
-                                                        setBillingModalOpen(true);
-                                                    }}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
-                                                    title="Discount & Finalize"
-                                                >
-                                                    <FileText className="w-4 h-4" /> Finalize
-                                                </button>
-                                            ) : bill.type === 'IPD' && (bill.status === 'PAID' || bill.status === 'COMPLETED') ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => window.open(`/dashboard/ipd-billing/invoice/${bill.id}`, '_blank')}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold rounded-lg transition-colors text-xs"
-                                                        title="Print Invoice"
-                                                    >
-                                                        <Printer className="w-4 h-4" /> Print
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)}
-                                                        disabled={actionLoadingId === bill.id}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
-                                                        title={bill.editUnlocked ? "Lock Editing" : "Unlock Editing"}
-                                                    >
-                                                        {actionLoadingId === bill.id ? (
-                                                            <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                                                        ) : bill.editUnlocked ? (
-                                                            <><Unlock className="w-4 h-4" /> Unlocked</>
-                                                        ) : (
-                                                            <><Lock className="w-4 h-4" /> Locked</>
-                                                        )}
-                                                    </button>
-                                                    <Link
-                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold rounded-lg transition-colors text-xs"
-                                                    >
-                                                        <Eye className="w-4 h-4" /> View
-                                                    </Link>
-                                                </>
-                                            ) : bill.type === 'LABORATORY' ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)}
-                                                        disabled={actionLoadingId === bill.id}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
-                                                        title={bill.editUnlocked ? "Lock Report Editing" : "Unlock Report Editing"}
-                                                    >
-                                                        {actionLoadingId === bill.id ? (
-                                                            <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                                                        ) : bill.editUnlocked ? (
-                                                            <><Unlock className="w-4 h-4" /> Unlocked</>
-                                                        ) : (
-                                                            <><Lock className="w-4 h-4" /> Locked</>
-                                                        )}
-                                                    </button>
-                                                    <Link
-                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
-                                                    >
-                                                        <Eye className="w-4 h-4" /> View
-                                                    </Link>
-                                                </>
-                                            ) : (
-                                                <Link
-                                                    href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
-                                                >
-                                                    <Eye className="w-4 h-4" /> View
-                                                </Link>
-                                            )}
-                                        </td>
-                                    </tr>
+                                    <BillRow
+                                        key={bill.id}
+                                        bill={bill}
+                                        onDelete={handleDeleteBill}
+                                        actionLoadingId={actionLoadingId}
+                                        handleToggleLock={handleToggleLock}
+                                        onFinalize={(b) => {
+                                            setSelectedAdmission(b);
+                                            setDiscountAmount(0);
+                                            setBillingModalOpen(true);
+                                        }}
+                                    />
                                 ))
                             )}
                         </tbody>
