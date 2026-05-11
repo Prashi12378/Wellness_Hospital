@@ -69,11 +69,16 @@ function BillRow({
                 {/* Background layer revealed on right swipe */}
                 {offsetX > 0 && (
                     <div 
-                        className="absolute top-0 bottom-0 left-0 bg-red-500 flex items-center px-4 text-white rounded-r-xl"
-                        style={{ transform: 'translateX(-100%)', width: '120px' }}
+                        className="absolute top-0 bottom-0 left-0 bg-red-500 flex items-center overflow-hidden text-white rounded-r-xl"
+                        style={{ 
+                            transform: `translateX(-${offsetX}px)`, 
+                            width: `${offsetX}px` 
+                        }}
                     >
-                        <Trash2 className="w-5 h-5 mr-2" />
-                        <span className="text-xs font-bold">{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                        <div className="px-4 flex items-center whitespace-nowrap min-w-[120px]">
+                            <Trash2 className="w-5 h-5 mr-2 shrink-0" />
+                            <span className="text-xs font-bold shrink-0">{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                        </div>
                     </div>
                 )}
                 <span className="font-mono text-sm font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
