@@ -4,10 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useSearchParams } from "next/navigation";
 import { Plus, Trash2, Printer, CheckCircle2, Search, Calculator, UserSearch, X, FileText, Loader2 } from "lucide-react";
-import { createLabInvoice } from "../../actions/billing";
+import { createLabInvoice, getLabInvoices } from "../../actions/billing";
 import { getPatientDepositBalance } from "../../actions/patient-billing";
 import { getUnbilledLabRequests, getLabRequestById } from "../../actions/lab";
 import LabInvoicePrint from "../../../components/LabInvoicePrint";
+import { format } from "date-fns";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,9 @@ function LabBillingPageContent() {
     const [paymentMethod, setPaymentMethod] = useState("CASH");
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedInvoice, setGeneratedInvoice] = useState<any>(null);
+    const [viewingInvoice, setViewingInvoice] = useState<any>(null);
+    const [recentBills, setRecentBills] = useState<any[]>([]);
+    const [isFetchingBills, setIsFetchingBills] = useState(false);
     const [depositBalance, setDepositBalance] = useState<number>(0);
     const [patientDeposits, setPatientDeposits] = useState<any[]>([]);
     const [useDeposit, setUseDeposit] = useState(false);
@@ -47,7 +51,17 @@ function LabBillingPageContent() {
         if (requestIdParam) {
             loadInitialRequest(requestIdParam);
         }
+        fetchRecentBills();
     }, [requestIdParam]);
+
+    const fetchRecentBills = async () => {
+        setIsFetchingBills(true);
+        const res = await getLabInvoices();
+        if (res.success && res.invoices) {
+            setRecentBills(res.invoices.slice(0, 50));
+        }
+        setIsFetchingBills(false);
+    };
 
     const loadInitialRequest = async (id: string) => {
         setInitialLoading(true);
@@ -200,6 +214,7 @@ function LabBillingPageContent() {
         const result = await createLabInvoice(payload);
         if (result.success) {
             setGeneratedInvoice(result.invoice);
+            fetchRecentBills();
         } else {
             alert("Failed: " + result.error);
         }
@@ -217,20 +232,21 @@ function LabBillingPageContent() {
         );
     }
 
-    if (generatedInvoice) {
+    if (generatedInvoice || viewingInvoice) {
+        const activeInvoice = generatedInvoice || viewingInvoice;
         return (
             <div className="max-w-4xl mx-auto space-y-8">
                 <div className="bg-emerald-50 text-emerald-700 p-6 rounded-2xl flex items-center justify-between border border-emerald-200">
                     <div className="flex items-center gap-4">
                         <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                         <div>
-                            <h2 className="text-xl font-bold">Invoice Generated Successfully</h2>
-                            <p className="opacity-80">Bill No: {generatedInvoice.billNo}</p>
+                            <h2 className="text-xl font-bold">{generatedInvoice ? "Invoice Generated Successfully" : "Invoice Details"}</h2>
+                            <p className="opacity-80">Bill No: {activeInvoice.billNo}</p>
                         </div>
                     </div>
                     <div className="flex gap-4">
-                        <Button variant="outline" onClick={() => { setGeneratedInvoice(null); setItems([]); setPatientInfo({ name: "", phone: "", doctor: "" }); setSelectedRequestIds([]) }}>
-                            New Bill
+                        <Button variant="outline" onClick={() => { setGeneratedInvoice(null); setViewingInvoice(null); setItems([]); setPatientInfo({ name: "", phone: "", doctor: "" }); setSelectedRequestIds([]) }}>
+                            {generatedInvoice ? "New Bill" : "Back to Billing"}
                         </Button>
                         <Button onClick={handlePrint} className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2">
                             <Printer className="w-4 h-4" /> Print Invoice
@@ -240,12 +256,12 @@ function LabBillingPageContent() {
 
                 <div className="hidden">
                     <div ref={printRef}>
-                        <LabInvoicePrint invoice={generatedInvoice} />
+                        <LabInvoicePrint invoice={activeInvoice} />
                     </div>
                 </div>
 
                 <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200 pointer-events-none opacity-90 overflow-hidden">
-                    <LabInvoicePrint invoice={generatedInvoice} />
+                    <LabInvoicePrint invoice={activeInvoice} />
                 </div>
             </div>
         );
@@ -547,6 +563,89 @@ function LabBillingPageContent() {
                             {isGenerating ? "Processing..." : "Generate Invoice"}
                         </Button>
                     </div>
+                </div>
+            </div>
+
+            {/* Recent Bills History */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                        <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-emerald-500" /> Recent Bills History
+                        </h2>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">Last 50 generated laboratory invoices</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={fetchRecentBills} disabled={isFetchingBills} className="text-xs font-bold bg-white">
+                        {isFetchingBills ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : null}
+                        Refresh List
+                    </Button>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-white border-b border-slate-100">
+                            <tr>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Bill No</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Name</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Payment</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {recentBills.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic font-medium">
+                                        No recent bills found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                recentBills.map((bill) => (
+                                    <tr key={bill.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md">
+                                                {bill.billNo}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-xs font-medium text-slate-600">
+                                            {bill.date ? format(new Date(bill.date), "dd MMM yyyy, hh:mm a") : "-"}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm font-bold text-slate-800">
+                                            {bill.patientName}
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-sm font-black text-slate-900">
+                                            ₹{Number(bill.grandTotal).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                {bill.paymentMethod}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={cn(
+                                                "px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
+                                                bill.status === "PAID" ? "bg-emerald-100 text-emerald-700" :
+                                                bill.status === "PENDING" ? "bg-amber-100 text-amber-700" :
+                                                "bg-red-100 text-red-700"
+                                            )}>
+                                                {bill.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button
+                                                onClick={() => setViewingInvoice(bill)}
+                                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                                title="View / Print"
+                                            >
+                                                <Printer className="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

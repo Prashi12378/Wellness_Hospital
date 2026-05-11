@@ -15,11 +15,12 @@ export default async function UniversalInvoicePage({
     const { id } = await params;
     const resolvedSearchParams = await searchParams;
     const type = resolvedSearchParams.type as string;
+    const isInvoice = resolvedSearchParams.isInvoice === 'true';
 
     let invoiceData: any = null;
     let title = "HOSPITAL INVOICE";
 
-    if (type === 'LABORATORY') {
+    if (type === 'LABORATORY' && !isInvoice) {
         const labRequest = await prisma.labRequest.findUnique({
             where: { id },
             include: {
@@ -70,6 +71,8 @@ export default async function UniversalInvoicePage({
                 title = "OPD CONSULTATION RECIEPT";
             } else if (type === 'IPD' || invoice.billNo.startsWith('INV-IPD-')) {
                 title = "IPD FINAL BILL";
+            } else if (type === 'LABORATORY' || invoice.billNo.startsWith('LAB/')) {
+                title = "LABORATORY RECEIPT";
             }
 
             invoiceData = {

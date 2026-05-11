@@ -26,20 +26,27 @@ export default function AuditBillsPage() {
         setLoading(false);
     };
 
-    const filteredInvoices = invoices.filter(inv => {
-        const matchesSearch =
-            inv.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            inv.billNo.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesSearch;
-    });
-
     // Audit-filtered invoices (for PDF)
     const auditInvoices = invoices.filter(inv => {
         let ok = true;
-        if (fromDate) ok = ok && new Date(inv.date) >= startOfDay(parseISO(fromDate));
-        if (toDate) ok = ok && new Date(inv.date) <= endOfDay(parseISO(toDate));
+        const invDate = new Date(inv.date || inv.createdAt || new Date());
+        if (fromDate) {
+             const from = new Date(fromDate + 'T00:00:00');
+             ok = ok && invDate >= from;
+        }
+        if (toDate) {
+             const to = new Date(toDate + 'T23:59:59');
+             ok = ok && invDate <= to;
+        }
         if (statusFilter !== "ALL") ok = ok && inv.status === statusFilter;
         return ok;
+    });
+
+    const filteredInvoices = auditInvoices.filter(inv => {
+        const matchesSearch =
+            inv.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            inv.billNo?.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesSearch;
     });
 
     // Summary totals for audit

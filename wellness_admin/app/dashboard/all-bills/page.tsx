@@ -255,7 +255,7 @@ export default function AllBillsPage() {
                                                         )}
                                                     </button>
                                                     <Link
-                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
+                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`}
                                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold rounded-lg transition-colors text-xs"
                                                     >
                                                         <Eye className="w-4 h-4" /> View
@@ -278,7 +278,7 @@ export default function AllBillsPage() {
                                                         )}
                                                     </button>
                                                     <Link
-                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
+                                                        href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`}
                                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
                                                     >
                                                         <Eye className="w-4 h-4" /> View
@@ -286,7 +286,7 @@ export default function AllBillsPage() {
                                                 </>
                                             ) : (
                                                 <Link
-                                                    href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}`}
+                                                    href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`}
                                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs"
                                                 >
                                                     <Eye className="w-4 h-4" /> View
