@@ -89,6 +89,7 @@ export async function GET() {
                 status: "PENDING",
                 paymentMethod: "CASH",
                 editUnlocked: adm.editUnlocked,
+                isInvoice: false,
                 rawAdmission: adm // Pass this so we can show details in the modal
             };
         });

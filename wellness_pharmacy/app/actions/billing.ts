@@ -654,3 +654,47 @@ export async function returnInvoiceItems(invoiceId: string, itemIds: string[]) {
         return { error: 'Failed to process partial return: ' + (error.message || 'Unknown error') };
     }
 }
+
+export async function clearPharmacyInvoicePayment(invoiceId: string, paymentMethod: string) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { error: 'Authentication required' };
+        }
+
+        const invoice = await db.invoice.findUnique({
+            where: { id: invoiceId }
+        });
+
+        if (!invoice) return { error: "Invoice not found" };
+
+        await db.invoice.update({
+            where: { id: invoiceId },
+            data: {
+                status: 'PAID',
+                paymentMethod: paymentMethod,
+                updatedAt: new Date()
+            }
+        });
+
+        // Record to Ledger now that it's paid
+        await db.ledger.create({
+            data: {
+                transactionType: 'income',
+                category: 'pharmacy',
+                description: `Payment Cleared - Bill #${invoice.billNo} (${invoice.patientName})`,
+                amount: invoice.grandTotal,
+                paymentMethod: paymentMethod,
+                transactionDate: new Date(),
+                recordedBy: (session.user as any).id
+            }
+        });
+
+        revalidatePath('/dashboard/history');
+        revalidatePath('/dashboard/billing');
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to clear pharmacy invoice payment:", error);
+        return { error: `Failed to clear payment: ${error.message || 'Unknown error'}` };
+    }
+}

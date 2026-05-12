@@ -136,6 +136,19 @@ function BillRow({
                         <Eye className="w-4 h-4" /> View
                     </Link>
                 )}
+                
+                {/* Always show Delete button for Admin */}
+                <button 
+                    onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this bill? This action cannot be undone.")) {
+                            onDelete(bill.id, bill.type, !!bill.isInvoice);
+                        }
+                    }}
+                    className="p-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                    title="Delete Bill"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
             </td>
         </tr>
     );

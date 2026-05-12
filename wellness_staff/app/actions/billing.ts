@@ -148,7 +148,7 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
                 paymentMethod: data.paymentMethod,
                 discountAmount: data.discountAmount || 0,
                 date: data.date ? new Date(data.date) : new Date(),
-                status: 'PAID',
+                status: data.paymentMethod === 'CREDIT' ? 'UNPAID' : 'PAID',
                 items: {
                     create: data.items.map(item => ({
                         medicineId: 'SERVICE', // Marker for non-pharmacy items
@@ -173,18 +173,20 @@ export async function generateOPDInvoice(data: OPDInvoiceData) {
             });
         }
 
-        // Record to Ledger
-        await prisma.ledger.create({
-            data: {
-                transactionType: 'income',
-                category: 'staff',
-                description: `OPD Bill #${billNo} (${data.patientName})`,
-                amount: data.grandTotal,
-                paymentMethod: data.paymentMethod,
-                transactionDate: new Date(),
-                recordedBy: (session.user as any).id
-            }
-        });
+        // Record to Ledger ONLY if not credit
+        if (data.paymentMethod !== 'CREDIT') {
+            await prisma.ledger.create({
+                data: {
+                    transactionType: 'income',
+                    category: 'staff',
+                    description: `OPD Bill #${billNo} (${data.patientName})`,
+                    amount: data.grandTotal,
+                    paymentMethod: data.paymentMethod,
+                    transactionDate: new Date(),
+                    recordedBy: (session.user as any).id
+                }
+            });
+        }
 
         revalidatePath(`/dashboard/appointments/${data.appointmentId}/billing`);
         revalidatePath('/dashboard/billing');
@@ -261,7 +263,7 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
                 discountAmount: data.discountAmount || 0,
                 ward: data.ward || undefined,
                 date: data.date ? new Date(data.date) : new Date(),
-                status: 'PAID',
+                status: data.paymentMethod === 'CREDIT' ? 'UNPAID' : 'PAID',
                 items: {
                     create: data.items.map((item: any) => ({
                         medicineId: 'OBSERVATION',
@@ -286,24 +288,69 @@ export async function generateObservationInvoice(data: ObservationInvoiceData) {
             });
         }
 
-        // Record to Ledger
-        await prisma.ledger.create({
-            data: {
-                transactionType: 'income',
-                category: 'staff',
-                description: `Observation Bill #${billNo} (${data.patientName})`,
-                amount: data.grandTotal,
-                paymentMethod: data.paymentMethod,
-                transactionDate: new Date(),
-                recordedBy: (session.user as any).id
-            }
-        });
+        // Record to Ledger ONLY if not credit
+        if (data.paymentMethod !== 'CREDIT') {
+            await prisma.ledger.create({
+                data: {
+                    transactionType: 'income',
+                    category: 'staff',
+                    description: `Observation Bill #${billNo} (${data.patientName})`,
+                    amount: data.grandTotal,
+                    paymentMethod: data.paymentMethod,
+                    transactionDate: new Date(),
+                    recordedBy: (session.user as any).id
+                }
+            });
+        }
 
         revalidatePath('/dashboard/billing');
         return { success: true, invoice: serializeData(invoice) };
     } catch (error: any) {
         console.error("Failed to generate observation invoice:", error);
         return { success: false, error: `Failed to generate observation invoice: ${error.message || 'Unknown error'}` };
+    }
+}
+
+export async function clearInvoicePayment(invoiceId: string, paymentMethod: string) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const invoice = await (prisma as any).invoice.findUnique({
+            where: { id: invoiceId }
+        });
+
+        if (!invoice) return { success: false, error: "Invoice not found" };
+
+        const updatedInvoice = await (prisma as any).invoice.update({
+            where: { id: invoiceId },
+            data: {
+                status: 'PAID',
+                paymentMethod: paymentMethod,
+                updatedAt: new Date()
+            }
+        });
+
+        // Record to Ledger now that it's paid
+        await prisma.ledger.create({
+            data: {
+                transactionType: 'income',
+                category: 'staff',
+                description: `Payment Cleared - ${invoice.billNo} (${invoice.patientName})`,
+                amount: invoice.grandTotal,
+                paymentMethod: paymentMethod,
+                transactionDate: new Date(),
+                recordedBy: (session.user as any).id
+            }
+        });
+
+        revalidatePath('/dashboard/billing');
+        return { success: true, invoice: serializeData(updatedInvoice) };
+    } catch (error: any) {
+        console.error("Failed to clear invoice payment:", error);
+        return { success: false, error: `Failed to clear payment: ${error.message || 'Unknown error'}` };
     }
 }
 

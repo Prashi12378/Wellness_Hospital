@@ -97,6 +97,17 @@ export async function updateDoctorNameOnReport(id: string, requestedByName: stri
 export async function updateLabRequestStatus(requestId: string, status: string, result?: string, reportUrl?: string, parameters?: any) {
     try {
         console.log(`[LabActions] Updating request ${requestId} to status ${status}`);
+        
+        // 1. Fetch current request to get patient info
+        const currentRequest = await prisma.labRequest.findUnique({
+            where: { id: requestId }
+        });
+
+        if (!currentRequest) {
+            return { success: false, error: "Lab request not found" };
+        }
+
+        // 2. Update the LabRequest status
         await prisma.labRequest.update({
             where: { id: requestId },
             data: {
@@ -110,6 +121,52 @@ export async function updateLabRequestStatus(requestId: string, status: string, 
                 updatedAt: new Date()
             } as any
         });
+
+        // 3. If completed, check for active IPD admission and sync to LabRecord
+        if (status === 'completed') {
+            const activeAdmission = await prisma.admission.findFirst({
+                where: {
+                    patientId: currentRequest.patientId,
+                    status: 'admitted'
+                }
+            });
+
+            if (activeAdmission) {
+                console.log(`[LabActions] Syncing report to IPD admission: ${activeAdmission.id}`);
+                
+                // Check if a record already exists for this specific request
+                // Since we don't have a requestId field in LabRecord yet, we match by admissionId and testName
+                // as a best-effort, or we can just always create/update.
+                const existingRecord = await prisma.labRecord.findFirst({
+                    where: {
+                        admissionId: activeAdmission.id,
+                        testName: currentRequest.testName
+                    }
+                });
+
+                if (existingRecord) {
+                    await prisma.labRecord.update({
+                        where: { id: existingRecord.id },
+                        data: {
+                            result: result || "Report Completed",
+                            fileUrl: reportUrl || currentRequest.reportUrl || undefined,
+                            recordedAt: new Date()
+                        }
+                    });
+                } else {
+                    await prisma.labRecord.create({
+                        data: {
+                            admissionId: activeAdmission.id,
+                            testName: currentRequest.testName,
+                            result: result || "Report Completed",
+                            fileUrl: reportUrl || currentRequest.reportUrl || undefined,
+                            recordedAt: new Date()
+                        }
+                    });
+                }
+            }
+        }
+
         console.log(`[LabActions] Successfully updated request ${requestId}.`);
         revalidatePath("/dashboard");
         revalidatePath(`/dashboard/report/${requestId}`);

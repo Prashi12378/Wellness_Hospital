@@ -13,7 +13,8 @@ import {
     getAllDoctors,
     searchPatientsForBilling,
     getRecentOPDAndObservationBills,
-    deleteObservationInvoice
+    deleteObservationInvoice,
+    clearInvoicePayment
 } from '@/app/actions/billing';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -22,7 +23,7 @@ import { cn } from '@/lib/utils';
 interface Patient { id: string; firstName: string; lastName: string; uhid: string; phone: string; }
 interface Doctor { id: string; firstName: string; lastName: string; specialization: string; consultationFee: number; }
 interface LineItem { id: string; name: string; qty: number; amount: number; }
-interface Invoice { id: string; billNo: string; patientName: string; grandTotal: number; paymentMethod: string; date: string; items: { medicineId: string }[]; }
+interface Invoice { id: string; billNo: string; patientName: string; patientPhone: string; grandTotal: number; paymentMethod: string; date: string; items: { medicineId: string }[]; status: string; }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const PAYMENT_METHODS = [
@@ -30,6 +31,7 @@ const PAYMENT_METHODS = [
     { value: 'UPI', label: 'UPI / QR Code', icon: Smartphone },
     { value: 'CARD', label: 'Debit / Credit', icon: CreditCard },
     { value: 'TRANSFER', label: 'Bank Transfer', icon: Building2 },
+    { value: 'CREDIT', label: 'Credit', icon: CreditCard },
 ];
 
 function newItem(): LineItem {
@@ -400,15 +402,6 @@ function OPDBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSuccess: (
     const [invoice, setInvoice] = useState<any>(null);
 
     const selectedDoctor = doctors.find(d => d.id === doctor);
-
-    const handleDoctorChange = (id: string) => {
-        setDoctor(id);
-        const d = doctors.find(x => x.id === id);
-        if (d && d.consultationFee) {
-            setItems([{ id: crypto.randomUUID(), name: `Consultation Fee – Dr. ${d.firstName} ${d.lastName}`, qty: 1, amount: Number(d.consultationFee) }]);
-        }
-    };
-
     const total = items.reduce((s, i) => s + (i.amount * i.qty), 0);
 
     const handleGenerate = async () => {
@@ -440,53 +433,35 @@ function OPDBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSuccess: (
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form */}
             <div className="lg:col-span-2 space-y-6">
-                {/* Patient */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <User className="w-4 h-4" /> Step 1 · Select Patient
                     </h3>
                     <PatientSearch onSelect={setPatient} />
                 </div>
-
-
                 <div className={cn("bg-white p-6 rounded-3xl shadow-sm border border-slate-100 transition-all", !patient && 'opacity-50 pointer-events-none')}>
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <Stethoscope className="w-4 h-4" /> Step 2 · Details
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Doctor (Optional)</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Doctor</label>
                             <select
                                 value={doctor}
-                                onChange={e => handleDoctorChange(e.target.value)}
+                                onChange={e => { setDoctor(e.target.value); const d = doctors.find(x => x.id === e.target.value); if (d) setItems([{ id: crypto.randomUUID(), name: `Consultation Fee – Dr. ${d.firstName} ${d.lastName}`, qty: 1, amount: Number(d.consultationFee) }]); }}
                                 className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
                             >
-                                <option value="">—  No doctor / Walk-in  —</option>
-                                {doctors.map(d => (
-                                    <option key={d.id} value={d.id}>
-                                        Dr. {d.firstName} {d.lastName}
-                                        {d.specialization ? ` (${d.specialization})` : ''}
-                                        {d.consultationFee ? ` · ₹${d.consultationFee}` : ''}
-                                    </option>
-                                ))}
+                                <option value="">— No doctor / Walk-in —</option>
+                                {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName}</option>)}
                             </select>
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bill Date</label>
-                            <input
-                                type="date"
-                                value={dateOut}
-                                onChange={e => setDateOut(e.target.value)}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
-                            />
+                            <input type="date" value={dateOut} onChange={e => setDateOut(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20" />
                         </div>
                     </div>
                 </div>
-
-
-                {/* Line Items */}
                 <div className={cn("bg-white p-6 rounded-3xl shadow-sm border border-slate-100 transition-all", !patient && 'opacity-50 pointer-events-none')}>
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <ReceiptText className="w-4 h-4" /> Step 3 · Services &amp; Charges
@@ -494,59 +469,26 @@ function OPDBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSuccess: (
                     <LineItems items={items} onChange={setItems} />
                 </div>
             </div>
-
-            {/* Summary */}
             <div className="space-y-6">
                 <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-2xl sticky top-8">
-                    <div className="absolute top-6 right-6 opacity-10">
-                        <ReceiptText className="w-16 h-16" />
-                    </div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Payable</p>
                     <p className="text-5xl font-black tracking-tighter mb-6">₹{total.toLocaleString()}</p>
-
                     <div className="space-y-2 mb-6">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Payment Mode</p>
                         <div className="grid grid-cols-2 gap-2">
-                            {PAYMENT_METHODS.map(pm => {
-                                const Icon = pm.icon;
-                                return (
-                                    <button
-                                        key={pm.value}
-                                        onClick={() => setPayment(pm.value)}
-                                        className={cn(
-                                            'flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold transition-all border',
-                                            payment === pm.value
-                                                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30'
-                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
-                                        )}
-                                    >
-                                        <Icon className="w-3.5 h-3.5" /> {pm.label}
-                                    </button>
-                                );
-                            })}
+                            {PAYMENT_METHODS.map(pm => (
+                                <button key={pm.value} onClick={() => setPayment(pm.value)} className={cn('flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold transition-all border', payment === pm.value ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500')}>
+                                    <pm.icon className="w-3.5 h-3.5" /> {pm.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
-
-                    <button
-                        disabled={loading || !patient || total === 0}
-                        onClick={handleGenerate}
-                        className="w-full py-4 bg-primary hover:bg-primary/90 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-95"
-                    >
+                    <button disabled={loading || !patient || total === 0} onClick={handleGenerate} className="w-full py-4 bg-primary hover:bg-primary/90 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-95">
                         {loading ? <Loader2 className="animate-spin w-5 h-5" /> : <><ReceiptText className="w-5 h-5" /> Generate OPD Invoice</>}
                     </button>
                 </div>
             </div>
-
-            {invoice && (
-                <InvoiceModal
-                    invoice={invoice}
-                    patientName={patient ? `${patient.firstName} ${patient.lastName}` : ''}
-                    doctorName={selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : undefined}
-                    paymentMethod={payment}
-                    type="OPD"
-                    onClose={() => setInvoice(null)}
-                />
-            )}
+            {invoice && <InvoiceModal invoice={invoice} patientName={patient ? `${patient.firstName} ${patient.lastName}` : ''} doctorName={selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : undefined} paymentMethod={payment} type="OPD" onClose={() => setInvoice(null)} />}
         </div>
     );
 }
@@ -597,17 +539,13 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form */}
             <div className="lg:col-span-2 space-y-6">
-                {/* Patient */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <User className="w-4 h-4" /> Step 1 · Select Patient
                     </h3>
                     <PatientSearch onSelect={setPatient} />
                 </div>
-
-                {/* Observation Details */}
                 <div className={cn("bg-white p-6 rounded-3xl shadow-sm border border-slate-100 transition-all", !patient && 'opacity-50 pointer-events-none')}>
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <Bed className="w-4 h-4" /> Step 2 · Observation Details
@@ -615,53 +553,21 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ward / Room</label>
-                            <input
-                                value={ward}
-                                onChange={e => setWard(e.target.value)}
-                                placeholder="e.g. Ward B, Room 12"
-                                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20"
-                            />
+                            <input value={ward} onChange={e => setWard(e.target.value)} className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Obs. Hours</label>
-                            <div className="relative">
-                                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    type="number" min={1} max={72}
-                                    value={hours}
-                                    onChange={e => setHours(Number(e.target.value))}
-                                    className="w-full pl-9 pr-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
-                                />
-                            </div>
+                            <input type="number" min={1} value={hours} onChange={e => setHours(Number(e.target.value))} className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20" />
                         </div>
-
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attending Doctor</label>
-                            <select
-                                value={doctor}
-                                onChange={e => setDoctor(e.target.value)}
-                                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
-                            >
+                            <select value={doctor} onChange={e => setDoctor(e.target.value)} className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
                                 <option value="">— Optional —</option>
-                                {doctors.map(d => (
-                                    <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName}</option>
-                                ))}
+                                {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName}</option>)}
                             </select>
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bill Date</label>
-                            <input
-                                type="date"
-                                value={dateOut}
-                                onChange={e => setDateOut(e.target.value)}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20"
-                            />
-                        </div>
-
                     </div>
                 </div>
-
-                {/* Charges */}
                 <div className={cn("bg-white p-6 rounded-3xl shadow-sm border border-slate-100 transition-all", !patient && 'opacity-50 pointer-events-none')}>
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <ReceiptText className="w-4 h-4" /> Step 3 · Charges
@@ -669,143 +575,161 @@ function ObservationBillingTab({ doctors, onSuccess }: { doctors: Doctor[]; onSu
                     <LineItems items={items} onChange={setItems} />
                 </div>
             </div>
-
-            {/* Summary */}
             <div className="space-y-6">
                 <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-2xl sticky top-8">
-                    <div className="absolute top-6 right-6 opacity-10">
-                        <Bed className="w-16 h-16" />
-                    </div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Payable</p>
-                    <p className="text-5xl font-black tracking-tighter mb-2">₹{total.toLocaleString()}</p>
-                    {hours > 0 && (
-                        <p className="text-xs text-slate-500 font-medium mb-6">{hours}h observation · {ward || 'Ward TBD'}</p>
-                    )}
-
+                    <p className="text-5xl font-black tracking-tighter mb-6">₹{total.toLocaleString()}</p>
                     <div className="space-y-2 mb-6">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Payment Mode</p>
                         <div className="grid grid-cols-2 gap-2">
-                            {PAYMENT_METHODS.map(pm => {
-                                const Icon = pm.icon;
-                                return (
-                                    <button
-                                        key={pm.value}
-                                        onClick={() => setPayment(pm.value)}
-                                        className={cn(
-                                            'flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold transition-all border',
-                                            payment === pm.value
-                                                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30'
-                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
-                                        )}
-                                    >
-                                        <Icon className="w-3.5 h-3.5" /> {pm.label}
-                                    </button>
-                                );
-                            })}
+                            {PAYMENT_METHODS.map(pm => (
+                                <button key={pm.value} onClick={() => setPayment(pm.value)} className={cn('flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold transition-all border', payment === pm.value ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500')}>
+                                    <pm.icon className="w-3.5 h-3.5" /> {pm.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
-
-                    <button
-                        disabled={loading || !patient || total === 0}
-                        onClick={handleGenerate}
-                        className="w-full py-4 bg-primary hover:bg-primary/90 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-95"
-                    >
+                    <button disabled={loading || !patient || total === 0} onClick={handleGenerate} className="w-full py-4 bg-primary hover:bg-primary/90 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-95">
                         {loading ? <Loader2 className="animate-spin w-5 h-5" /> : <><Bed className="w-5 h-5" /> Generate Obs. Invoice</>}
                     </button>
                 </div>
-
-                <div className="bg-amber-50 border border-amber-100 p-5 rounded-3xl">
-                    <p className="text-xs font-black text-amber-800 uppercase tracking-widest mb-2">Observation Note</p>
-                    <p className="text-xs text-amber-700 font-medium leading-relaxed">
-                        Observation billing is for patients kept under medical watch but not formally admitted as IPD.
-                        For admitted patients use the IPD module.
-                    </p>
-                </div>
             </div>
-
-            {invoice && (
-                <InvoiceModal
-                    invoice={invoice}
-                    patientName={patient ? `${patient.firstName} ${patient.lastName}` : ''}
-                    doctorName={selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : undefined}
-                    paymentMethod={payment}
-                    type="OBS"
-                    onClose={() => setInvoice(null)}
-                />
-            )}
+            {invoice && <InvoiceModal invoice={invoice} patientName={patient ? `${patient.firstName} ${patient.lastName}` : ''} doctorName={selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : undefined} paymentMethod={payment} type="OBS" onClose={() => setInvoice(null)} />}
         </div>
     );
 }
 
-function SwipeableTableRow({ bill, isDeleting, onDelete, onPrint }: { bill: Invoice, isDeleting: boolean, onDelete: () => void, onPrint: () => void }) {
-    const isObs = bill.items?.some((i: any) => i.medicineId === 'OBSERVATION');
-    const [offsetX, setOffsetX] = useState(0);
-    const startX = useRef<number | null>(null);
+function SwipeableTableRow({ bill, onDelete, onPrint, isDeleting, onClear }: {
+    bill: Invoice;
+    onDelete: () => void;
+    onPrint: () => void;
+    onClear: (method: string) => void;
+    isDeleting?: boolean;
+}) {
+    const [startX, setStartX] = useState(0);
+    const [currentX, setCurrentX] = useState(0);
+    const [isSwiping, setIsSwiping] = useState(false);
+    const [showClearModal, setShowClearModal] = useState(false);
 
-    const handlePointerDown = (e: React.PointerEvent) => {
-        if (!isObs) return;
-        startX.current = e.clientX;
+    const onPointerDown = (e: React.PointerEvent) => {
+        setStartX(e.clientX);
+        setIsSwiping(true);
     };
 
-    const handlePointerMove = (e: React.PointerEvent) => {
-        if (!isObs || startX.current === null) return;
-        const delta = e.clientX - startX.current;
-        if (delta > 0 && delta < 120) { // Only right swipe, max 120px
-            setOffsetX(delta);
-        }
+    const onPointerMove = (e: React.PointerEvent) => {
+        if (!isSwiping) return;
+        const delta = e.clientX - startX;
+        if (delta < 0) setCurrentX(delta);
     };
 
-    const handlePointerUp = () => {
-        if (!isObs || startX.current === null) return;
-        if (offsetX > 60) {
+    const onPointerUp = () => {
+        setIsSwiping(false);
+        if (currentX < -100) {
             onDelete();
         }
-        setOffsetX(0);
-        startX.current = null;
+        setCurrentX(0);
     };
 
     return (
         <tr
-            className="hover:bg-slate-50/60 transition-colors relative"
-            style={{ transform: `translateX(${offsetX}px)`, transition: startX.current ? 'none' : 'transform 0.3s ease', touchAction: 'pan-y' }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
+            className="group hover:bg-slate-50/50 transition-colors relative"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{ touchAction: 'none' }}
         >
-            <td className="px-6 py-4 text-sm font-black text-slate-800 relative">
-                {/* Background layer revealed on right swipe */}
-                {isObs && offsetX > 0 && (
-                    <div 
-                        className="absolute top-0 bottom-0 left-0 bg-red-500 flex items-center px-4 text-white rounded-r-xl"
-                        style={{ transform: 'translateX(-100%)', width: '120px' }}
-                    >
-                        <Trash2 className="w-5 h-5 mr-2" />
-                        <span className="text-xs font-bold">{isDeleting ? 'Deleting...' : 'Delete'}</span>
-                    </div>
-                )}
-                {bill.billNo}
+            <td className="px-6 py-4">
+                <div
+                    className="absolute inset-y-0 right-0 bg-red-500 flex items-center justify-center transition-all duration-200"
+                    style={{ width: Math.abs(currentX), opacity: Math.min(Math.abs(currentX) / 100, 1) }}
+                >
+                    <Trash2 className="w-5 h-5 text-white" />
+                </div>
+
+                <div className="flex flex-col transform transition-transform duration-200" style={{ transform: `translateX(${currentX}px)` }}>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-tighter">#{bill.billNo}</span>
+                </div>
             </td>
-            <td className="px-6 py-4 text-sm font-medium text-slate-700">{bill.patientName}</td>
+            <td className="px-6 py-4">
+                <div className="flex flex-col">
+                    <span className="text-sm font-bold text-slate-800">{bill.patientName}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">{bill.patientPhone || 'No Phone'}</span>
+                </div>
+            </td>
             <td className="px-6 py-4">
                 <span className={cn(
-                    'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest',
-                    isObs ? 'bg-amber-50 text-amber-700' : 'bg-primary/10 text-primary'
+                    "px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest",
+                    bill.billNo.startsWith('OBS') ? "bg-purple-50 text-purple-600" : "bg-blue-50 text-blue-600"
                 )}>
-                    {isObs ? 'Observation' : 'OPD'}
+                    {bill.billNo.startsWith('OBS') ? 'OBS' : 'OPD'}
                 </span>
             </td>
-            <td className="px-6 py-4 text-right text-sm font-black text-slate-900">₹{Number(bill.grandTotal).toLocaleString()}</td>
-            <td className="px-6 py-4 text-sm text-slate-500 font-medium">{bill.paymentMethod}</td>
-            <td className="px-6 py-4 text-sm text-slate-500 font-medium">{format(new Date(bill.date), 'dd MMM yy, hh:mm a')}</td>
+            <td className="px-6 py-4 text-right font-black text-slate-900">
+                ₹{Number(bill.grandTotal).toLocaleString()}
+            </td>
+            <td className="px-6 py-4">
+                <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{bill.paymentMethod}</span>
+                    <span className={cn(
+                        "text-[9px] font-bold uppercase px-1.5 py-0.5 rounded w-fit",
+                        bill.status === 'PAID' ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+                    )}>
+                        {bill.status}
+                    </span>
+                </div>
+            </td>
+            <td className="px-6 py-4 text-sm text-slate-500 font-medium">
+                {format(new Date(bill.date), 'dd MMM yy, hh:mm a')}
+            </td>
             <td className="px-6 py-4 text-center">
-                <button
-                    onClick={onPrint}
-                    className="p-2 rounded-xl text-slate-300 hover:text-primary hover:bg-primary/5 transition-all"
-                    title="Print"
-                >
-                    <Printer className="w-4 h-4" />
-                </button>
+                <div className="flex items-center justify-center gap-2">
+                    {bill.status === 'UNPAID' && (
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowClearModal(true)}
+                                className="p-2 rounded-xl text-amber-500 hover:bg-amber-50 transition-all"
+                                title="Clear Payment"
+                            >
+                                <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                            {showClearModal && (
+                                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm pointer-events-auto">
+                                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full">
+                                        <h3 className="text-xl font-black text-slate-800 mb-4">Clear Payment?</h3>
+                                        <div className="grid grid-cols-2 gap-2 mb-6">
+                                            {['CASH', 'UPI', 'CARD', 'TRANSFER'].map(m => (
+                                                <button
+                                                    key={m}
+                                                    onClick={() => {
+                                                        onClear(m);
+                                                        setShowClearModal(false);
+                                                    }}
+                                                    className="py-2.5 rounded-xl text-xs font-black bg-slate-50 hover:bg-slate-900 hover:text-white border border-slate-100 transition-all uppercase"
+                                                >
+                                                    {m}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button 
+                                            onClick={() => setShowClearModal(false)}
+                                            className="w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <button
+                        onClick={onPrint}
+                        className="p-2 rounded-xl text-slate-300 hover:text-primary hover:bg-primary/5 transition-all"
+                        title="Print"
+                    >
+                        <Printer className="w-4 h-4" />
+                    </button>
+                </div>
             </td>
         </tr>
     );
@@ -931,6 +855,11 @@ export default function BillingHubPage() {
                                     isDeleting={isDeleting === bill.id} 
                                     onDelete={() => setDeleteConfirmId(bill.id)} 
                                     onPrint={() => setPrintInvoice(bill)} 
+                                    onClear={async (method) => {
+                                        const res = await clearInvoicePayment(bill.id, method);
+                                        if (res.success) fetchBills();
+                                        else alert('Failed to clear: ' + res.error);
+                                    }}
                                 />
                             ))}
                         </tbody>

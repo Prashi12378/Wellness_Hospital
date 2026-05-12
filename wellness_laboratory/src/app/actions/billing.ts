@@ -3,6 +3,8 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { serializeData } from "@/lib/serialization";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 interface LabInvoiceData {
     patientName: string;
@@ -157,5 +159,48 @@ export async function getLabInvoices() {
     } catch (error) {
         console.error('Error fetching lab invoices:', error);
         return { success: false, error: 'Failed to fetch invoice history' };
+    }
+}
+
+export async function clearLabInvoicePayment(invoiceId: string, paymentMethod: string) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const invoice = await (prisma as any).invoice.findUnique({
+            where: { id: invoiceId }
+        });
+
+        if (!invoice) return { success: false, error: "Invoice not found" };
+
+        const updatedInvoice = await (prisma as any).invoice.update({
+            where: { id: invoiceId },
+            data: {
+                status: 'PAID',
+                paymentMethod: paymentMethod,
+                updatedAt: new Date()
+            }
+        });
+
+        // Record to Ledger now that it's paid
+        await prisma.ledger.create({
+            data: {
+                transactionType: 'income',
+                category: 'lab',
+                description: `Payment Cleared - ${invoice.billNo} (${invoice.patientName})`,
+                amount: invoice.grandTotal,
+                paymentMethod: paymentMethod,
+                transactionDate: new Date(),
+                recordedBy: (session.user as any).id
+            }
+        });
+
+        revalidatePath('/dashboard/billing');
+        return { success: true, invoice: serializeData(updatedInvoice) };
+    } catch (error: any) {
+        console.error("Failed to clear lab invoice payment:", error);
+        return { success: false, error: `Failed to clear payment: ${error.message || 'Unknown error'}` };
     }
 }

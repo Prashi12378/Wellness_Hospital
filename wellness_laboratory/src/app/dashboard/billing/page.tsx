@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useSearchParams } from "next/navigation";
 import { Plus, Trash2, Printer, CheckCircle2, Search, Calculator, UserSearch, X, FileText, Loader2 } from "lucide-react";
-import { createLabInvoice, getLabInvoices } from "../../actions/billing";
+import { createLabInvoice, getLabInvoices, clearLabInvoicePayment } from "../../actions/billing";
 import { getPatientDepositBalance } from "../../actions/patient-billing";
 import { getUnbilledLabRequests, getLabRequestById } from "../../actions/lab";
 import LabInvoicePrint from "../../../components/LabInvoicePrint";
@@ -33,6 +33,7 @@ function LabBillingPageContent() {
     const [patientDeposits, setPatientDeposits] = useState<any[]>([]);
     const [useDeposit, setUseDeposit] = useState(false);
     const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+    const [clearingInvoiceId, setClearingInvoiceId] = useState<string | null>(null);
 
     // Search and Selection for Lab Reports
     const [searchQuery, setSearchQuery] = useState("");
@@ -633,13 +634,24 @@ function LabBillingPageContent() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => setViewingInvoice(bill)}
-                                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                                                title="View / Print"
-                                            >
-                                                <Printer className="w-4 h-4" />
-                                            </button>
+                                            <div className="flex items-center justify-center gap-1">
+                                                {bill.status === "PENDING" && (
+                                                    <button
+                                                        onClick={() => setClearingInvoiceId(bill.id)}
+                                                        className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                                                        title="Clear Payment"
+                                                    >
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => setViewingInvoice(bill)}
+                                                    className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                                    title="View / Print"
+                                                >
+                                                    <Printer className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -648,6 +660,40 @@ function LabBillingPageContent() {
                     </table>
                 </div>
             </div>
+            {/* Clear Payment Modal */}
+            {clearingInvoiceId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 duration-200">
+                        <h3 className="text-xl font-black text-slate-800 mb-4">Clear Lab Payment?</h3>
+                        <p className="text-sm text-slate-500 mb-6 font-medium">Select the final payment method received from the patient.</p>
+                        <div className="grid grid-cols-2 gap-2 mb-6">
+                            {['CASH', 'UPI', 'CARD', 'TRANSFER'].map(m => (
+                                <button
+                                    key={m}
+                                    onClick={async () => {
+                                        const res = await clearLabInvoicePayment(clearingInvoiceId, m);
+                                        if (res.success) {
+                                            setClearingInvoiceId(null);
+                                            fetchRecentBills();
+                                        } else {
+                                            alert('Failed to clear: ' + res.error);
+                                        }
+                                    }}
+                                    className="py-2.5 rounded-xl text-xs font-black bg-slate-50 hover:bg-slate-900 hover:text-white border border-slate-100 transition-all uppercase"
+                                >
+                                    {m}
+                                </button>
+                            ))}
+                        </div>
+                        <button 
+                            onClick={() => setClearingInvoiceId(null)}
+                            className="w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
