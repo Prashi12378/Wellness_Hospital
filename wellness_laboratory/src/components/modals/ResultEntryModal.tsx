@@ -16,7 +16,7 @@ interface ResultEntryModalProps {
 export default function ResultEntryModal({ isOpen, onClose, onSuccess, requestData }: ResultEntryModalProps) {
     const [parameters, setParameters] = useState<any[]>([{ name: "", result: "", unit: "", refRange: "" }]);
     const [reportUrl, setReportUrl] = useState("");
-    const [technicianName, setTechnicianName] = useState("NAVEENA");
+    const [technicianName, setTechnicianName] = useState("Mahesh Gowda");
     const [consultantName, setConsultantName] = useState("Dr. Somashekar K.");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,7 +54,7 @@ export default function ResultEntryModal({ isOpen, onClose, onSuccess, requestDa
                 }
             }
             setReportUrl(requestData.reportUrl || "");
-            setTechnicianName(requestData.technicianName || "NAVEENA");
+            setTechnicianName(requestData.technicianName || "Mahesh Gowda");
             setConsultantName(requestData.consultantName || "Dr. Somashekar K.");
         }
     }, [isOpen, requestData]);

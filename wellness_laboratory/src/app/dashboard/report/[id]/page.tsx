@@ -415,7 +415,7 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                     <div className="flex justify-between items-end px-4">
                         {/* Left Side: Preparation Info */}
                         <div className="space-y-1 pb-2">
-                            <p className="text-[9px] font-black text-slate-900 uppercase tracking-tight">Report Prepared by: <span className="text-blue-700">{request.technicianName || 'NAVEENA'}</span></p>
+                            <p className="text-[9px] font-black text-slate-900 uppercase tracking-tight">Report Prepared by: <span className="text-blue-700">{request.technicianName || 'Mahesh Gowda'}</span></p>
                             <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Wellness Hospital Laboratory Services • Bangalore</p>
                         </div>
 

@@ -7,8 +7,8 @@ import { PrismaClient } from '@prisma/client';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Printer, Trash2, RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
-import { deleteInvoice, returnInvoice, returnInvoiceItems } from '@/app/actions/billing';
+import { Printer, Trash2, RotateCcw, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { deleteInvoice, returnInvoice, returnInvoiceItems, clearPharmacyInvoicePayment } from '@/app/actions/billing';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -44,6 +44,8 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
     const [showConfirm, setShowConfirm] = useState<'delete' | 'return' | 'partial' | null>(null);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+    const [showClearPayment, setShowClearPayment] = useState(false);
+    const [isClearing, setIsClearing] = useState(false);
     const router = useRouter();
 
     const showToast = (message: string, type: 'success' | 'error') => {
@@ -242,6 +244,15 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                                     <Trash2 className="w-4 h-4" />
                                     Delete Bill
                                 </button>
+                                {invoice.status === 'UNPAID' && (
+                                    <button
+                                        onClick={() => setShowClearPayment(true)}
+                                        className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-700 transition-all font-bold text-sm shadow-lg shadow-emerald-600/10"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Clear Payment
+                                    </button>
+                                )}
                             </>
                         )}
                         <button
@@ -467,6 +478,57 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                     </div>
                 </div>
             </div>
+
+            {/* Clear Payment Dialog */}
+            {showClearPayment && (
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] z-[1000] flex items-center justify-center p-4 rounded-2xl no-print">
+                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600">
+                                <CheckCircle2 className="w-6 h-6 animate-pulse" />
+                            </div>
+                            <h4 className="text-xl font-bold text-slate-900">Clear Pharmacy Bill?</h4>
+                        </div>
+                        <p className="text-sm text-slate-500 mb-6 font-medium">Select the payment method received for this credit bill.</p>
+                        <div className="grid grid-cols-2 gap-2 mb-6">
+                            {['CASH', 'UPI', 'CARD', 'TRANSFER'].map(m => (
+                                <button
+                                    key={m}
+                                    disabled={isClearing}
+                                    onClick={async () => {
+                                        setIsClearing(true);
+                                        try {
+                                            const res = await clearPharmacyInvoicePayment(invoice.id, m);
+                                            if (res.success) {
+                                                showToast(`Payment of ₹${invoice.grandTotal} cleared via ${m}`, 'success');
+                                                router.refresh();
+                                                setShowClearPayment(false);
+                                                setTimeout(() => onClose(), 1500);
+                                            } else {
+                                                showToast(res.error || 'Failed to clear payment', 'error');
+                                            }
+                                        } catch (error) {
+                                            showToast('An unexpected error occurred', 'error');
+                                        } finally {
+                                            setIsClearing(false);
+                                        }
+                                    }}
+                                    className="py-3 rounded-xl text-xs font-black bg-slate-50 hover:bg-slate-900 hover:text-white border border-slate-100 transition-all uppercase flex items-center justify-center gap-1.5"
+                                >
+                                    {isClearing ? <Loader2 className="w-4 h-4 animate-spin" /> : m}
+                                </button>
+                            ))}
+                        </div>
+                        <button 
+                            disabled={isClearing}
+                            onClick={() => setShowClearPayment(false)}
+                            className="w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Confirm Dialog */}
             {showConfirm && (

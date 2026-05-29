@@ -58,21 +58,24 @@ export async function getPatientHistory(patientId: string) {
     }
 }
 
-export async function searchPatientsForHistory(query: string) {
+export async function searchPatientsForHistory(query?: string) {
     try {
-        if (!query || query.length < 2) return { success: true, patients: [] };
+        const whereClause: any = {
+            role: 'patient'
+        };
+
+        if (query && query.length >= 2) {
+            whereClause.OR = [
+                { firstName: { contains: query, mode: 'insensitive' } },
+                { lastName: { contains: query, mode: 'insensitive' } },
+                { phone: { contains: query, mode: 'insensitive' } },
+                { uhid: { contains: query, mode: 'insensitive' } }
+            ];
+        }
 
         const patients = await prisma.profile.findMany({
-            where: {
-                role: 'patient',
-                OR: [
-                    { firstName: { contains: query, mode: 'insensitive' } },
-                    { lastName: { contains: query, mode: 'insensitive' } },
-                    { phone: { contains: query, mode: 'insensitive' } },
-                    { uhid: { contains: query, mode: 'insensitive' } }
-                ]
-            },
-            take: 10,
+            where: whereClause,
+            take: 50,
             orderBy: { firstName: 'asc' }
         });
         return { success: true, patients: serializeData(patients) };

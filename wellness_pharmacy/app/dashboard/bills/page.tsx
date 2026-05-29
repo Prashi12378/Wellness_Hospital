@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, FileText, Calendar, User, IndianRupee, Eye, Loader2, ArrowRight, Settings2, Download } from 'lucide-react';
+import { Search, FileText, Calendar, User, IndianRupee, Eye, Loader2, ArrowRight, Settings2, Download, CheckCircle2 } from 'lucide-react';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
-import { getInvoices } from '@/app/actions/billing';
+import { getInvoices, clearPharmacyInvoicePayment } from '@/app/actions/billing';
 import InvoicePreview from '@/components/billing/InvoicePreview';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ export default function BillsPage() {
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
     const [showPreview, setShowPreview] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [clearingInvoiceId, setClearingInvoiceId] = useState<string | null>(null);
 
     // Audit filters
     const today = new Date();
@@ -342,14 +343,25 @@ export default function BillsPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => { setSelectedInvoice(invoice); setShowPreview(true); }}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold"
-                                            >
-                                                <Eye className="w-3.5 h-3.5" />
-                                                Manage
-                                                <ArrowRight className="w-3 h-3" />
-                                            </button>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {invoice.status === 'UNPAID' && (
+                                                    <button
+                                                        onClick={() => setClearingInvoiceId(invoice.id)}
+                                                        className="p-1.5 bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white rounded-lg transition-all"
+                                                        title="Clear Payment"
+                                                    >
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                     </button>
+                                                 )}
+                                                <button
+                                                    onClick={() => { setSelectedInvoice(invoice); setShowPreview(true); }}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 text-primary hover:bg-primary hover:text-white rounded-lg transition-all text-xs font-bold"
+                                                >
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                    Manage
+                                                    <ArrowRight className="w-3 h-3" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -365,6 +377,44 @@ export default function BillsPage() {
                     onClose={() => { setShowPreview(false); fetchInvoices(); }}
                     readOnly={false}
                 />
+            )}
+
+            {/* Clear Payment Modal */}
+            {clearingInvoiceId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 duration-200">
+                        <h3 className="text-xl font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <CheckCircle2 className="w-6 h-6 text-emerald-600 animate-pulse" />
+                            Clear Pharmacy Bill?
+                        </h3>
+                        <p className="text-sm text-slate-500 mb-6 font-medium">Select the payment method received for this credit bill.</p>
+                        <div className="grid grid-cols-2 gap-2 mb-6">
+                            {['CASH', 'UPI', 'CARD', 'TRANSFER'].map(m => (
+                                <button
+                                    key={m}
+                                    onClick={async () => {
+                                        const res = await clearPharmacyInvoicePayment(clearingInvoiceId, m);
+                                        if (res.success) {
+                                            setClearingInvoiceId(null);
+                                            fetchInvoices();
+                                        } else {
+                                            alert('Failed to clear: ' + (res as any).error);
+                                        }
+                                    }}
+                                    className="py-2.5 rounded-xl text-xs font-black bg-slate-50 hover:bg-slate-900 hover:text-white border border-slate-100 transition-all uppercase"
+                                >
+                                    {m}
+                                </button>
+                            ))}
+                        </div>
+                        <button 
+                            onClick={() => setClearingInvoiceId(null)}
+                            className="w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -40,7 +40,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Shared fields
-    const [technicianName, setTechnicianName] = useState("NAVEENA");
+    const [technicianName, setTechnicianName] = useState("Mahesh Gowda");
     const [consultantName, setConsultantName] = useState("Dr. Somashekar K.");
     const [requestedByName, setRequestedByName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +57,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
             setCurrentTestName("");
             setCurrentDepartment("General");
             setCurrentPriority("normal");
-            setTechnicianName("NAVEENA");
+            setTechnicianName("Mahesh Gowda");
             setConsultantName("Dr. Somashekar K.");
             setRequestedByName("");
             setSuggestions([]);

@@ -25,7 +25,10 @@ import {
     Sparkles,
     Wand2,
     Trash2,
-    Lock
+    Lock,
+    Share2,
+    Copy,
+    Check
 } from 'lucide-react';
 import {
     getAdmissionDetails,
@@ -41,7 +44,11 @@ import {
     updateLabRecord,
     updateSurgery,
     updateClinicalNote,
-    deleteAdmission
+    deleteAdmission,
+    deleteClinicalNote,
+    deleteLabRecord,
+    deleteSurgery,
+    updateAdmissionDetailsAction
 } from '@/app/actions/ipd';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -67,6 +74,86 @@ export default function AdmissionDetailPage() {
 
     const [depositBalance, setDepositBalance] = useState(0);
     const [patientDeposits, setPatientDeposits] = useState<any[]>([]);
+    const [toast, setToast] = useState<string | null>(null);
+    const [doctors, setDoctors] = useState<any[]>([]);
+    const [isEditingDoctor, setIsEditingDoctor] = useState(false);
+
+    const fetchDoctors = async () => {
+        const { getDoctors } = await import('@/app/actions/appointments');
+        const res = await getDoctors();
+        if (res.success) {
+            setDoctors(res.doctors || []);
+        }
+    };
+
+    const showToast = (msg: string) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    const handleShare = async (fileUrl: string, title: string) => {
+        const absoluteUrl = fileUrl.startsWith('http') 
+            ? fileUrl 
+            : `${window.location.origin}${fileUrl}`;
+            
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: `View document: ${title}`,
+                    url: absoluteUrl,
+                });
+                showToast("Document shared successfully!");
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    await navigator.clipboard.writeText(absoluteUrl);
+                    showToast("Link copied to clipboard!");
+                }
+            }
+        } else {
+            await navigator.clipboard.writeText(absoluteUrl);
+            showToast("Link copied to clipboard!");
+        }
+    };
+
+    const handleDeleteClinicalNote = async (noteId: string) => {
+        if (!confirm("Are you sure you want to permanently delete this clinical record?")) return;
+        setIsActionLoading(true);
+        const res = await deleteClinicalNote(noteId, id);
+        if (res.success) {
+            showToast("Clinical record deleted successfully.");
+            fetchDetails();
+        } else {
+            alert(res.error || "Failed to delete clinical record");
+        }
+        setIsActionLoading(false);
+    };
+
+    const handleDeleteLabRecord = async (labRecordId: string) => {
+        if (!confirm("Are you sure you want to permanently delete this lab record?")) return;
+        setIsActionLoading(true);
+        const res = await deleteLabRecord(labRecordId, id);
+        if (res.success) {
+            showToast("Lab record deleted successfully.");
+            fetchDetails();
+        } else {
+            alert(res.error || "Failed to delete lab record");
+        }
+        setIsActionLoading(false);
+    };
+
+    const handleDeleteSurgery = async (surgeryId: string) => {
+        if (!confirm("Are you sure you want to permanently delete this surgery log entry?")) return;
+        setIsActionLoading(true);
+        const res = await deleteSurgery(surgeryId, id);
+        if (res.success) {
+            showToast("Surgery log deleted successfully.");
+            fetchDetails();
+        } else {
+            alert(res.error || "Failed to delete surgery entry");
+        }
+        setIsActionLoading(false);
+    };
 
     useEffect(() => {
         fetchDetails();
@@ -334,12 +421,68 @@ export default function AdmissionDetailPage() {
                                 </h3>
 
                                 <div className="grid grid-cols-2 gap-8">
-                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Primary Physician</p>
-                                        <p className="text-lg font-black text-slate-800 leading-tight">
-                                            {admission.primaryDoctor ? `${admission.primaryDoctor.firstName} ${admission.primaryDoctor.lastName}` : "Unassigned"}
-                                        </p>
-                                        <p className="text-xs font-bold text-slate-500 mt-1">{admission.primaryDoctor?.specialization || "--"}</p>
+                                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 relative group">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Primary Physician</p>
+                                            {!isEditingDoctor && (
+                                                <button 
+                                                    onClick={() => {
+                                                        fetchDoctors();
+                                                        setIsEditingDoctor(true);
+                                                    }}
+                                                    className="text-slate-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1 bg-white rounded-lg shadow-sm border border-slate-100"
+                                                    title="Change Doctor"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        {isEditingDoctor ? (
+                                            <div className="flex flex-col gap-2 mt-2">
+                                                <select
+                                                    defaultValue={admission.doctorId || ""}
+                                                    onChange={async (e) => {
+                                                        const newDoctorId = e.target.value;
+                                                        if (newDoctorId) {
+                                                            setIsActionLoading(true);
+                                                            const res = await updateAdmissionDetailsAction(id, { doctorId: newDoctorId });
+                                                            if (res.success) {
+                                                                showToast("Primary physician updated successfully.");
+                                                                fetchDetails();
+                                                            } else {
+                                                                alert(res.error || "Failed to update doctor");
+                                                            }
+                                                            setIsActionLoading(false);
+                                                        }
+                                                        setIsEditingDoctor(false);
+                                                    }}
+                                                    onBlur={() => setIsEditingDoctor(false)}
+                                                    autoFocus
+                                                    className="w-full p-2 bg-white border border-slate-200 rounded-xl outline-none text-sm font-bold focus:ring-2 focus:ring-primary/20"
+                                                >
+                                                    <option value="" disabled>Select Doctor...</option>
+                                                    {doctors.map((doc: any) => (
+                                                        <option key={doc.id} value={doc.id}>
+                                                            {doc.firstName} {doc.lastName} ({doc.specialization})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setIsEditingDoctor(false)}
+                                                    className="text-[10px] font-bold text-slate-400 hover:text-slate-600 self-end mr-1 hover:underline"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p className="text-lg font-black text-slate-800 leading-tight">
+                                                    {admission.primaryDoctor ? `${admission.primaryDoctor.firstName} ${admission.primaryDoctor.lastName}` : "Unassigned"}
+                                                </p>
+                                                <p className="text-xs font-bold text-slate-500 mt-1">{admission.primaryDoctor?.specialization || "--"}</p>
+                                            </>
+                                        )}
                                     </div>
                                     <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Entry Status</p>
@@ -530,15 +673,25 @@ export default function AdmissionDetailPage() {
                                             <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">
                                                 {format(new Date(note.createdAt), 'MMM dd, HH:mm')}
                                             </span>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingItem(note);
-                                                    setModalType('note');
-                                                }}
-                                                className="p-1.5 hover:bg-white rounded-lg text-slate-300 hover:text-primary transition-all opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingItem(note);
+                                                        setModalType('note');
+                                                    }}
+                                                    className="p-1.5 hover:bg-white rounded-lg text-slate-300 hover:text-primary transition-colors"
+                                                    title="Edit note"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteClinicalNote(note.id)}
+                                                    className="p-1.5 hover:bg-white rounded-lg text-slate-300 hover:text-red-500 transition-colors"
+                                                    title="Delete note"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         </div>
                                         <p className="text-sm font-bold text-slate-700 leading-relaxed mb-4">{note.note}</p>
                                         <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
@@ -583,15 +736,25 @@ export default function AdmissionDetailPage() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingItem(lab);
-                                                        setModalType('lab');
-                                                    }}
-                                                    className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-purple-500 transition-all opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingItem(lab);
+                                                            setModalType('lab');
+                                                        }}
+                                                        className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-purple-500 transition-colors"
+                                                        title="Edit Lab Record"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteLabRecord(lab.id)}
+                                                        className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-red-500 transition-colors"
+                                                        title="Delete Lab Record"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                                 <span className="text-sm font-black text-purple-600 bg-purple-50 px-3 py-1 rounded-lg">{lab.result || "Pending"}</span>
                                             </div>
                                         </div>
@@ -618,21 +781,29 @@ export default function AdmissionDetailPage() {
                                 </div>
                                 <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
                                     {admission.surgeries?.map((sur: any) => (
-                                        <div key={sur.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2">
+                                        <div key={sur.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2 relative group">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{sur.surgeryName}</p>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{format(new Date(sur.surgeryDate), 'MMM dd, yyyy')}</p>
                                             </div>
                                             <p className="text-xs font-bold text-slate-500 leading-relaxed italic">By {sur.surgeonName}</p>
-                                            <div className="flex justify-end pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex justify-end pt-2 items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={() => {
                                                         setEditingItem(sur);
                                                         setModalType('surgery');
                                                     }}
-                                                    className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-emerald-500 transition-all"
+                                                    className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-emerald-500 transition-colors"
+                                                    title="Edit surgery entry"
                                                 >
                                                     <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteSurgery(sur.id)}
+                                                    className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 hover:text-red-500 transition-colors"
+                                                    title="Delete surgery entry"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </div>
@@ -654,58 +825,169 @@ export default function AdmissionDetailPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* Clinical Note Files */}
                             {admission.clinicalNotes?.filter((n: any) => n.fileUrl).map((note: any) => (
-                                <a
+                                <div
                                     key={note.id}
-                                    href={note.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group p-6 bg-slate-50 rounded-[30px] border border-slate-100 hover:bg-white hover:shadow-xl hover:border-primary/20 transition-all"
+                                    className="group p-6 bg-slate-50 rounded-[30px] border border-slate-100 hover:bg-white hover:shadow-xl hover:border-primary/20 transition-all relative flex flex-col justify-between"
                                 >
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="p-3 bg-primary/10 rounded-2xl text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                                            <FileText className="w-6 h-6" />
+                                    <div>
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="p-3 bg-primary/10 rounded-2xl text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                                <FileText className="w-6 h-6" />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleShare(note.fileUrl, `${note.type} Document`)}
+                                                    className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-primary transition-colors"
+                                                    title="Share document link"
+                                                >
+                                                    <Share2 className="w-4 h-4" />
+                                                </button>
+                                                <a
+                                                    href={note.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-primary transition-colors"
+                                                    title="Download document"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDeleteClinicalNote(note.id)}
+                                                    className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-red-500 transition-colors"
+                                                    title="Delete document"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <Download className="w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
+                                        <p className="font-black text-slate-800 text-sm mb-1 truncate">{note.type} Document</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                                            Ref: {note.doctorName} • {format(new Date(note.createdAt), 'MMM dd')}
+                                        </p>
                                     </div>
-                                    <p className="font-black text-slate-800 text-sm mb-1 truncate">{note.type} Document</p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                                        Ref: {note.doctorName} • {format(new Date(note.createdAt), 'MMM dd')}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest">
-                                        <span>View Document</span>
-                                        <Activity className="w-3 h-3" />
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-100/50 mt-2">
+                                        <a
+                                            href={note.fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                                        >
+                                            <span>View Document</span>
+                                            <Activity className="w-3 h-3" />
+                                        </a>
                                     </div>
-                                </a>
+                                </div>
                             ))}
 
-                            {/* Lab Record Files */}
+                            {/* Lab Record Files (IPD Module Uploads) */}
                             {admission.labRecords?.filter((l: any) => l.fileUrl).map((lab: any) => (
-                                <a
+                                <div
                                     key={lab.id}
-                                    href={lab.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group p-6 bg-purple-50 rounded-[30px] border border-purple-100 hover:bg-white hover:shadow-xl hover:border-purple-200 transition-all"
+                                    className="group p-6 bg-purple-50 rounded-[30px] border border-purple-100 hover:bg-white hover:shadow-xl hover:border-purple-200 transition-all relative flex flex-col justify-between"
                                 >
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                                            <FileSearch className="w-6 h-6" />
+                                    <div>
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                                <FileSearch className="w-6 h-6" />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleShare(lab.fileUrl, `Lab Record: ${lab.testName}`)}
+                                                    className="p-2 hover:bg-purple-100 rounded-xl text-purple-400 hover:text-purple-600 transition-colors"
+                                                    title="Share record link"
+                                                >
+                                                    <Share2 className="w-4 h-4" />
+                                                </button>
+                                                <a
+                                                    href={lab.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 hover:bg-purple-100 rounded-xl text-purple-400 hover:text-purple-600 transition-colors"
+                                                    title="Download record"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDeleteLabRecord(lab.id)}
+                                                    className="p-2 hover:bg-purple-100 rounded-xl text-purple-400 hover:text-red-500 transition-colors"
+                                                    title="Delete record"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <Download className="w-5 h-5 text-purple-200 group-hover:text-purple-600 transition-colors" />
+                                        <p className="font-black text-slate-800 text-sm mb-1 truncate">Lab: {lab.testName}</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                                            Ref: {format(new Date(lab.recordedAt), 'MMM dd, yyyy')}
+                                        </p>
                                     </div>
-                                    <p className="font-black text-slate-800 text-sm mb-1 truncate">Lab: {lab.testName}</p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                                        Ref: {format(new Date(lab.recordedAt), 'MMM dd, yyyy')}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-purple-600 uppercase tracking-widest">
-                                        <span>Open Lab Report</span>
-                                        <Activity className="w-3 h-3" />
+                                    <div className="flex items-center justify-between pt-2 border-t border-purple-100/50 mt-2">
+                                        <a
+                                            href={lab.fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-[10px] font-black text-purple-600 uppercase tracking-widest hover:underline"
+                                        >
+                                            <span>Open Lab Report</span>
+                                            <Activity className="w-3 h-3" />
+                                        </a>
                                     </div>
-                                </a>
+                                </div>
+                            ))}
+
+                            {/* Completed Lab Portal Reports (Direct Integration, No Billing Restrictions) */}
+                            {admission.labRequests?.filter((r: any) => r.reportUrl).map((lab: any) => (
+                                <div
+                                    key={lab.id}
+                                    className="group p-6 bg-purple-50 rounded-[30px] border border-purple-100 hover:bg-white hover:shadow-xl hover:border-purple-200 transition-all relative flex flex-col justify-between"
+                                >
+                                    <div>
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                                <FlaskConical className="w-6 h-6" />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleShare(lab.reportUrl, `Lab Portal Report: ${lab.testName}`)}
+                                                    className="p-2 hover:bg-purple-100 rounded-xl text-purple-400 hover:text-purple-600 transition-colors"
+                                                    title="Share report link"
+                                                >
+                                                    <Share2 className="w-4 h-4" />
+                                                </button>
+                                                <a
+                                                    href={lab.reportUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 hover:bg-purple-100 rounded-xl text-purple-400 hover:text-purple-600 transition-colors"
+                                                    title="Download report"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <p className="font-black text-slate-800 text-sm mb-1 truncate">Report: {lab.testName}</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                                            Ref: Lab Portal • {format(new Date(lab.createdAt), 'MMM dd, yyyy')}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-purple-100/50 mt-2">
+                                        <a
+                                            href={lab.reportUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-[10px] font-black text-purple-600 uppercase tracking-widest hover:underline"
+                                        >
+                                            <span>View Lab Report</span>
+                                            <Activity className="w-3 h-3" />
+                                        </a>
+                                    </div>
+                                </div>
                             ))}
 
                             {/* No Files Check */}
-                            {(!admission.clinicalNotes?.some((n: any) => n.fileUrl) && !admission.labRecords?.some((l: any) => l.fileUrl)) && (
+                            {(!admission.clinicalNotes?.some((n: any) => n.fileUrl) && 
+                              !admission.labRecords?.some((l: any) => l.fileUrl) && 
+                              !admission.labRequests?.some((r: any) => r.reportUrl)) && (
                                 <div className="col-span-full p-20 text-center bg-slate-50 rounded-[30px] border-2 border-dashed border-slate-200">
                                     <FileText className="w-16 h-16 text-slate-200 mx-auto mb-4" />
                                     <h3 className="text-xl font-bold text-slate-400">No medical files found</h3>
@@ -894,6 +1176,13 @@ export default function AdmissionDetailPage() {
                         )}
 
                     </div>
+                </div>
+            )}
+
+            {toast && (
+                <div className="fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-4 rounded-3xl shadow-2xl border border-slate-800 flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 duration-300">
+                    <Check className="w-5 h-5 text-emerald-400" />
+                    <span className="text-sm font-bold">{toast}</span>
                 </div>
             )}
         </div>

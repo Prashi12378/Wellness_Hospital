@@ -49,13 +49,24 @@ export async function getAdmissionDetails(id: string) {
 
         if (!admission) return { success: false, error: "Admission not found" };
 
+        // Fetch completed lab requests for the patient regardless of billing
+        const labRequests = await prisma.labRequest.findMany({
+            where: {
+                patientId: admission.patientId,
+                status: 'completed',
+                reportUrl: { not: null }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
         // Remap PascalCase relation names to camelCase for the frontend
         const mapped = {
             ...admission,
             charges: admission.HospitalCharge,
             labRecords: admission.LabRecord,
             surgeries: admission.Surgery,
-            clinicalNotes: admission.ClinicalNote
+            clinicalNotes: admission.ClinicalNote,
+            labRequests: labRequests
         };
 
         return { success: true, admission: serializeData(mapped) };
@@ -600,5 +611,68 @@ export async function undoDischarge(admissionId: string) {
     } catch (error) {
         console.error("Failed to undo discharge:", error);
         return { success: false, error: "Failed to undo discharge" };
+    }
+}
+
+export async function deleteClinicalNote(id: string, admissionId: string) {
+    try {
+        await prisma.clinicalNote.delete({
+            where: { id }
+        });
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete clinical note:", error);
+        return { success: false, error: "Failed to delete clinical note" };
+    }
+}
+
+export async function deleteLabRecord(id: string, admissionId: string) {
+    try {
+        await prisma.labRecord.delete({
+            where: { id }
+        });
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete lab record:", error);
+        return { success: false, error: "Failed to delete lab record" };
+    }
+}
+
+export async function deleteSurgery(id: string, admissionId: string) {
+    try {
+        await prisma.surgery.delete({
+            where: { id }
+        });
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete surgery:", error);
+        return { success: false, error: "Failed to delete surgery" };
+    }
+}
+
+export async function updateAdmissionDetailsAction(admissionId: string, data: {
+    doctorId?: string;
+    bedNumber?: string;
+    ward?: string;
+}) {
+    try {
+        const admission = await prisma.admission.update({
+            where: { id: admissionId },
+            data: {
+                doctorId: data.doctorId ?? undefined,
+                bedNumber: data.bedNumber ?? undefined,
+                ward: data.ward ?? undefined,
+                updatedAt: new Date()
+            }
+        });
+        await safeRevalidatePath('/dashboard/ipd');
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        return { success: true, admission: serializeData(admission) };
+    } catch (error) {
+        console.error("Failed to update admission details:", error);
+        return { success: false, error: "Failed to update admission details" };
     }
 }

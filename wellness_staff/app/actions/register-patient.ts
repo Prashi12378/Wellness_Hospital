@@ -8,23 +8,13 @@ export async function registerPatient(formData: FormData) {
     try {
         const firstName = formData.get('firstName') as string;
         const lastName = formData.get('lastName') as string;
-        const email = formData.get('email') as string;
         const phone = formData.get('phone') as string;
         const dob = formData.get('dob') as string;
         const gender = formData.get('gender') as string;
 
         // Basic Validation
-        if (!firstName || !lastName || !email || !phone || !dob || !gender) {
+        if (!firstName || !lastName || !phone || !dob || !gender) {
             return { success: false, error: "All fields are required" };
-        }
-
-        // Check if user exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email }
-        });
-
-        if (existingUser) {
-            return { success: false, error: "A patient with this email already exists." };
         }
 
         // Limit: Max 3 patients per phone number
@@ -67,6 +57,7 @@ export async function registerPatient(formData: FormData) {
         }
 
         const uhid = `${prefix}${nextCounter.toString().padStart(4, '0')}`;
+        const email = `${uhid.toLowerCase()}@wellness.com`;
         const defaultPassword = "Password@123";
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 

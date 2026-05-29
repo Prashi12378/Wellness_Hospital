@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { User, Mail, Phone, Calendar, ArrowLeft } from 'lucide-react';
+import { User, Phone, Calendar, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { registerPatient } from '@/app/actions/register-patient';
 
@@ -74,20 +74,7 @@ export default function RegisterPatientPage() {
                             </div>
                         </div>
 
-                        {/* Email */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                    name="email"
-                                    type="email"
-                                    required
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                                    placeholder="john@example.com"
-                                />
-                            </div>
-                        </div>
+
 
                         {/* Phone */}
                         <div>
