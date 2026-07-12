@@ -117,7 +117,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                                         className="text-[11px] font-black text-slate-900 uppercase bg-transparent border-b border-dashed border-slate-300 focus:border-primary focus:outline-none cursor-pointer print:hidden p-0 m-0"
                                                     />
                                                     <span className="hidden print:inline text-[11px] font-black text-slate-900 uppercase">
-                                                        {format(new Date(billDate), 'dd-MM-yy')}
+                                                        {format(new Date(billDate), 'dd-MMM-yyyy')}
                                                     </span>
                                                 </div>
                                             </div>

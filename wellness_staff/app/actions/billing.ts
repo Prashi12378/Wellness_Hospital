@@ -470,3 +470,60 @@ export async function deleteObservationInvoice(id: string) {
         return { success: false, error: "Failed to delete observation invoice" };
     }
 }
+
+export async function getInvoiceById(id: string) {
+    try {
+        const invoice = await prisma.invoice.findUnique({
+            where: { id },
+            include: {
+                items: true,
+                Appointment: {
+                    include: {
+                        patient: true,
+                        doctor: true
+                    }
+                },
+                admission: {
+                    include: {
+                        patient: true,
+                        primaryDoctor: true
+                    }
+                }
+            }
+        });
+        if (!invoice) return { success: false, error: 'Invoice not found' };
+        
+        const serialized = {
+            ...invoice,
+            date: invoice.date ? invoice.date.toISOString() : null,
+            createdAt: invoice.createdAt ? invoice.createdAt.toISOString() : null,
+            updatedAt: invoice.updatedAt ? invoice.updatedAt.toISOString() : null,
+            subTotal: Number(invoice.subTotal || 0),
+            totalGst: Number(invoice.totalGst || 0),
+            grandTotal: Number(invoice.grandTotal || 0),
+            discountAmount: Number(invoice.discountAmount || 0),
+            depositAmount: Number(invoice.depositAmount || 0),
+            items: (invoice.items || []).map((item: any) => ({
+                ...item,
+                mrp: Number(item.mrp || 0),
+                gstRate: Number(item.gstRate || 0),
+                amount: Number(item.amount || 0),
+            })),
+            Appointment: invoice.Appointment ? {
+                ...invoice.Appointment,
+                appointmentDate: invoice.Appointment.appointmentDate ? invoice.Appointment.appointmentDate.toISOString() : null,
+            } : null,
+            admission: invoice.admission ? {
+                ...invoice.admission,
+                admissionDate: invoice.admission.admissionDate ? invoice.admission.admissionDate.toISOString() : null,
+                dischargeDate: invoice.admission.dischargeDate ? invoice.admission.dischargeDate.toISOString() : null,
+            } : null,
+        };
+
+        return { success: true, invoice: serialized };
+    } catch (error: any) {
+        console.error('Failed to get invoice by ID:', error);
+        return { success: false, error: error.message || 'Failed to get invoice' };
+    }
+}
+

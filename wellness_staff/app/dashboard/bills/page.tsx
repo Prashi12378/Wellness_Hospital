@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, FileText, Calendar, User, IndianRupee, Loader2, Download, ReceiptText } from 'lucide-react';
+import { Search, FileText, Calendar, User, IndianRupee, Loader2, Download, ReceiptText, Printer } from 'lucide-react';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { getAllFrontDeskInvoices } from '@/app/actions/billing';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function AuditBillsPage() {
     const [invoices, setInvoices] = useState<any[]>([]);
@@ -283,12 +284,13 @@ export default function AuditBillsPage() {
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Patient</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {filteredInvoices.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic">
                                         No invoices found.
                                     </td>
                                 </tr>
@@ -332,6 +334,16 @@ export default function AuditBillsPage() {
                                             )}>
                                                 {invoice.status}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <Link
+                                                href={`/dashboard/history/invoices/${invoice.id}`}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-primary transition-all active:scale-95 shadow-sm"
+                                                title="Print Invoice"
+                                            >
+                                                <Printer className="w-3.5 h-3.5 text-primary" />
+                                                Print
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))
