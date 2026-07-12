@@ -33,6 +33,7 @@ export async function getDashboardStats() {
 
         const salesAgg = await db.invoice.aggregate({
             where: {
+                isDeleted: false,
                 createdAt: {
                     gte: today
                 },

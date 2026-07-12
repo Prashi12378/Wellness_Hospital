@@ -8,6 +8,7 @@ export async function getLabRequests() {
     try {
         console.log("[LabActions] Fetching lab requests...");
         const requests = await prisma.labRequest.findMany({
+            where: { isDeleted: false },
             orderBy: { createdAt: 'desc' },
             include: {
                 patient: {
@@ -259,6 +260,7 @@ export async function getUnbilledLabRequests(searchQuery?: string) {
         console.log(`[LabActions] Fetching unbilled requests with search: "${searchQuery || 'none'}"`);
         const requests = await prisma.labRequest.findMany({
             where: {
+                isDeleted: false,
                 isBilled: false,
                 status: { in: ['processing', 'completed'] },
                 OR: searchQuery ? [

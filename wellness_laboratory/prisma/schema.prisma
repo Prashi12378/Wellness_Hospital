@@ -199,6 +199,7 @@ model Invoice {
   depositAmount  Decimal         @default(0)
   ward           String?
   editUnlocked   Boolean         @default(false)
+  isDeleted      Boolean         @default(false)
   admission      Admission?      @relation(fields: [admissionId], references: [id])
   Appointment    Appointment?    @relation(fields: [appointmentId], references: [id])
   deposit        Deposit?        @relation("InvoiceDeposit")
@@ -259,6 +260,7 @@ model Admission {
   presentingSymptoms  String?
   doctorDesignation   String?
   editUnlocked        Boolean          @default(false)
+  isDeleted           Boolean          @default(false)
   primaryDoctor       Profile?         @relation("AdmissionDoctor", fields: [doctorId], references: [id])
   patient             Profile          @relation("PatientAdmissions", fields: [patientId], references: [id], onDelete: Cascade)
   ClinicalNote        ClinicalNote[]
@@ -324,6 +326,7 @@ model LabRequest {
   isBilled        Boolean  @default(false)
   invoiceId       String?
   editUnlocked    Boolean  @default(false)
+  isDeleted       Boolean  @default(false)
   patient         Profile  @relation("PatientLabRequests", fields: [patientId], references: [id], onDelete: Cascade)
   invoice         Invoice? @relation(fields: [invoiceId], references: [id])
 }

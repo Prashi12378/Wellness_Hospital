@@ -380,6 +380,7 @@ export async function getRecentOPDAndObservationBills() {
     try {
         const invoices = await (prisma as any).invoice.findMany({
             where: {
+                isDeleted: false,
                 OR: [
                     { items: { some: { medicineId: 'SERVICE' } } },
                     { items: { some: { medicineId: 'OBSERVATION' } } },
@@ -400,6 +401,7 @@ export async function getAllFrontDeskInvoices() {
     try {
         const invoices = await (prisma as any).invoice.findMany({
             where: {
+                isDeleted: false,
                 OR: [
                     { billNo: { startsWith: 'OPD-' } },
                     { billNo: { startsWith: 'OBS-' } },
@@ -456,8 +458,9 @@ export async function deleteObservationInvoice(id: string) {
              return { success: false, error: "Only observation bills can be deleted" };
         }
 
-        await prisma.invoice.delete({
-            where: { id }
+        await prisma.invoice.update({
+            where: { id },
+            data: { isDeleted: true }
         });
 
         await prisma.ledger.deleteMany({

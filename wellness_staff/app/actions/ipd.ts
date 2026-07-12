@@ -19,7 +19,7 @@ async function safeRevalidatePath(path: string) {
 export async function getAdmittedPatients(status?: string) {
     try {
         const admissions = await prisma.admission.findMany({
-            where: status ? { status } : {},
+            where: status ? { status, isDeleted: false } : { isDeleted: false },
             include: {
                 patient: true,
                 primaryDoctor: true
@@ -54,7 +54,8 @@ export async function getAdmissionDetails(id: string) {
             where: {
                 patientId: admission.patientId,
                 status: 'completed',
-                reportUrl: { not: null }
+                reportUrl: { not: null },
+                isDeleted: false
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -564,16 +565,10 @@ export async function generateAIDischargeSummary(admissionId: string) {
 
 export async function deleteAdmission(admissionId: string) {
     try {
-        // First, unlink any invoices that might be associated with this admission
-        await prisma.invoice.updateMany({
-            where: { admissionId },
-            data: { admissionId: null }
-        });
-
-        // Delete the admission record. 
-        // Note: ClinicalNote, HospitalCharge, LabRecord, Surgery have onDelete: Cascade in Prisma schema
-        await prisma.admission.delete({
-            where: { id: admissionId }
+        // Update the admission record to soft deleted. 
+        await prisma.admission.update({
+            where: { id: admissionId },
+            data: { isDeleted: true }
         });
 
         await safeRevalidatePath('/dashboard/ipd');

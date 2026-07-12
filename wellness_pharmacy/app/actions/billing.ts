@@ -301,6 +301,7 @@ export async function getInvoices() {
     try {
         const invoices = await db.invoice.findMany({
             where: {
+                isDeleted: false,
                 billNo: {
                     startsWith: 'S-'
                 }
@@ -426,9 +427,10 @@ export async function deleteInvoice(invoiceId: string) {
                 });
             }
 
-            // 3. Delete Invoice (Cascade will handle items if configured, but let's be explicit if not sure)
-            await tx.invoice.delete({
-                where: { id: invoiceId }
+            // 3. Update Invoice isDeleted = true
+            await tx.invoice.update({
+                where: { id: invoiceId },
+                data: { isDeleted: true }
             });
         });
 
