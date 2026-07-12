@@ -422,6 +422,7 @@ export async function getAllFrontDeskInvoices() {
             totalGst: Number(invoice.totalGst || 0),
             grandTotal: Number(invoice.grandTotal || 0),
             discountAmount: Number(invoice.discountAmount || 0),
+            discountRate: Number(invoice.discountRate || 0),
             depositAmount: Number(invoice.depositAmount || 0),
             items: (invoice.items || []).map((item: any) => ({
                 ...item,
@@ -502,6 +503,7 @@ export async function getInvoiceById(id: string) {
             totalGst: Number(invoice.totalGst || 0),
             grandTotal: Number(invoice.grandTotal || 0),
             discountAmount: Number(invoice.discountAmount || 0),
+            discountRate: Number(invoice.discountRate || 0),
             depositAmount: Number(invoice.depositAmount || 0),
             items: (invoice.items || []).map((item: any) => ({
                 ...item,
