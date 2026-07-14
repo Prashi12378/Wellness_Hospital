@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PrintButton from './PrintButton';
+import BillDateEditor from './BillDateEditor';
 
 export default async function UniversalInvoicePage({
     params,
@@ -162,9 +163,17 @@ export default async function UniversalInvoicePage({
                                 </div>
                                 <div>
                                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Date & Time</p>
-                                    <p className="text-[12px] font-bold text-slate-900 uppercase">
+                                    <div className="hidden print:block text-[12px] font-bold text-slate-900 uppercase">
                                         {format(new Date(invoiceData.createdAt), 'dd-MMM-yyyy hh:mm a')}
-                                    </p>
+                                    </div>
+                                    <div className="print:hidden">
+                                        <BillDateEditor
+                                            id={invoiceData.id}
+                                            initialDate={new Date(invoiceData.createdAt).toISOString()}
+                                            isInvoice={isInvoice}
+                                            type={type}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
