@@ -490,7 +490,8 @@ export async function getInvoiceById(id: string) {
                 admission: {
                     include: {
                         patient: true,
-                        primaryDoctor: true
+                        primaryDoctor: true,
+                        HospitalCharge: true
                     }
                 }
             }

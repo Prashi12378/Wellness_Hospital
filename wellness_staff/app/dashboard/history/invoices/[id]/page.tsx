@@ -82,6 +82,14 @@ export default function UniversalInvoicePrintPage({ params }: { params: Promise<
         window.print();
     };
 
+    const getChargeDate = (itemName: string, itemAmount: number) => {
+        const admission = invoice.admission;
+        const charge = admission?.HospitalCharge?.find(
+            (c: any) => c.description.toLowerCase() === itemName.toLowerCase() && Number(c.amount) === Number(itemAmount)
+        );
+        return charge?.date ? format(new Date(charge.date), 'dd MMM yyyy') : format(new Date(invoice.date || invoice.createdAt), 'dd MMM yyyy');
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0 print:m-0" id="invoice-overlay">
             {/* Action Bar */}
@@ -228,6 +236,7 @@ export default function UniversalInvoicePrintPage({ params }: { params: Promise<
                             <thead>
                                 <tr className="border-y-2 border-slate-900 text-[10px] font-black uppercase tracking-widest text-slate-900">
                                     <th className="py-3.5 px-3 w-16">S.No</th>
+                                    <th className="py-3.5 px-3 w-28">Date</th>
                                     <th className="py-3.5 px-3">Description of Services / Medicine Items</th>
                                     <th className="py-3.5 px-3 text-center w-24">Quantity</th>
                                     <th className="py-3.5 px-3 text-right w-32">Amount (₹)</th>
@@ -237,6 +246,9 @@ export default function UniversalInvoicePrintPage({ params }: { params: Promise<
                                 {items.map((item: any, idx: number) => (
                                     <tr key={item.id || idx} className="text-sm text-slate-800">
                                         <td className="py-4 px-3 font-bold text-slate-500">{idx + 1}</td>
+                                        <td className="py-4 px-3 text-slate-500 font-semibold whitespace-nowrap">
+                                            {getChargeDate(item.name, Number(item.amount))}
+                                        </td>
                                         <td className="py-4 px-3 font-black uppercase tracking-tight">{item.name}</td>
                                         <td className="py-4 px-3 text-center font-bold text-slate-600">{item.qty || 1}</td>
                                         <td className="py-4 px-3 text-right font-black text-lg">₹{Number(item.amount || item.mrp * (item.qty || 1)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -244,7 +256,7 @@ export default function UniversalInvoicePrintPage({ params }: { params: Promise<
                                 ))}
                                 {items.length === 0 && (
                                     <tr>
-                                        <td colSpan={4} className="py-12 text-center text-slate-400 italic font-medium">No items charged on this bill.</td>
+                                        <td colSpan={5} className="py-12 text-center text-slate-400 italic font-medium">No items charged on this bill.</td>
                                     </tr>
                                 )}
                             </tbody>

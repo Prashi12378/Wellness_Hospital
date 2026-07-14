@@ -220,7 +220,13 @@ export default function OPDBillingPage() {
                             <tbody className="divide-y divide-slate-50">
                                 {appointment.charges?.map((c: any) => (
                                     <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-5 text-sm font-bold text-slate-800">{format(new Date(c.date), 'MMM dd, HH:mm')}</td>
+                                        <td className="px-6 py-5 text-sm font-bold text-slate-800">
+                                            {(() => {
+                                                if (!c.date) return '---';
+                                                const d = new Date(c.date);
+                                                return isNaN(d.getTime()) ? '---' : format(d, 'MMM dd, HH:mm');
+                                            })()}
+                                        </td>
                                         <td className="px-6 py-5 text-sm font-medium text-slate-600 uppercase tracking-tight">{c.description}</td>
                                         <td className="px-6 py-5">
                                             <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
@@ -443,7 +449,11 @@ export default function OPDBillingPage() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
-                                    <input name="date" type="datetime-local" defaultValue={editingItem?.date ? format(new Date(editingItem.date), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input name="date" type="datetime-local" defaultValue={(() => {
+                                        if (!editingItem?.date) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+                                        const d = new Date(editingItem.date);
+                                        return isNaN(d.getTime()) ? format(new Date(), "yyyy-MM-dd'T'HH:mm") : format(d, "yyyy-MM-dd'T'HH:mm");
+                                    })()} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
 

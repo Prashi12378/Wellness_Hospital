@@ -147,6 +147,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                             <thead>
                                                 <tr className="border-y-2 border-slate-900 text-[10px] font-black uppercase text-slate-900">
                                                     <th className="py-3 px-2">S.No</th>
+                                                    <th className="py-3 px-2">Date</th>
                                                     <th className="py-3 px-2">Service / Item Description</th>
                                                     <th className="py-3 px-2">Service Type</th>
                                                     <th className="py-3 px-2 text-right">Amount (₹)</th>
@@ -156,6 +157,9 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                                 {admission.charges?.map((charge: any, idx: number) => (
                                                     <tr key={charge.id} className="text-xs text-slate-800">
                                                         <td className="py-4 px-2 font-bold">{idx + 1}</td>
+                                                        <td className="py-4 px-2 font-bold text-slate-500 whitespace-nowrap">
+                                                            {charge.date ? format(new Date(charge.date), 'dd MMM yyyy') : '---'}
+                                                        </td>
                                                         <td className="py-4 px-2 font-black uppercase tracking-tight">{charge.description}</td>
                                                         <td className="py-4 px-2">
                                                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-200 px-2 py-0.5 rounded">
@@ -167,7 +171,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                                 ))}
                                                 {admission.charges?.length === 0 && (
                                                     <tr>
-                                                        <td colSpan={4} className="py-12 text-center text-slate-400 italic">No charges recorded for this admission.</td>
+                                                        <td colSpan={5} className="py-12 text-center text-slate-400 italic">No charges recorded for this admission.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

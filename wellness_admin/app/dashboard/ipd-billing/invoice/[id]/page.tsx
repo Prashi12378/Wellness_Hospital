@@ -15,7 +15,8 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
             admission: {
                 include: {
                     patient: true,
-                    primaryDoctor: true
+                    primaryDoctor: true,
+                    HospitalCharge: true
                 }
             }
         }
@@ -26,6 +27,13 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
     const { admission } = invoice;
     const patient = admission?.patient;
     const doctor = admission?.primaryDoctor;
+
+    const getChargeDate = (itemName: string, itemAmount: number) => {
+        const charge = admission?.HospitalCharge?.find(
+            (c: any) => c.description.toLowerCase() === itemName.toLowerCase() && Number(c.amount) === Number(itemAmount)
+        );
+        return charge?.date ? format(new Date(charge.date), 'dd MMM yyyy') : format(new Date(invoice.createdAt), 'dd MMM yyyy');
+    };
 
     return (
         <>
@@ -146,6 +154,7 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                             <thead>
                                 <tr className="border-y-2 border-slate-800 bg-slate-50">
                                     <th className="py-2 px-3 text-left font-black uppercase tracking-wide w-10">S.No</th>
+                                    <th className="py-2 px-3 text-left font-black uppercase tracking-wide w-28">Date</th>
                                     <th className="py-2 px-3 text-left font-black uppercase tracking-wide">Service / Item Description</th>
                                     <th className="py-2 px-3 text-right font-black uppercase tracking-wide">Amount (₹)</th>
                                 </tr>
@@ -154,13 +163,16 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                                 {invoice.items.map((item: any, idx: number) => (
                                     <tr key={item.id} className="border-b border-slate-200">
                                         <td className="py-2 px-3 text-slate-600">{idx + 1}</td>
+                                        <td className="py-2 px-3 text-slate-500 font-semibold whitespace-nowrap">
+                                            {getChargeDate(item.name, Number(item.amount))}
+                                        </td>
                                         <td className="py-2 px-3 font-semibold uppercase">{item.name}</td>
                                         <td className="py-2 px-3 text-right font-bold">₹{Number(item.amount).toLocaleString()}</td>
                                     </tr>
                                 ))}
                                 {invoice.items.length === 0 && (
                                     <tr>
-                                        <td colSpan={3} className="py-10 text-center text-slate-400 italic">No charges recorded.</td>
+                                        <td colSpan={4} className="py-10 text-center text-slate-400 italic">No charges recorded.</td>
                                     </tr>
                                 )}
                             </tbody>

@@ -48,6 +48,7 @@ import {
     deleteClinicalNote,
     deleteLabRecord,
     deleteSurgery,
+    deleteHospitalCharge,
     updateAdmissionDetailsAction
 } from '@/app/actions/ipd';
 import { format } from 'date-fns';
@@ -151,6 +152,19 @@ export default function AdmissionDetailPage() {
             fetchDetails();
         } else {
             alert(res.error || "Failed to delete surgery entry");
+        }
+        setIsActionLoading(false);
+    };
+
+    const handleDeleteHospitalCharge = async (chargeId: string) => {
+        if (!confirm("Are you sure you want to permanently delete this charge?")) return;
+        setIsActionLoading(true);
+        const res = await deleteHospitalCharge(chargeId, id);
+        if (res.success) {
+            showToast("Charge deleted successfully.");
+            fetchDetails();
+        } else {
+            alert(res.error || "Failed to delete charge");
         }
         setIsActionLoading(false);
     };
@@ -597,7 +611,13 @@ export default function AdmissionDetailPage() {
                                 <tbody className="divide-y divide-slate-50">
                                     {admission.charges?.map((c: any) => (
                                         <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-5 text-sm font-bold text-slate-800">{format(new Date(c.date), 'MMM dd, yyyy HH:mm')}</td>
+                                            <td className="px-6 py-5 text-sm font-bold text-slate-800">
+                                                {(() => {
+                                                    if (!c.date) return '---';
+                                                    const d = new Date(c.date);
+                                                    return isNaN(d.getTime()) ? '---' : format(d, 'MMM dd, yyyy HH:mm');
+                                                })()}
+                                            </td>
                                             <td className="px-6 py-5 text-sm font-medium text-slate-600 uppercase tracking-tight">{c.description}</td>
                                             <td className="px-6 py-5">
                                                 <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
@@ -606,15 +626,25 @@ export default function AdmissionDetailPage() {
                                             </td>
                                             <td className="px-6 py-5 text-right text-base font-black text-slate-900">₹{Number(c.amount).toLocaleString()}</td>
                                             <td className="px-6 py-5 text-right">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingItem(c);
-                                                        setModalType('charge');
-                                                    }}
-                                                    className="p-2 hover:bg-white rounded-xl text-slate-300 hover:text-primary transition-all"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingItem(c);
+                                                            setModalType('charge');
+                                                        }}
+                                                        className="p-2 hover:bg-white rounded-xl text-slate-300 hover:text-primary transition-all"
+                                                        title="Edit charge"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteHospitalCharge(c.id)}
+                                                        className="p-2 hover:bg-white rounded-xl text-slate-300 hover:text-red-500 transition-all"
+                                                        title="Delete charge"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -1039,7 +1069,11 @@ export default function AdmissionDetailPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Transaction Date</label>
-                                        <input name="date" type="datetime-local" defaultValue={editingItem?.date ? format(new Date(editingItem.date), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                        <input name="date" type="datetime-local" defaultValue={(() => {
+                                            if (!editingItem?.date) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+                                            const d = new Date(editingItem.date);
+                                            return isNaN(d.getTime()) ? format(new Date(), "yyyy-MM-dd'T'HH:mm") : format(d, "yyyy-MM-dd'T'HH:mm");
+                                        })()} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Category</label>
@@ -1083,7 +1117,11 @@ export default function AdmissionDetailPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Note Date & Time</label>
-                                        <input name="createdAt" type="datetime-local" defaultValue={editingItem?.createdAt ? format(new Date(editingItem.createdAt), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                        <input name="createdAt" type="datetime-local" defaultValue={(() => {
+                                            if (!editingItem?.createdAt) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+                                            const d = new Date(editingItem.createdAt);
+                                            return isNaN(d.getTime()) ? format(new Date(), "yyyy-MM-dd'T'HH:mm") : format(d, "yyyy-MM-dd'T'HH:mm");
+                                        })()} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Physician Name</label>
@@ -1122,7 +1160,11 @@ export default function AdmissionDetailPage() {
                             }}>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Recording Date & Time</label>
-                                    <input name="recordedAt" type="datetime-local" defaultValue={editingItem?.recordedAt ? format(new Date(editingItem.recordedAt), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
+                                    <input name="recordedAt" type="datetime-local" defaultValue={(() => {
+                                        if (!editingItem?.recordedAt) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+                                        const d = new Date(editingItem.recordedAt);
+                                        return isNaN(d.getTime()) ? format(new Date(), "yyyy-MM-dd'T'HH:mm") : format(d, "yyyy-MM-dd'T'HH:mm");
+                                    })()} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 font-bold" />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Test Name</label>
@@ -1162,7 +1204,11 @@ export default function AdmissionDetailPage() {
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Surgery Date & Time</label>
-                                        <input name="surgeryDate" type="datetime-local" required defaultValue={editingItem?.surgeryDate ? format(new Date(editingItem.surgeryDate), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm")} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
+                                        <input name="surgeryDate" type="datetime-local" required defaultValue={(() => {
+                                            if (!editingItem?.surgeryDate) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+                                            const d = new Date(editingItem.surgeryDate);
+                                            return isNaN(d.getTime()) ? format(new Date(), "yyyy-MM-dd'T'HH:mm") : format(d, "yyyy-MM-dd'T'HH:mm");
+                                        })()} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-200 font-bold" />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">

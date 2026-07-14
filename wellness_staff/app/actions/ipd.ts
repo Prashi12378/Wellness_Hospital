@@ -648,6 +648,20 @@ export async function deleteSurgery(id: string, admissionId: string) {
     }
 }
 
+export async function deleteHospitalCharge(id: string, admissionId: string) {
+    try {
+        await prisma.hospitalCharge.delete({
+            where: { id }
+        });
+        await safeRevalidatePath(`/dashboard/ipd/${admissionId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete hospital charge:", error);
+        return { success: false, error: "Failed to delete hospital charge" };
+    }
+}
+
+
 export async function updateAdmissionDetailsAction(admissionId: string, data: {
     doctorId?: string;
     bedNumber?: string;
