@@ -1069,10 +1069,10 @@ export default function AdmissionDetailPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Transaction Date</label>
-                                        <input name="date" type="datetime-local" defaultValue={(() => {
-                                            if (!editingItem?.date) return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+                                        <input name="date" type="date" defaultValue={(() => {
+                                            if (!editingItem?.date) return format(new Date(), "yyyy-MM-dd");
                                             const d = new Date(editingItem.date);
-                                            return isNaN(d.getTime()) ? format(new Date(), "yyyy-MM-dd'T'HH:mm") : format(d, "yyyy-MM-dd'T'HH:mm");
+                                            return isNaN(d.getTime()) ? format(new Date(), "yyyy-MM-dd") : format(d, "yyyy-MM-dd");
                                         })()} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                     </div>
                                     <div className="space-y-1.5">
