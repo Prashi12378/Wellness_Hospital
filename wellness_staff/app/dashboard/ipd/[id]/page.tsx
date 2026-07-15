@@ -615,7 +615,7 @@ export default function AdmissionDetailPage() {
                                                 {(() => {
                                                     if (!c.date) return '---';
                                                     const d = new Date(c.date);
-                                                    return isNaN(d.getTime()) ? '---' : format(d, 'MMM dd, yyyy HH:mm');
+                                                    return isNaN(d.getTime()) ? '---' : format(d, 'MMM dd, yyyy');
                                                 })()}
                                             </td>
                                             <td className="px-6 py-5 text-sm font-medium text-slate-600 uppercase tracking-tight">{c.description}</td>
