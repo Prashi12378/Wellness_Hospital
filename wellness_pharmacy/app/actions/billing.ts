@@ -700,3 +700,75 @@ export async function clearPharmacyInvoicePayment(invoiceId: string, paymentMeth
         return { error: `Failed to clear payment: ${error.message || 'Unknown error'}` };
     }
 }
+
+export async function applyInvoiceDiscount(invoiceId: string, discountRate: number, discountAmount: number) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { error: 'Authentication required' };
+        }
+
+        const invoice = await db.invoice.findUnique({
+            where: { id: invoiceId },
+            include: { items: true }
+        });
+
+        if (!invoice) return { error: 'Invoice not found' };
+        if (invoice.status === 'RETURNED') return { error: 'Returned invoices cannot be discounted' };
+        if (invoice.isDeleted) return { error: 'Deleted invoices cannot be discounted' };
+
+        const subTotal = Number(invoice.subTotal);
+        const totalGst = Number(invoice.totalGst);
+
+        if (discountAmount < 0 || discountAmount > (subTotal + totalGst)) {
+            return { error: 'Invalid discount amount' };
+        }
+
+        const grandTotal = Number((subTotal + totalGst - discountAmount).toFixed(2));
+
+        await db.$transaction(async (tx) => {
+            // 1. Update Invoice totals
+            await tx.invoice.update({
+                where: { id: invoiceId },
+                data: {
+                    discountRate: discountRate,
+                    discountAmount: discountAmount,
+                    grandTotal: grandTotal
+                }
+            });
+
+            // 2. Update Hospital Charge if IPD Credit
+            if (invoice.paymentMethod === 'CREDIT' && invoice.admissionId) {
+                await tx.hospitalCharge.updateMany({
+                    where: {
+                        admissionId: invoice.admissionId,
+                        description: `Pharmacy Bill #${invoice.billNo}`
+                    },
+                    data: {
+                        amount: grandTotal
+                    }
+                });
+            } else {
+                // 3. Update Ledger Entry for cash/card/upi sales
+                await tx.ledger.updateMany({
+                    where: {
+                        description: {
+                            contains: `Bill #${invoice.billNo}`
+                        }
+                    },
+                    data: {
+                        amount: grandTotal
+                    }
+                });
+            }
+        });
+
+        revalidatePath('/dashboard/billing');
+        revalidatePath('/dashboard/history');
+        revalidatePath('/dashboard/bills');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Apply invoice discount error:', error);
+        return { error: 'Failed to apply discount: ' + (error.message || 'Unknown error') };
+    }
+}

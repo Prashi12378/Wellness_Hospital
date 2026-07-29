@@ -57,8 +57,8 @@ export default function BillsPage() {
         return matchesSearch;
     });
 
-    // Summary totals for audit
-    const auditTotals = auditInvoices.reduce((acc, inv) => {
+    // Summary totals for audit (computed dynamically from filtered list)
+    const auditTotals = filteredInvoices.reduce((acc, inv) => {
         acc.subTotal += Number(inv.subTotal || 0);
         acc.totalGst += Number(inv.totalGst || 0);
         acc.discountAmount += Number(inv.discountAmount || 0);
@@ -79,7 +79,7 @@ export default function BillsPage() {
                 ? `${format(parseISO(fromDate), 'dd MMM yyyy')} to ${format(parseISO(toDate), 'dd MMM yyyy')}`
                 : fromDate ? `From ${format(parseISO(fromDate), 'dd MMM yyyy')}` : toDate ? `Up to ${format(parseISO(toDate), 'dd MMM yyyy')}` : 'All Time';
 
-            const rows = auditInvoices.map((inv, i) => `
+            const rows = filteredInvoices.map((inv, i) => `
                 <tr style="border-bottom:1px solid #e2e8f0;${inv.status==='RETURNED'?'color:#94a3b8;text-decoration:line-through;':''}">
                     <td style="padding:6px 8px;text-align:center;color:#94a3b8;">${i + 1}</td>
                     <td style="padding:6px 8px;font-family:monospace;font-weight:700;color:#1d4ed8;">${inv.billNo}</td>
@@ -118,7 +118,7 @@ export default function BillsPage() {
                         <h2 style="margin:0 0 4px;font-size:16px;font-weight:900;color:#1e40af;">PHARMACY BILLS AUDIT REPORT</h2>
                         <p style="margin:0;font-size:11px;color:#64748b;">Period: ${dateLabel}</p>
                         <p style="margin:2px 0 0;font-size:11px;color:#64748b;">Status Filter: ${statusFilter} | Generated: ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-                        <p style="margin:2px 0 0;font-size:11px;color:#64748b;">Total Bills: ${auditInvoices.length}</p>
+                        <p style="margin:2px 0 0;font-size:11px;color:#64748b;">Total Bills: ${filteredInvoices.length}</p>
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
@@ -138,7 +138,7 @@ export default function BillsPage() {
                 <tbody>${rows}</tbody>
                 <tfoot>
                     <tr style="background:#f1f5f9;font-weight:900;border-top:2px solid #1e293b;">
-                        <td colspan="7" style="padding:8px;font-weight:900;font-size:12px;">TOTALS (${auditInvoices.length} bills)</td>
+                        <td colspan="7" style="padding:8px;font-weight:900;font-size:12px;">TOTALS (${filteredInvoices.length} bills)</td>
                         <td style="padding:8px;text-align:right;">₹${auditTotals.subTotal.toFixed(2)}</td>
                         <td style="padding:8px;text-align:right;color:#16a34a;">₹${auditTotals.totalGst.toFixed(2)}</td>
                         <td style="padding:8px;text-align:right;color:#dc2626;">₹${auditTotals.discountAmount.toFixed(2)}</td>
@@ -201,17 +201,17 @@ export default function BillsPage() {
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <FileText className="w-5 h-5 text-blue-400" />
-                            <h2 className="text-white font-bold text-base">Audit Report — Download All Bills as PDF</h2>
+                            <h2 className="text-white font-bold text-base">Audit Report — Download Bills as PDF</h2>
                         </div>
-                        <p className="text-slate-400 text-xs">Filter by date range &amp; status, then download a comprehensive PDF with payer info, GST breakdown, and totals for tax filing.</p>
+                        <p className="text-slate-400 text-xs">Filter by date, status, or search term to download a custom PDF with payer info, GST breakdown, and totals.</p>
                     </div>
                     <button
                         onClick={handleDownloadPdf}
-                        disabled={isDownloading || auditInvoices.length === 0}
+                        disabled={isDownloading || filteredInvoices.length === 0}
                         className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 text-sm"
                     >
                         {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                        {isDownloading ? 'Generating...' : `Download PDF (${auditInvoices.length} bills)`}
+                        {isDownloading ? 'Generating...' : `Download PDF (${filteredInvoices.length} bills)`}
                     </button>
                 </div>
 
@@ -251,7 +251,7 @@ export default function BillsPage() {
                 </div>
 
                 {/* Live Summary */}
-                {auditInvoices.length > 0 && (
+                {filteredInvoices.length > 0 && (
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {[
                             { label: 'Taxable Amt', value: `₹${auditTotals.subTotal.toFixed(2)}`, color: 'text-white' },

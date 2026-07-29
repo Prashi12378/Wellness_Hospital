@@ -7,8 +7,8 @@ import { PrismaClient } from '@prisma/client';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Printer, Trash2, RotateCcw, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { deleteInvoice, returnInvoice, returnInvoiceItems, clearPharmacyInvoicePayment } from '@/app/actions/billing';
+import { Printer, Trash2, RotateCcw, Loader2, AlertTriangle, CheckCircle2, Tag } from 'lucide-react';
+import { deleteInvoice, returnInvoice, returnInvoiceItems, clearPharmacyInvoicePayment, applyInvoiceDiscount } from '@/app/actions/billing';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -36,7 +36,10 @@ interface InvoicePreviewProps {
     readOnly?: boolean;
 }
 
-export default function InvoicePreview({ invoice, onClose, readOnly = false }: InvoicePreviewProps) {
+export default function InvoicePreview({ invoice: initialInvoice, onClose, readOnly = false }: InvoicePreviewProps) {
+    const [currentInvoice, setCurrentInvoice] = useState(initialInvoice);
+    const invoice = currentInvoice;
+
     const printRef = useRef<HTMLDivElement>(null);
     const [mounted, setMounted] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -46,6 +49,10 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const [showClearPayment, setShowClearPayment] = useState(false);
     const [isClearing, setIsClearing] = useState(false);
+    const [showDiscountModal, setShowDiscountModal] = useState(false);
+    const [isSavingDiscount, setIsSavingDiscount] = useState(false);
+    const [discountType, setDiscountType] = useState<'PERCENT' | 'FLAT'>('PERCENT');
+    const [discountVal, setDiscountVal] = useState<string>('');
     const router = useRouter();
 
     const showToast = (message: string, type: 'success' | 'error') => {
@@ -61,6 +68,74 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
             document.body.style.overflow = 'unset';
         };
     }, []);
+
+    // Sync state if initialInvoice prop updates
+    useEffect(() => {
+        setCurrentInvoice(initialInvoice);
+    }, [initialInvoice]);
+
+    // Populate discount inputs when modal opens
+    useEffect(() => {
+        if (showDiscountModal) {
+            if (Number(invoice.discountRate) > 0) {
+                setDiscountType('PERCENT');
+                setDiscountVal(String(invoice.discountRate));
+            } else if (Number(invoice.discountAmount) > 0) {
+                setDiscountType('FLAT');
+                setDiscountVal(String(invoice.discountAmount));
+            } else {
+                setDiscountType('PERCENT');
+                setDiscountVal('');
+            }
+        }
+    }, [showDiscountModal, invoice.discountRate, invoice.discountAmount]);
+
+    const subTotal = Number(invoice.subTotal);
+    const totalGst = Number(invoice.totalGst);
+    const totalBeforeDiscount = subTotal + totalGst;
+
+    let computedDiscountAmount = 0;
+    let computedDiscountRate = 0;
+
+    const parsedVal = Number(discountVal) || 0;
+
+    if (discountType === 'PERCENT') {
+        computedDiscountRate = parsedVal;
+        computedDiscountAmount = Number((totalBeforeDiscount * (parsedVal / 100)).toFixed(2));
+    } else {
+        computedDiscountAmount = parsedVal;
+        computedDiscountRate = totalBeforeDiscount > 0 ? Number(((parsedVal / totalBeforeDiscount) * 100).toFixed(2)) : 0;
+    }
+
+    const previewGrandTotal = Math.max(0, Number((totalBeforeDiscount - computedDiscountAmount).toFixed(2)));
+
+    const handleSaveDiscount = async () => {
+        if (computedDiscountAmount < 0 || computedDiscountAmount > totalBeforeDiscount) {
+            showToast('Discount cannot exceed the total bill amount', 'error');
+            return;
+        }
+        setIsSavingDiscount(true);
+        try {
+            const res = await applyInvoiceDiscount(invoice.id, computedDiscountRate, computedDiscountAmount);
+            if (res.success) {
+                setCurrentInvoice(prev => ({
+                    ...prev,
+                    discountRate: computedDiscountRate,
+                    discountAmount: computedDiscountAmount,
+                    grandTotal: previewGrandTotal
+                }));
+                showToast('Discount updated successfully', 'success');
+                setShowDiscountModal(false);
+                router.refresh();
+            } else {
+                showToast(res.error || 'Failed to update discount', 'error');
+            }
+        } catch (err) {
+            showToast('An unexpected error occurred', 'error');
+        } finally {
+            setIsSavingDiscount(false);
+        }
+    };
 
     if (!mounted) return null;
 
@@ -253,6 +328,13 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                                         Clear Payment
                                     </button>
                                 )}
+                                <button
+                                    onClick={() => setShowDiscountModal(true)}
+                                    className="bg-blue-600 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-all font-bold text-sm shadow-lg shadow-blue-600/10"
+                                >
+                                    <Tag className="w-4 h-4" />
+                                    Apply Discount
+                                </button>
                             </>
                         )}
                         <button
@@ -566,6 +648,111 @@ export default function InvoicePreview({ invoice, onClose, readOnly = false }: I
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
                                     showConfirm === 'delete' ? 'Delete Bill' : showConfirm === 'partial' ? 'Return Selected' : 'Confirm Return'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Apply Discount Modal */}
+            {showDiscountModal && (
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] z-[1000] flex items-center justify-center p-4 rounded-2xl no-print">
+                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                                <Tag className="w-6 h-6 animate-pulse" />
+                            </div>
+                            <div>
+                                <h4 className="text-xl font-bold text-slate-900">Apply Bill Discount</h4>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Bill No: {invoice.billNo}</p>
+                            </div>
+                        </div>
+
+                        {/* Discount Type Selector */}
+                        <div className="flex bg-slate-100 p-1 rounded-xl mb-4">
+                            <button
+                                type="button"
+                                onClick={() => { setDiscountType('PERCENT'); setDiscountVal(''); }}
+                                className={cn(
+                                    "flex-1 py-2 text-xs font-black rounded-lg transition-all",
+                                    discountType === 'PERCENT' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                                )}
+                            >
+                                Percentage (%)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setDiscountType('FLAT'); setDiscountVal(''); }}
+                                className={cn(
+                                    "flex-1 py-2 text-xs font-black rounded-lg transition-all",
+                                    discountType === 'FLAT' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                                )}
+                            >
+                                Flat Amount (₹)
+                            </button>
+                        </div>
+
+                        {/* Input Value */}
+                        <div className="mb-4">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">
+                                {discountType === 'PERCENT' ? 'Discount Rate (%)' : 'Discount Amount (₹)'}
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max={discountType === 'PERCENT' ? '100' : totalBeforeDiscount}
+                                    step="any"
+                                    value={discountVal}
+                                    onChange={e => setDiscountVal(e.target.value)}
+                                    placeholder={discountType === 'PERCENT' ? 'e.g. 10' : 'e.g. 150'}
+                                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                                    {discountType === 'PERCENT' ? '%' : '₹'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Totals Breakdown Preview */}
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs space-y-2 mb-6">
+                            <div className="flex justify-between items-center text-slate-500">
+                                <span>Bill Subtotal</span>
+                                <span className="font-bold">₹{subTotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-500">
+                                <span>Total GST</span>
+                                <span className="font-bold">₹{totalGst.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-red-600 font-bold border-t border-slate-200/60 pt-2">
+                                <span>Discount {discountType === 'PERCENT' && discountVal ? `(${discountVal}%)` : ''}</span>
+                                <span>-₹{computedDiscountAmount.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-slate-800 text-sm font-black border-t border-slate-200 pt-2">
+                                <span>New Grand Total</span>
+                                <span>₹{previewGrandTotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex gap-3">
+                            <button
+                                disabled={isSavingDiscount}
+                                onClick={() => setShowDiscountModal(false)}
+                                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all text-sm uppercase tracking-wide disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                disabled={isSavingDiscount}
+                                onClick={handleSaveDiscount}
+                                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isSavingDiscount ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    'Apply'
                                 )}
                             </button>
                         </div>
