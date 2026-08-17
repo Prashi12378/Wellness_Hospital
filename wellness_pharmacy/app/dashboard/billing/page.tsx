@@ -299,6 +299,7 @@ export default function BillingPage() {
         const selectedDeposit = appliedDeposit > 0 ? patientDeposits[0] : null;
 
         const result = await createInvoice({
+            patientId: isIpdEnabled ? selectedAdmittedPatient?.id : (selectedPatientId || undefined),
             patientName: patientInfo.name,
             patientPhone: patientInfo.phone,
             doctorName: patientInfo.doctor,

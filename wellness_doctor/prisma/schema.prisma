@@ -82,6 +82,7 @@ model Profile {
   prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
   deposits              Deposit[]      @relation("PatientDeposits")
+  invoices              Invoice[]      @relation("PatientInvoices")
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -196,11 +197,13 @@ model Invoice {
   discountRate   Decimal       @default(0)
   admissionId    String?
   appointmentId  String?
+  patientId      String?
   depositAmount  Decimal         @default(0)
   ward           String?
   isDeleted      Boolean         @default(false)
   admission      Admission?      @relation(fields: [admissionId], references: [id])
   Appointment    Appointment?    @relation(fields: [appointmentId], references: [id])
+  patient        Profile?        @relation("PatientInvoices", fields: [patientId], references: [id], onDelete: SetNull)
   deposit        Deposit?        @relation("InvoiceDeposit")
   items          InvoiceItem[]
 }

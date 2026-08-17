@@ -63,6 +63,7 @@ export async function searchPatients(query: string) {
 }
 
 export async function createInvoice(data: {
+    patientId?: string;
     patientName: string;
     patientPhone?: string;
     doctorName?: string;
@@ -152,6 +153,7 @@ export async function createInvoice(data: {
                     const newInvoice = await tx.invoice.create({
                         data: {
                             billNo: nextBillNo,
+                            patientId: data.patientId || null,
                             patientName: data.patientName,
                             patientPhone: data.patientPhone,
                             doctorName: data.doctorName,

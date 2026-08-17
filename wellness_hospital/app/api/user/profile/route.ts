@@ -94,6 +94,25 @@ export async function PUT(req: Request) {
                 data: { name: `${firstName} ${lastName}`.trim() }
             });
 
+            const fullName = `${firstName} ${lastName}`.trim();
+            const patientId = profile.id;
+
+            // 3. Propagate changes to related tables where stored statically
+            await tx.appointment.updateMany({
+                where: { patientId },
+                data: { patientName: fullName, patientPhone: phone }
+            });
+
+            await tx.labRequest.updateMany({
+                where: { patientId },
+                data: { patientName: fullName }
+            });
+
+            await tx.invoice.updateMany({
+                where: { patientId },
+                data: { patientName: fullName, patientPhone: phone }
+            });
+
             return profile;
         });
 

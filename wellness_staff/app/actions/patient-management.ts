@@ -65,6 +65,24 @@ export async function updatePatient(patientId: string, formData: FormData) {
             });
         }
 
+        const fullName = `${firstName} ${lastName}`;
+
+        // Propagate patient name and phone changes to related tables where stored statically
+        await prisma.appointment.updateMany({
+            where: { patientId },
+            data: { patientName: fullName, patientPhone: phone }
+        });
+
+        await prisma.labRequest.updateMany({
+            where: { patientId },
+            data: { patientName: fullName }
+        });
+
+        await prisma.invoice.updateMany({
+            where: { patientId },
+            data: { patientName: fullName, patientPhone: phone }
+        });
+
         revalidatePath(`/dashboard/patients`);
         revalidatePath(`/dashboard/patients/${patientId}`);
         revalidatePath(`/dashboard/patients/${patientId}/edit`);
