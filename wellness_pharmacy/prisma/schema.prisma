@@ -253,6 +253,7 @@ model Admission {
   dischargeMedication String?
   hospitalCourse      String?
   investigations      String?
+  treatmentGiven      String?
   noteAndReview       String?
   physicalFindings    String?
   presentingSymptoms  String?

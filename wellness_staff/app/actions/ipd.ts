@@ -350,6 +350,7 @@ export async function dischargePatient(admissionId: string, data?: {
     presentingSymptoms?: string;
     physicalFindings?: string;
     investigations?: string;
+    treatmentGiven?: string;
     hospitalCourse?: string;
     dischargeMedication?: string;
     dischargeCondition?: string;
@@ -405,6 +406,7 @@ export async function dischargePatient(admissionId: string, data?: {
                     presentingSymptoms: data?.presentingSymptoms,
                     physicalFindings: data?.physicalFindings,
                     investigations: data?.investigations,
+                    treatmentGiven: data?.treatmentGiven,
                     hospitalCourse: data?.hospitalCourse,
                     dischargeMedication: data?.dischargeMedication,
                     dischargeCondition: data?.dischargeCondition,
@@ -473,6 +475,7 @@ export async function updateDischargeSummary(admissionId: string, data: {
     presentingSymptoms?: string;
     physicalFindings?: string;
     investigations?: string;
+    treatmentGiven?: string;
     hospitalCourse?: string;
     dischargeMedication?: string;
     dischargeCondition?: string;
@@ -592,6 +595,7 @@ export async function undoDischarge(admissionId: string) {
                 dischargeMedication: null,
                 hospitalCourse: null,
                 investigations: null,
+                treatmentGiven: null,
                 noteAndReview: null,
                 physicalFindings: null,
                 presentingSymptoms: null,

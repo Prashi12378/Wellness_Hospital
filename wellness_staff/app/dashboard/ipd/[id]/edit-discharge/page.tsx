@@ -41,6 +41,7 @@ export default function EditDischargePage() {
                 presentingSymptoms: fd.get('presentingSymptoms') as string,
                 physicalFindings: fd.get('physicalFindings') as string,
                 investigations: fd.get('investigations') as string,
+                treatmentGiven: fd.get('treatmentGiven') as string,
                 hospitalCourse: fd.get('hospitalCourse') as string,
                 dischargeMedication: fd.get('dischargeMedication') as string,
                 dischargeCondition: fd.get('dischargeCondition') as string,
@@ -110,58 +111,63 @@ export default function EditDischargePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Final Diagnoses</label>
-                        <textarea name="diagnoses" required rows={3} defaultValue={admission.diagnoses} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="diagnoses" required rows={3} defaultValue={admission.diagnoses} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Presenting Symptoms</label>
-                        <textarea name="presentingSymptoms" rows={3} defaultValue={admission.presentingSymptoms} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="presentingSymptoms" rows={3} defaultValue={admission.presentingSymptoms} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Investigations Summary</label>
-                        <textarea name="investigations" rows={3} defaultValue={admission.investigations} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="investigations" rows={3} defaultValue={admission.investigations} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Treatment Given</label>
+                        <textarea name="treatmentGiven" rows={3} defaultValue={admission.treatmentGiven} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Physical Findings (Vitals/Examination)</label>
-                        <textarea name="physicalFindings" rows={3} defaultValue={admission.physicalFindings} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="physicalFindings" rows={3} defaultValue={admission.physicalFindings} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Course in the Hospital</label>
-                        <textarea name="hospitalCourse" rows={5} defaultValue={admission.hospitalCourse} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="hospitalCourse" rows={5} defaultValue={admission.hospitalCourse} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Discharge Medication</label>
-                        <textarea name="dischargeMedication" rows={3} defaultValue={admission.dischargeMedication} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="dischargeMedication" rows={3} defaultValue={admission.dischargeMedication} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Condition on Discharge</label>
-                        <input name="dischargeCondition" defaultValue={admission.dischargeCondition} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold uppercase" />
+                        <input name="dischargeCondition" defaultValue={admission.dischargeCondition} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Attending Doctor Designation</label>
-                        <input name="doctorDesignation" defaultValue={admission.doctorDesignation || admission.primaryDoctor?.specialization || "CONSULTANT AYURVEDA"} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold uppercase" />
+                        <input name="doctorDesignation" defaultValue={admission.doctorDesignation || admission.primaryDoctor?.specialization || "CONSULTANT AYURVEDA"} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Advice on Discharge</label>
-                        <textarea name="dischargeAdvice" rows={3} defaultValue={admission.dischargeAdvice} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="dischargeAdvice" rows={3} defaultValue={admission.dischargeAdvice} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Note and Review</label>
-                        <textarea name="noteAndReview" rows={3} defaultValue={admission.noteAndReview} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none uppercase" />
+                        <textarea name="noteAndReview" rows={3} defaultValue={admission.noteAndReview} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold resize-none" />
                     </div>
 
                     {!isEdit && (
                         <div className="space-y-2 md:col-span-2 mt-4 pt-6 border-t border-slate-100">
                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Payment Mode (Bill Settlement)</label>
-                            <select name="paymentMethod" required className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold uppercase">
+                            <select name="paymentMethod" required className="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-2 focus:ring-primary/20 font-bold">
                                 <option value="CASH">CASH</option>
                                 <option value="UPI">UPI / QR CODE</option>
                                 <option value="CARD">DEBIT / CREDIT CARD</option>

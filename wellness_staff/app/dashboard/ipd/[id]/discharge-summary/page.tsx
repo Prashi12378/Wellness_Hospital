@@ -107,7 +107,14 @@ export default function DischargeSummaryPage() {
 
                 // Casing logic
                 if (casing === 'sentence') {
-                    current = current.charAt(0).toUpperCase() + current.slice(1).toLowerCase();
+                    current = current
+                        .split(/([.!?]\s+)/)
+                        .map((part, index) => {
+                            if (index % 2 === 1) return part;
+                            if (!part) return part;
+                            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                        })
+                        .join('');
                 } else if (casing === 'upper') {
                     current = current.toUpperCase();
                 }
@@ -291,6 +298,7 @@ export default function DischargeSummaryPage() {
                             { id: 'symptoms', label: 'Symptoms' },
                             { id: 'findings', label: 'Findings' },
                             { id: 'investigations', label: 'Investigations' },
+                            { id: 'treatmentGiven', label: 'Treatment Given' },
                             { id: 'hospitalCourse', label: 'Course' },
                             { id: 'medication', label: 'Medication' },
                             { id: 'condition', label: 'Condition' },
@@ -452,6 +460,20 @@ export default function DischargeSummaryPage() {
                                         <p className="font-normal text-slate-900">{point}</p>
                                     </div>
                                 ))}
+                            </div>
+                        </section>
+                    </SectionContainer>
+
+                    <SectionContainer id="treatmentGiven" label="Treatment Given">
+                        <section>
+                            <h3 className="font-bold text-[14px] underline mb-1">Treatment Given:</h3>
+                            <div className="pl-6 space-y-2">
+                                {formatClinicalText(admission.treatmentGiven)?.map((point, i) => (
+                                    <div key={i} className={`flex gap-2 ${alignment === 'justify' ? 'text-justify' : 'text-left'}`}>
+                                        {markerChar && point.length < 150 && <span className="shrink-0">{markerChar}</span>}
+                                        <p className="font-normal text-slate-900">{point}</p>
+                                    </div>
+                                )) || <p className="text-slate-500">—</p>}
                             </div>
                         </section>
                     </SectionContainer>

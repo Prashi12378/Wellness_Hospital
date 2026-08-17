@@ -358,7 +358,6 @@ export default function LabReportPage({ params }: { params: Promise<{ id: string
                 <div className="flex-1 px-4">
                     <div className="mb-4">
                         <h4 className="text-[11px] font-black text-slate-900 uppercase mb-0.5">{request.testName}</h4>
-                        <p className="text-[10px] font-bold text-slate-600">Sample Type : Serum</p>
                     </div>
 
                     <div>
