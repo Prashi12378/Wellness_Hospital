@@ -218,25 +218,133 @@ export default function InvoicePreview({ invoice: initialInvoice, onClose, readO
         // 2. Build responsive print styles
         const styles = `
             @page { 
-                size: auto; 
-                margin: 5mm; 
+                size: A5 portrait; 
+                margin: 5mm 6mm; 
             }
             body { 
                 margin: 0; 
-                padding: 5mm;
+                padding: 0;
                 font-family: system-ui, -apple-system, sans-serif;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color: #000;
+                font-size: 10px;
+                line-height: 1.25;
             }
-            .invoice-container { width: 100%; border: none !important; page-break-inside: avoid; }
+            .invoice-container { 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                background: transparent !important;
+                page-break-inside: auto !important; 
+                break-inside: auto !important;
+            }
+            .header-container {
+                margin-bottom: 12px !important;
+                padding-bottom: 8px !important;
+                border-bottom: 1.5px solid #cbd5e1 !important;
+            }
+            .header-container h1 {
+                font-size: 15px !important;
+                margin-bottom: 2px !important;
+            }
+            .header-container p {
+                font-size: 9px !important;
+                line-height: 1.3 !important;
+            }
+            .header-container h2 {
+                font-size: 15px !important;
+                margin-bottom: 2px !important;
+            }
+            .header-container table {
+                font-size: 9.5px !important;
+                width: auto !important;
+            }
+            .header-logo {
+                width: 52px !important;
+                height: 52px !important;
+                padding: 2px !important;
+                border-radius: 8px !important;
+            }
+            .patient-info {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+                margin-bottom: 10px !important;
+                padding: 6px 8px !important;
+                font-size: 10px !important;
+                border-radius: 6px !important;
+            }
+            .patient-info .info-block span:first-child {
+                font-size: 8px !important;
+            }
+            .items-table-wrapper {
+                border-radius: 6px !important;
+                margin-bottom: 10px !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            .items-table th {
+                padding: 4px 6px !important;
+                font-size: 8.5px !important;
+                text-transform: uppercase !important;
+            }
+            .items-table td {
+                padding: 4px 6px !important;
+                font-size: 9px !important;
+            }
+            .items-table thead {
+                display: table-header-group !important;
+            }
+            .items-table tbody {
+                display: table-row-group !important;
+            }
+            .totals-container { 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important; 
+                margin-top: 10px !important;
+                gap: 12px !important;
+            }
+            .totals-container > div:first-child {
+                width: 56% !important;
+            }
+            .totals-container > div:last-child {
+                width: 41% !important;
+            }
+            .gst-table th, .gst-table td {
+                padding: 3px 4px !important;
+                font-size: 8px !important;
+            }
+            .totals-box {
+                padding-top: 6px !important;
+            }
+            .totals-box > div {
+                margin-bottom: 6px !important;
+                font-size: 9.5px !important;
+            }
+            .totals-box .bg-slate-900 {
+                background-color: #0f172a !important;
+                color: #fff !important;
+                padding: 6px 10px !important;
+                border-radius: 4px !important;
+            }
+            .footer { 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important; 
+                page-break-before: avoid !important; 
+                break-before: avoid !important; 
+                margin-top: 10px !important; 
+                padding-top: 6px !important;
+                font-size: 8px !important;
+            }
+            .footer ol {
+                font-size: 7.5px !important;
+                line-height: 1.25 !important;
+            }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            tr { page-break-inside: avoid; }
-            .totals-container { page-break-inside: avoid; break-inside: avoid; }
-            .footer { page-break-inside: avoid; break-inside: avoid; page-break-before: avoid; break-before: avoid; margin-top: 12px !important; }
-            .items-table { page-break-inside: auto; }
-            .gst-table { page-break-inside: avoid; break-inside: avoid; }
+            tr { page-break-inside: avoid !important; }
             #print-area { padding: 0 !important; background: transparent !important; }
         `;
 
@@ -418,7 +526,7 @@ export default function InvoicePreview({ invoice: initialInvoice, onClose, readO
                         </div>
 
                         {/* Items Table - Clean styling */}
-                        <div className="rounded-xl border border-slate-200 overflow-hidden mb-4">
+                        <div className="rounded-xl border border-slate-200 overflow-hidden mb-4 items-table-wrapper">
                             <table className="w-full border-collapse text-xs items-table">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-slate-200 text-slate-500">
@@ -504,7 +612,7 @@ export default function InvoicePreview({ invoice: initialInvoice, onClose, readO
                             </div>
 
                             <div className="w-5/12">
-                                <div className="bg-slate-50 rounded-xl border border-slate-200 flex flex-col pt-3 pb-0 overflow-hidden">
+                                <div className="bg-slate-50 rounded-xl border border-slate-200 flex flex-col pt-3 pb-0 overflow-hidden totals-box">
                                     <div className="px-5 space-y-3 mb-4">
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="font-medium text-slate-500">Sub Total</span>
