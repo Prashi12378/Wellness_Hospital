@@ -67,3 +67,61 @@ export async function getPatientDepositBalance(patientId: string) {
         return { success: false, error: "Failed to fetch balance" };
     }
 }
+
+export async function updateDeposit(depositId: string, data: {
+    amount: number;
+    paymentMethod: string;
+    description?: string;
+    date?: string;
+}) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const existing = await (prisma as any).deposit.findUnique({
+            where: { id: depositId }
+        });
+        if (!existing) return { success: false, error: "Deposit not found" };
+
+        const updated = await (prisma as any).deposit.update({
+            where: { id: depositId },
+            data: {
+                amount: data.amount,
+                paymentMethod: data.paymentMethod,
+                description: data.description || existing.description,
+                ...(data.date ? { createdAt: new Date(data.date) } : {}),
+            }
+        });
+
+        // Update the associated Ledger entry for this deposit if it exists
+        const ledgerEntry = await prisma.ledger.findFirst({
+            where: {
+                category: 'deposit',
+                transactionType: 'income',
+                description: { contains: existing.description || 'Deposit Payment' },
+            },
+            orderBy: { transactionDate: 'desc' },
+        });
+
+        if (ledgerEntry) {
+            await prisma.ledger.update({
+                where: { id: ledgerEntry.id },
+                data: {
+                    amount: data.amount,
+                    paymentMethod: data.paymentMethod,
+                    description: `Deposit Payment - ${data.description || existing.description || 'General'}`,
+                    ...(data.date ? { transactionDate: new Date(data.date) } : {}),
+                }
+            });
+        }
+
+        revalidatePath(`/dashboard/patients/${existing.patientId}`);
+        revalidatePath(`/dashboard/ipd`);
+        return { success: true, deposit: serializeData(updated) };
+    } catch (error: any) {
+        console.error("Failed to update deposit:", error);
+        return { success: false, error: error.message || "Failed to update deposit" };
+    }
+}

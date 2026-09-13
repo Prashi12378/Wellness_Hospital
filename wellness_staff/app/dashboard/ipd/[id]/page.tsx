@@ -56,6 +56,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Pencil } from 'lucide-react';
 import RecordDepositButton from '@/components/RecordDepositButton';
+import EditDepositModal from '@/components/EditDepositModal';
 
 type TabType = 'overview' | 'billing' | 'clinical' | 'files';
 
@@ -76,6 +77,7 @@ export default function AdmissionDetailPage() {
     const [depositBalance, setDepositBalance] = useState(0);
     const [patientDeposits, setPatientDeposits] = useState<any[]>([]);
     const [toast, setToast] = useState<string | null>(null);
+    const [editingDeposit, setEditingDeposit] = useState<any>(null);
     const [doctors, setDoctors] = useState<any[]>([]);
     const [isEditingDoctor, setIsEditingDoctor] = useState(false);
 
@@ -671,6 +673,52 @@ export default function AdmissionDetailPage() {
                                 </tfoot>
                             </table>
                         </div>
+
+                        {/* Advance Payments Section */}
+                        {patientDeposits.length > 0 && (
+                            <div className="mt-8">
+                                <h4 className="text-sm font-black text-slate-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                    Advance Payments
+                                </h4>
+                                <div className="overflow-hidden rounded-2xl border border-emerald-100">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-emerald-50">
+                                            <tr>
+                                                <th className="px-5 py-3 text-[10px] font-black text-emerald-700 uppercase tracking-widest">Date</th>
+                                                <th className="px-5 py-3 text-[10px] font-black text-emerald-700 uppercase tracking-widest">Description</th>
+                                                <th className="px-5 py-3 text-[10px] font-black text-emerald-700 uppercase tracking-widest">Method</th>
+                                                <th className="px-5 py-3 text-[10px] font-black text-emerald-700 uppercase tracking-widest text-right">Amount</th>
+                                                <th className="px-5 py-3 text-[10px] font-black text-emerald-700 uppercase tracking-widest text-center">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-emerald-50 bg-white">
+                                            {patientDeposits.map((dep: any) => (
+                                                <tr key={dep.id} className="hover:bg-emerald-50/30 transition-colors">
+                                                    <td className="px-5 py-3 text-sm font-bold text-slate-700">
+                                                        {dep.createdAt ? format(new Date(dep.createdAt), 'dd MMM yyyy') : '--'}
+                                                    </td>
+                                                    <td className="px-5 py-3 text-sm text-slate-600 font-medium">{dep.description || 'Advance Payment'}</td>
+                                                    <td className="px-5 py-3">
+                                                        <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest">{dep.paymentMethod}</span>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-right text-sm font-black text-emerald-700">₹{Number(dep.amount).toLocaleString()}</td>
+                                                    <td className="px-5 py-3 text-center">
+                                                        <button
+                                                            onClick={() => setEditingDeposit(dep)}
+                                                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                                                            title="Edit advance payment"
+                                                        >
+                                                            <Pencil className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -1231,6 +1279,18 @@ export default function AdmissionDetailPage() {
                     <span className="text-sm font-bold">{toast}</span>
                 </div>
             )}
+
+            {/* Edit Deposit Modal */}
+            <EditDepositModal
+                deposit={editingDeposit}
+                isOpen={!!editingDeposit}
+                onClose={() => setEditingDeposit(null)}
+                onSuccess={() => {
+                    setEditingDeposit(null);
+                    fetchAdvanceBalance();
+                    showToast('Advance payment updated successfully.');
+                }}
+            />
         </div>
     );
 }

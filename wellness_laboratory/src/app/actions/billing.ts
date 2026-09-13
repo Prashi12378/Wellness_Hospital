@@ -204,3 +204,77 @@ export async function clearLabInvoicePayment(invoiceId: string, paymentMethod: s
         return { success: false, error: `Failed to clear payment: ${error.message || 'Unknown error'}` };
     }
 }
+
+export async function updateLabInvoice(invoiceId: string, data: {
+    items: Array<{ name: string; price: number; gstRate: number; amount: number }>;
+    subTotal: number;
+    totalGst: number;
+    discountAmount: number;
+    grandTotal: number;
+    paymentMethod: string;
+}) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        const existing = await (prisma as any).invoice.findUnique({ where: { id: invoiceId } });
+        if (!existing) return { success: false, error: "Invoice not found" };
+
+        const updated = await prisma.$transaction(async (tx: any) => {
+            // Remove old items and re-create
+            await tx.invoiceItem.deleteMany({ where: { invoiceId } });
+
+            const inv = await tx.invoice.update({
+                where: { id: invoiceId },
+                data: {
+                    subTotal: data.subTotal,
+                    totalGst: data.totalGst,
+                    discountAmount: data.discountAmount,
+                    grandTotal: data.grandTotal,
+                    paymentMethod: data.paymentMethod,
+                    items: {
+                        create: data.items.map((item) => ({
+                            medicineId: 'LAB_TEST',
+                            name: item.name,
+                            qty: 1,
+                            mrp: item.price,
+                            gstRate: item.gstRate || 0,
+                            amount: item.amount,
+                        })),
+                    },
+                },
+                include: { items: true },
+            });
+
+            // Sync ledger entry
+            const ledger = await tx.ledger.findFirst({
+                where: {
+                    transactionType: 'income',
+                    category: 'lab',
+                    description: { contains: existing.billNo },
+                },
+                orderBy: { transactionDate: 'desc' },
+            });
+            if (ledger) {
+                await tx.ledger.update({
+                    where: { id: ledger.id },
+                    data: {
+                        amount: data.grandTotal,
+                        paymentMethod: data.paymentMethod,
+                    },
+                });
+            }
+
+            return inv;
+        });
+
+        revalidatePath('/dashboard/billing');
+        revalidatePath('/dashboard/bills');
+        return { success: true, invoice: serializeData(updated) };
+    } catch (error: any) {
+        console.error("Failed to update lab invoice:", error);
+        return { success: false, error: error.message || "Failed to update invoice" };
+    }
+}

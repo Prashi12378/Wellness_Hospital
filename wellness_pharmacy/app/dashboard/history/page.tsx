@@ -87,6 +87,7 @@ export default function HistoryPage() {
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Date</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Patient</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Discount</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
                             </tr>
@@ -94,7 +95,7 @@ export default function HistoryPage() {
                         <tbody className="divide-y divide-slate-50">
                             {filteredInvoices.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic">
                                         No invoices found.
                                     </td>
                                 </tr>
@@ -127,6 +128,13 @@ export default function HistoryPage() {
                                                 <IndianRupee className="w-3.5 h-3.5" />
                                                 {Number(invoice.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            {Number(invoice.discountAmount) > 0 ? (
+                                                <span className="text-sm font-bold text-red-500">-₹{Number(invoice.discountAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                            ) : (
+                                                <span className="text-sm font-bold text-slate-400">₹0.00</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={cn(

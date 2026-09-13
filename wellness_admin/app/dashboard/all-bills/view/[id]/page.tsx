@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PrintButton from './PrintButton';
 import BillDateEditor from './BillDateEditor';
+import EditBillViewButton from './EditBillViewButton';
 
 export default async function UniversalInvoicePage({
     params,
@@ -108,7 +109,18 @@ export default async function UniversalInvoicePage({
                 <Link href={`/dashboard/all-bills`} className="flex items-center gap-2 text-slate-600 font-bold hover:text-primary transition-colors">
                     <ArrowLeft className="w-5 h-5" /> Back to All Bills
                 </Link>
-                <PrintButton />
+                <div className="flex items-center gap-3">
+                    <EditBillViewButton bill={{
+                        id: invoiceData.id,
+                        billNo: invoiceData.billNo,
+                        patientName: invoiceData.patientName,
+                        amount: invoiceData.grandTotal,
+                        discountAmount: invoiceData.discountAmount,
+                        type: type,
+                        isInvoice: isInvoice
+                    }} />
+                    <PrintButton />
+                </div>
             </div>
 
             {/* Invoice Document */}

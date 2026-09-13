@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useSearchParams } from "next/navigation";
-import { Plus, Trash2, Printer, CheckCircle2, Search, Calculator, UserSearch, X, FileText, Loader2 } from "lucide-react";
+import { Plus, Trash2, Printer, CheckCircle2, Search, Calculator, UserSearch, X, FileText, Loader2, Pencil } from "lucide-react";
 import { createLabInvoice, getLabInvoices, clearLabInvoicePayment } from "../../actions/billing";
+import EditLabBillModal from "../../../components/modals/EditLabBillModal";
 import { getPatientDepositBalance } from "../../actions/patient-billing";
 import { getUnbilledLabRequests, getLabRequestById } from "../../actions/lab";
 import LabInvoicePrint from "../../../components/LabInvoicePrint";
@@ -34,6 +35,7 @@ function LabBillingPageContent() {
     const [useDeposit, setUseDeposit] = useState(false);
     const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
     const [clearingInvoiceId, setClearingInvoiceId] = useState<string | null>(null);
+    const [editingBill, setEditingBill] = useState<any>(null);
 
     // Search and Selection for Lab Reports
     const [searchQuery, setSearchQuery] = useState("");
@@ -589,6 +591,7 @@ function LabBillingPageContent() {
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Patient Name</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Discount</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Payment</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
@@ -597,7 +600,7 @@ function LabBillingPageContent() {
                         <tbody className="divide-y divide-slate-50">
                             {recentBills.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic font-medium">
+                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-400 italic font-medium">
                                         No recent bills found.
                                     </td>
                                 </tr>
@@ -617,6 +620,13 @@ function LabBillingPageContent() {
                                         </td>
                                         <td className="px-6 py-4 text-right text-sm font-black text-slate-900">
                                             ₹{Number(bill.grandTotal).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-sm font-bold">
+                                            {Number(bill.discountAmount) > 0 ? (
+                                                <span className="text-red-500">-₹{Number(bill.discountAmount).toLocaleString()}</span>
+                                            ) : (
+                                                <span className="text-slate-400">₹0</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
@@ -644,6 +654,13 @@ function LabBillingPageContent() {
                                                         <CheckCircle2 className="w-4 h-4" />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => setEditingBill(bill)}
+                                                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                                                    title="Edit Invoice"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => setViewingInvoice(bill)}
                                                     className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
@@ -694,6 +711,16 @@ function LabBillingPageContent() {
                     </div>
                 </div>
             )}
+            {/* Edit Lab Invoice Modal */}
+            <EditLabBillModal
+                bill={editingBill}
+                isOpen={!!editingBill}
+                onClose={() => setEditingBill(null)}
+                onSuccess={() => {
+                    setEditingBill(null);
+                    fetchRecentBills();
+                }}
+            />
         </div>
     );
 }

@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, FileText, Calendar, User, IndianRupee, Loader2, Download, ReceiptText } from "lucide-react";
-import { format, parseISO, startOfDay, endOfDay } from "date-fns";
+import { Search, FileText, Calendar, User, IndianRupee, Loader2, Download, ReceiptText, Pencil } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { getLabInvoices } from "@/app/actions/billing";
 import { cn } from "@/lib/utils";
+import EditLabBillModal from "@/components/modals/EditLabBillModal";
 
 export default function AuditBillsPage() {
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [isDownloading, setIsDownloading] = useState(false);
+    const [editingBill, setEditingBill] = useState<any>(null);
 
     // Audit filters
     const [fromDate, setFromDate] = useState("");
@@ -169,6 +171,7 @@ export default function AuditBillsPage() {
     }
 
     return (
+        <>
         <div className="max-w-7xl mx-auto space-y-6 pb-20">
             {/* Page Header */}
             <div className="flex items-center justify-between">
@@ -281,13 +284,15 @@ export default function AuditBillsPage() {
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Date</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Patient</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Amount</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Discount</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Edit</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {filteredInvoices.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">
                                         No invoices found.
                                     </td>
                                 </tr>
@@ -322,6 +327,13 @@ export default function AuditBillsPage() {
                                                 {Number(invoice.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 text-right">
+                                            {Number(invoice.discountAmount) > 0 ? (
+                                                <span className="text-sm font-bold text-red-500">-₹{Number(invoice.discountAmount).toFixed(2)}</span>
+                                            ) : (
+                                                <span className="text-sm font-bold text-slate-400">₹0.00</span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={cn(
                                                 "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
@@ -332,6 +344,15 @@ export default function AuditBillsPage() {
                                                 {invoice.status}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <button
+                                                onClick={() => setEditingBill(invoice)}
+                                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                                                title="Edit invoice"
+                                            >
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -340,5 +361,17 @@ export default function AuditBillsPage() {
                 </div>
             </div>
         </div>
+
+        {/* Edit Lab Bill Modal */}
+        <EditLabBillModal
+            bill={editingBill}
+            isOpen={!!editingBill}
+            onClose={() => setEditingBill(null)}
+            onSuccess={() => {
+                setEditingBill(null);
+                fetchInvoices();
+            }}
+        />
+        </>
     );
 }

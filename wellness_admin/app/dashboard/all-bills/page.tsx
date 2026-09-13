@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer, Lock, Unlock, Trash2, RotateCcw } from 'lucide-react';
+import { Search, ReceiptText, Filter, Eye, User, IndianRupee, CheckCircle2, X, FileText, Printer, Lock, Unlock, Trash2, RotateCcw, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useLockBodyScroll } from '@/hooks/useLockBodyScroll';
+import EditBillModal from './EditBillModal';
 
 function BillRow({
     bill,
@@ -13,6 +14,7 @@ function BillRow({
     actionLoadingId,
     handleToggleLock,
     onFinalize,
+    onEdit,
     isInTrash
 }: {
     bill: any;
@@ -21,6 +23,7 @@ function BillRow({
     actionLoadingId: string | null;
     handleToggleLock: (id: string, status: boolean, type?: string, isInvoice?: boolean) => void;
     onFinalize: (bill: any) => void;
+    onEdit: (bill: any) => void;
     isInTrash: boolean;
 }) {
     const [offsetX, setOffsetX] = useState(0);
@@ -102,6 +105,13 @@ function BillRow({
                 </span>
             </td>
             <td className="px-6 py-4">
+                {Number(bill.discountAmount || 0) > 0 ? (
+                    <span className="font-bold text-red-600 text-sm">-₹{Number(bill.discountAmount).toLocaleString()}</span>
+                ) : (
+                    <span className="text-slate-400 font-medium text-sm">₹0</span>
+                )}
+            </td>
+            <td className="px-6 py-4">
                 <p className="font-bold text-slate-900">₹{bill.amount.toLocaleString()}</p>
                 <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{bill.paymentMethod}</p>
             </td>
@@ -147,6 +157,9 @@ function BillRow({
                                 <button onClick={() => window.open(`/dashboard/ipd-billing/invoice/${bill.id}`, '_blank')} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold rounded-lg transition-colors text-xs" title="Print Invoice">
                                     <Printer className="w-4 h-4" /> Print
                                 </button>
+                                <button onClick={() => onEdit(bill)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold rounded-lg transition-colors text-xs shadow-sm active:scale-95" title="Edit Finalised Bill">
+                                    <Edit className="w-3.5 h-3.5" /> Edit
+                                </button>
                                 <button onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)} disabled={actionLoadingId === bill.id} className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`} title={bill.editUnlocked ? "Lock Editing" : "Unlock Editing"}>
                                     {actionLoadingId === bill.id ? <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : bill.editUnlocked ? <><Unlock className="w-4 h-4" /> Unlocked</> : <><Lock className="w-4 h-4" /> Locked</>}
                                 </button>
@@ -159,14 +172,26 @@ function BillRow({
                                 <button onClick={() => handleToggleLock(bill.id, bill.editUnlocked, bill.type, bill.isInvoice)} disabled={actionLoadingId === bill.id} className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition-colors text-xs ${bill.editUnlocked ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`} title={bill.editUnlocked ? "Lock Report Editing" : "Unlock Report Editing"}>
                                     {actionLoadingId === bill.id ? <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : bill.editUnlocked ? <><Unlock className="w-4 h-4" /> Unlocked</> : <><Lock className="w-4 h-4" /> Locked</>}
                                 </button>
+                                {bill.isInvoice && (
+                                    <button onClick={() => onEdit(bill)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold rounded-lg transition-colors text-xs shadow-sm active:scale-95" title="Edit Bill">
+                                        <Edit className="w-3.5 h-3.5" /> Edit
+                                    </button>
+                                )}
                                 <Link href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs">
                                     <Eye className="w-4 h-4" /> View
                                 </Link>
                             </>
                         ) : (
-                            <Link href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs">
-                                <Eye className="w-4 h-4" /> View
-                            </Link>
+                            <>
+                                {bill.isInvoice && (
+                                    <button onClick={() => onEdit(bill)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold rounded-lg transition-colors text-xs shadow-sm active:scale-95" title="Edit Bill">
+                                        <Edit className="w-3.5 h-3.5" /> Edit
+                                    </button>
+                                )}
+                                <Link href={`/dashboard/all-bills/view/${bill.id}?type=${bill.type}&isInvoice=${bill.isInvoice}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-lg transition-colors text-xs">
+                                    <Eye className="w-4 h-4" /> View
+                                </Link>
+                            </>
                         )}
                         
                         <button 
@@ -200,8 +225,9 @@ export default function AllBillsPage() {
     const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0]);
     const [processing, setProcessing] = useState(false);
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+    const [editingBill, setEditingBill] = useState<any>(null);
 
-    useLockBodyScroll(billingModalOpen);
+    useLockBodyScroll(billingModalOpen || !!editingBill);
 
     useEffect(() => {
         fetchBills(activeTab === 'TRASH');
@@ -318,6 +344,7 @@ export default function AllBillsPage() {
     });
 
     const totalRevenue = filteredBills.reduce((sum, bill) => sum + (bill.amount || 0), 0);
+    const totalDiscount = filteredBills.reduce((sum, bill) => sum + (bill.discountAmount || 0), 0);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -330,9 +357,17 @@ export default function AllBillsPage() {
                     </h1>
                     <p className="text-slate-500 font-medium mt-1">Unified view of all hospital billing transactions</p>
                 </div>
-                <div className="flex items-center gap-4 bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="text-sm font-bold text-slate-500 uppercase tracking-widest">{activeTab === 'TRASH' ? 'Trash Total' : 'Total Shown'}</div>
-                    <div className="text-2xl font-black text-slate-900">₹{totalRevenue.toLocaleString()}</div>
+                <div className="flex items-center gap-3 flex-wrap">
+                    {totalDiscount > 0 && (
+                        <div className="bg-red-50 px-5 py-3 rounded-2xl border border-red-100 shadow-sm">
+                            <div className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Total Discount</div>
+                            <div className="text-xl font-black text-red-600">-₹{totalDiscount.toLocaleString()}</div>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-4 bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <div className="text-sm font-bold text-slate-500 uppercase tracking-widest">{activeTab === 'TRASH' ? 'Trash Total' : 'Total Revenue'}</div>
+                        <div className="text-2xl font-black text-slate-900">₹{totalRevenue.toLocaleString()}</div>
+                    </div>
                 </div>
             </div>
 
@@ -375,6 +410,7 @@ export default function AllBillsPage() {
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Patient Name</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Type</th>
+                                <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Discount</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider">Amount</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Status</th>
                                 <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Action</th>
@@ -383,7 +419,7 @@ export default function AllBillsPage() {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                    <td colSpan={8} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center justify-center space-y-4">
                                             <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
                                             <p className="text-slate-500 font-medium">Loading records...</p>
@@ -392,7 +428,7 @@ export default function AllBillsPage() {
                                 </tr>
                             ) : filteredBills.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-16 text-center text-slate-500 bg-slate-50/50">
+                                    <td colSpan={8} className="px-6 py-16 text-center text-slate-500 bg-slate-50/50">
                                         <Filter className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                                         <p className="text-lg font-semibold text-slate-700">{activeTab === 'TRASH' ? 'Trash is empty' : 'No bills found'}</p>
                                         <p className="text-sm mt-1">{activeTab === 'TRASH' ? 'Items deleted from billing lists will appear here.' : 'Try adjusting your filters or search query.'}</p>
@@ -408,6 +444,7 @@ export default function AllBillsPage() {
                                         actionLoadingId={actionLoadingId}
                                         handleToggleLock={handleToggleLock}
                                         isInTrash={activeTab === 'TRASH'}
+                                        onEdit={(b) => setEditingBill(b)}
                                         onFinalize={(b) => {
                                             setSelectedAdmission(b);
                                             setDiscountAmount(0);
@@ -507,6 +544,18 @@ export default function AllBillsPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Edit Finalised Bill Modal */}
+            {editingBill && (
+                <EditBillModal
+                    bill={editingBill}
+                    isOpen={!!editingBill}
+                    onClose={() => setEditingBill(null)}
+                    onSuccess={() => {
+                        fetchBills(activeTab === 'TRASH');
+                    }}
+                />
             )}
         </div>
     );
