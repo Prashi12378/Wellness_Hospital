@@ -12,6 +12,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
     const [loading, setLoading] = useState(true);
     const [admission, setAdmission] = useState<any>(null);
     const [billDate, setBillDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [discount, setDiscount] = useState<number>(0);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -34,7 +35,9 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
         notFound();
     }
 
-    const totalBill = admission.charges?.reduce((acc: number, c: any) => acc + Number(c.amount), 0) || 0;
+    const subTotal = admission.charges?.reduce((acc: number, c: any) => acc + Number(c.amount), 0) || 0;
+    const discountAmount = Math.max(0, Math.min(subTotal, discount));
+    const totalBill = Math.max(0, subTotal - discountAmount);
 
     const handlePrint = () => {
         window.print();
@@ -206,11 +209,33 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                                             <div className="space-y-2 pt-4 border-t border-slate-200">
                                                 <div className="flex justify-between items-center px-2">
                                                     <span className="text-[11px] font-black text-slate-500 uppercase">Sub Total</span>
-                                                    <span className="text-sm font-bold text-slate-900">₹{totalBill.toLocaleString()}</span>
+                                                    <span className="text-sm font-bold text-slate-900">₹{subTotal.toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center px-2">
                                                     <span className="text-[11px] font-black text-slate-500 uppercase">Total Items</span>
                                                     <span className="text-sm font-bold text-slate-900">{admission.charges?.length || 0}</span>
+                                                </div>
+                                                {/* Discount input — hidden on print, value shown */}
+                                                <div className="flex justify-between items-center px-2 py-1 bg-emerald-50/60 rounded-xl border border-emerald-100">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[11px] font-black text-emerald-600 uppercase">Discount</span>
+                                                        <input
+                                                            type="number"
+                                                            min={0}
+                                                            max={subTotal}
+                                                            step={1}
+                                                            value={discount || ''}
+                                                            onChange={e => setDiscount(Math.max(0, Math.min(subTotal, Number(e.target.value))))}
+                                                            placeholder="₹ 0"
+                                                            className="w-28 px-2 py-1 text-sm font-bold text-emerald-700 bg-white border border-emerald-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-300 transition-all placeholder:text-emerald-300 print:hidden"
+                                                        />
+                                                        {discountAmount > 0 && (
+                                                            <span className="hidden print:inline text-sm font-bold text-emerald-700">– ₹{discountAmount.toLocaleString()}</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm font-black text-emerald-600">
+                                                        {discountAmount > 0 ? `– ₹${discountAmount.toLocaleString()}` : '—'}
+                                                    </span>
                                                 </div>
                                                 <div className="flex justify-between items-center pt-4 border-t-2 border-slate-900 bg-slate-900 text-white p-4 rounded-2xl print:bg-white print:text-slate-900 print:border-2 print:border-slate-900">
                                                     <span className="text-lg font-black uppercase tracking-tighter">Grand Total</span>

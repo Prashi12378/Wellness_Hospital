@@ -64,6 +64,7 @@ export default function AdmissionDetailPage() {
     const { id } = useParams() as { id: string };
     const router = useRouter();
     const [admission, setAdmission] = useState<any>(null);
+    const [ipdDiscount, setIpdDiscount] = useState<number>(0);
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
@@ -655,6 +656,33 @@ export default function AdmissionDetailPage() {
                                     )}
                                 </tbody>
                                 <tfoot>
+                                    {/* Discount Row */}
+                                    <tr className="border-t border-slate-100">
+                                        <td colSpan={3} className="px-6 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest whitespace-nowrap">Discount (₹)</span>
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    max={totalBill}
+                                                    step={1}
+                                                    value={ipdDiscount || ''}
+                                                    onChange={e => setIpdDiscount(Math.max(0, Math.min(totalBill, Number(e.target.value))))}
+                                                    placeholder="0"
+                                                    className="w-36 px-3 py-1.5 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-300 transition-all placeholder:text-emerald-300"
+                                                />
+                                                {ipdDiscount > 0 && (
+                                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
+                                                        You save ₹{ipdDiscount.toLocaleString()}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-3 text-right font-black text-emerald-600">
+                                            {ipdDiscount > 0 ? `– ₹${ipdDiscount.toLocaleString()}` : '—'}
+                                        </td>
+                                        <td className="px-6 py-3"></td>
+                                    </tr>
                                     {depositBalance > 0 && (
                                         <tr className="bg-emerald-50 text-emerald-700 font-bold border-t border-emerald-100">
                                             <td colSpan={3} className="px-6 py-4 text-[10px] uppercase tracking-widest">Available Patient Deposit Credit</td>
@@ -665,8 +693,12 @@ export default function AdmissionDetailPage() {
                                     <tr className="bg-slate-900 text-white rounded-2xl overflow-hidden">
                                         <td colSpan={3} className="px-6 py-5 text-lg font-black tracking-tight text-slate-400 lowercase">T O T A L   B I L L</td>
                                         <td className="px-6 py-5 text-right text-2xl font-black">
-                                            ₹{Math.max(0, totalBill - depositBalance).toLocaleString()}
-                                            {depositBalance > 0 && totalBill > depositBalance && <span className="text-xs block text-slate-400 font-medium">After deducting advance</span>}
+                                            ₹{Math.max(0, totalBill - ipdDiscount - depositBalance).toLocaleString()}
+                                            {(ipdDiscount > 0 || depositBalance > 0) && (
+                                                <span className="text-xs block text-slate-400 font-medium">
+                                                    {[ipdDiscount > 0 && 'discount applied', depositBalance > 0 && 'advance deducted'].filter(Boolean).join(' · ')}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-5"></td>
                                     </tr>

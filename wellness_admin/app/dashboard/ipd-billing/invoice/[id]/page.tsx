@@ -16,7 +16,7 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                 include: {
                     patient: true,
                     primaryDoctor: true,
-                    HospitalCharge: true
+                    HospitalCharge: { orderBy: { date: 'asc' } }
                 }
             }
         }
@@ -34,6 +34,18 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
         );
         return charge?.date ? format(new Date(charge.date), 'dd MMM yyyy') : format(new Date(invoice.createdAt), 'dd MMM yyyy');
     };
+
+    // Sort items by their charge date (ascending) — mirrors the front desk portal order
+    const getChargeDateRaw = (itemName: string, itemAmount: number): Date => {
+        const charge = admission?.HospitalCharge?.find(
+            (c: any) => c.description.toLowerCase() === itemName.toLowerCase() && Number(c.amount) === Number(itemAmount)
+        );
+        return charge?.date ? new Date(charge.date) : new Date(invoice.createdAt);
+    };
+
+    const sortedItems = [...invoice.items].sort((a: any, b: any) =>
+        getChargeDateRaw(a.name, Number(a.amount)).getTime() - getChargeDateRaw(b.name, Number(b.amount)).getTime()
+    );
 
     return (
         <>
@@ -160,7 +172,7 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                                 </tr>
                             </thead>
                             <tbody>
-                                {invoice.items.map((item: any, idx: number) => (
+                                {sortedItems.map((item: any, idx: number) => (
                                     <tr key={item.id} className="border-b border-slate-200">
                                         <td className="py-2 px-3 text-slate-600">{idx + 1}</td>
                                         <td className="py-2 px-3 text-slate-500 font-semibold whitespace-nowrap">
@@ -170,7 +182,7 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                                         <td className="py-2 px-3 text-right font-bold">₹{Number(item.amount).toLocaleString()}</td>
                                     </tr>
                                 ))}
-                                {invoice.items.length === 0 && (
+                                {sortedItems.length === 0 && (
                                     <tr>
                                         <td colSpan={4} className="py-10 text-center text-slate-400 italic">No charges recorded.</td>
                                     </tr>
@@ -198,7 +210,7 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-500 uppercase font-bold">Total Items</span>
-                                    <span className="font-bold">{invoice.items.length}</span>
+                                    <span className="font-bold">{sortedItems.length}</span>
                                 </div>
                                 {Number(invoice.discountAmount) > 0 && (
                                     <div className="flex justify-between text-emerald-700">
