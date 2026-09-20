@@ -218,6 +218,12 @@ export default async function AdminInvoicePage({ params }: { params: Promise<{ i
                                         <span className="font-bold">– ₹{Number(invoice.discountAmount).toLocaleString()}</span>
                                     </div>
                                 )}
+                                {Number(invoice.depositAmount) > 0 && (
+                                    <div className="flex justify-between text-blue-700">
+                                        <span className="font-bold uppercase">Advance Applied</span>
+                                        <span className="font-bold">– ₹{Number(invoice.depositAmount).toLocaleString()}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between border-t-2 border-slate-800 pt-2 mt-2">
                                     <span className="text-base font-black uppercase">Grand Total</span>
                                     <span className="text-base font-black">₹{Number(invoice.grandTotal).toLocaleString()}</span>

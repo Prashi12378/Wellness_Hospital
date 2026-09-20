@@ -222,6 +222,7 @@ export default function AllBillsPage() {
     const [billingModalOpen, setBillingModalOpen] = useState(false);
     const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
     const [discountAmount, setDiscountAmount] = useState(0);
+    const [depositBalance, setDepositBalance] = useState(0);
     const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0]);
     const [processing, setProcessing] = useState(false);
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -302,6 +303,7 @@ export default function AllBillsPage() {
             if (res.ok) {
                 const data = await res.json();
                 setBillingModalOpen(false);
+                setDepositBalance(0);
                 fetchBills(activeTab === 'TRASH');
                 window.open('/dashboard/ipd-billing/invoice/' + data.invoice.id, '_blank');
             } else {
@@ -445,10 +447,23 @@ export default function AllBillsPage() {
                                         handleToggleLock={handleToggleLock}
                                         isInTrash={activeTab === 'TRASH'}
                                         onEdit={(b) => setEditingBill(b)}
-                                        onFinalize={(b) => {
+                                        onFinalize={async (b) => {
                                             setSelectedAdmission(b);
                                             setDiscountAmount(0);
+                                            setDepositBalance(0);
                                             setBillingModalOpen(true);
+                                            // Fetch available deposits for this patient
+                                            try {
+                                                const patientId = b.rawAdmission?.patientId;
+                                                if (patientId) {
+                                                    const r = await fetch(`/api/deposits?patientId=${patientId}&status=AVAILABLE`);
+                                                    if (r.ok) {
+                                                        const d = await r.json();
+                                                        const total = (d.deposits || []).reduce((sum: number, dep: any) => sum + Number(dep.amount), 0);
+                                                        setDepositBalance(total);
+                                                    }
+                                                }
+                                            } catch {}
                                         }}
                                     />
                                 ))
@@ -519,10 +534,17 @@ export default function AllBillsPage() {
                                     </div>
                                 </div>
 
+                                {depositBalance > 0 && (
+                                    <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100">
+                                        <span className="text-sm font-bold">Advance Deposit Credit</span>
+                                        <span className="font-bold">– ₹{Math.min(depositBalance, Math.max(0, selectedAdmission.amount - discountAmount)).toLocaleString()}</span>
+                                    </div>
+                                )}
+
                                 <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
                                     <span className="text-lg font-bold text-slate-800">Grand Total</span>
                                     <span className="text-2xl font-bold text-primary">
-                                        ₹{Math.max(0, selectedAdmission.amount - discountAmount).toLocaleString()}
+                                        ₹{Math.max(0, selectedAdmission.amount - discountAmount - Math.min(depositBalance, Math.max(0, selectedAdmission.amount - discountAmount))).toLocaleString()}
                                     </span>
                                 </div>
                             </div>

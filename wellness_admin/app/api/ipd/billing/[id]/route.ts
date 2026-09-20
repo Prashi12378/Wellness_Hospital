@@ -29,12 +29,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
             if (!admission) throw new Error("Admission not found");
 
-            // 2. Calculate totals
-            const subTotal = admission.HospitalCharge.reduce((sum, charge) => sum + Number(charge.amount), 0);
-            const totalGst = 0; // Simplified for now
-            const grandTotal = Math.max(0, subTotal - Number(discountAmount));
+            // 2. Fetch available patient deposits
+            const deposits = await (tx as any).deposit.findMany({
+                where: {
+                    patientId: admission.patientId,
+                    status: "AVAILABLE"
+                }
+            });
 
-            // 3. Create Invoice
+            const totalAdvance = deposits.reduce((sum: number, d: any) => sum + Number(d.amount), 0);
+
+            // 3. Calculate totals
+            const subTotal = admission.HospitalCharge.reduce((sum, charge) => sum + Number(charge.amount), 0);
+            const afterDiscount = Math.max(0, subTotal - Number(discountAmount));
+            const appliedDeposit = Math.min(afterDiscount, totalAdvance);
+            const grandTotal = Math.max(0, afterDiscount - appliedDeposit);
+
+            // 4. Create Invoice
             const billNo = `INV-IPD-${Date.now().toString().slice(-6)}`;
             const invoice = await tx.invoice.create({
                 data: {
@@ -42,8 +53,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     patientName: `${admission.patient.firstName} ${admission.patient.lastName}`,
                     patientPhone: admission.patient.phone,
                     subTotal: subTotal,
-                    totalGst: totalGst,
+                    totalGst: 0,
                     discountAmount: Number(discountAmount),
+                    depositAmount: appliedDeposit,
                     grandTotal: grandTotal,
                     paymentMethod,
                     status: "PAID",
@@ -56,18 +68,31 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                             mrp: charge.amount,
                             gstRate: 0,
                             amount: charge.amount,
-                            medicineId: "SERVICE" // Placeholder for general hospital charges
+                            medicineId: "SERVICE"
                         }))
                     }
                 }
             });
 
-            // 4. Record in Ledger
+            // 5. Mark applied deposits as CONSUMED
+            if (appliedDeposit > 0) {
+                let remaining = appliedDeposit;
+                for (const dep of deposits) {
+                    if (remaining <= 0) break;
+                    remaining -= Math.min(Number(dep.amount), remaining);
+                    await (tx as any).deposit.update({
+                        where: { id: dep.id },
+                        data: { status: "CONSUMED", updatedAt: new Date() }
+                    });
+                }
+            }
+
+            // 6. Record in Ledger
             await tx.ledger.create({
                 data: {
                     transactionType: 'income',
                     category: 'admin',
-                    description: `IPD Billing - Bill for ${admission.patient.firstName} ${admission.patient.lastName} (${billNo})`,
+                    description: `IPD Billing - Bill for ${admission.patient.firstName} ${admission.patient.lastName} (${billNo})${appliedDeposit > 0 ? ` [Advance Applied: ₹${appliedDeposit}]` : ''}`,
                     amount: grandTotal,
                     paymentMethod: paymentMethod,
                     transactionDate: new Date(),
