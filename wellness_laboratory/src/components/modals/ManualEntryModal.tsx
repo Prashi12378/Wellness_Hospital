@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Search, Loader2, User, ChevronRight, FlaskConical, Plus, Trash2 } from "lucide-react";
+import { X, Search, Loader2, User, ChevronRight, FlaskConical, Plus, Trash2, UserPlus, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { searchPatients, createLabRequest } from "@/app/actions/lab";
+import { searchPatients, createLabRequest, registerWalkInPatient } from "@/app/actions/lab";
 import { searchLabTests, SearchResult } from "@/lib/labTests";
+
+type PatientMode = "search" | "register";
 
 interface TestEntry {
     name: string;
@@ -21,9 +23,24 @@ interface ManualEntryModalProps {
 
 export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualEntryModalProps) {
     const [step, setStep] = useState(1);
+    const [patientMode, setPatientMode] = useState<PatientMode>("search");
+
+    // Search mode state
     const [searchQuery, setSearchQuery] = useState("");
     const [patients, setPatients] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+
+    // Register mode state
+    const [regFirstName, setRegFirstName] = useState("");
+    const [regLastName, setRegLastName] = useState("");
+    const [regPhone, setRegPhone] = useState("");
+    const [regGender, setRegGender] = useState("");
+    const [regAgeOrDob, setRegAgeOrDob] = useState<"age" | "dob">("age");
+    const [regAge, setRegAge] = useState("");
+    const [regDob, setRegDob] = useState("");
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [regError, setRegError] = useState("");
+
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
     // Multi-test state
@@ -50,6 +67,7 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
     useEffect(() => {
         if (isOpen) {
             setStep(1);
+            setPatientMode("search");
             setSearchQuery("");
             setPatients([]);
             setSelectedPatient(null);
@@ -62,6 +80,13 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
             setRequestedByName("");
             setSuggestions([]);
             setShowSuggestions(false);
+            setRegFirstName("");
+            setRegLastName("");
+            setRegPhone("");
+            setRegGender("");
+            setRegAge("");
+            setRegDob("");
+            setRegError("");
         }
     }, [isOpen]);
 
@@ -89,6 +114,40 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
     const handlePatientSelect = (patient: any) => {
         setSelectedPatient(patient);
         setStep(2);
+    };
+
+    const handleRegisterAndContinue = async () => {
+        if (!regFirstName.trim()) {
+            setRegError("First name is required.");
+            return;
+        }
+        setRegError("");
+        setIsRegistering(true);
+        try {
+            let dob: string | undefined;
+            if (regAgeOrDob === "age" && regAge) {
+                const birthYear = new Date().getFullYear() - parseInt(regAge, 10);
+                dob = `${birthYear}-01-01`;
+            } else if (regAgeOrDob === "dob" && regDob) {
+                dob = regDob;
+            }
+            const res = await registerWalkInPatient({
+                firstName: regFirstName.trim(),
+                lastName: regLastName.trim() || undefined,
+                phone: regPhone.trim() || undefined,
+                gender: regGender || undefined,
+                dob,
+            });
+            if (res.success && res.data) {
+                setSelectedPatient(res.data);
+                setStep(2);
+            } else {
+                setRegError((res as any).error || "Failed to register patient.");
+            }
+        } catch (err: any) {
+            setRegError(err.message || "Unexpected error.");
+        }
+        setIsRegistering(false);
     };
 
     // Autocomplete handlers
@@ -207,11 +266,12 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+                {/* Header */}
                 <div className="bg-slate-50 p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
                     <div>
                         <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Direct Accession</h2>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">
-                            Step {step} of 2: {step === 1 ? "Select Patient" : "Add Tests"}
+                            Step {step} of 2: {step === 1 ? "Select / Register Patient" : "Add Tests"}
                         </p>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-white hover:shadow-md rounded-2xl transition-all text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-100">
@@ -222,51 +282,193 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                 <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
                     {step === 1 ? (
                         <div className="space-y-6">
-                            <div className="relative group">
-                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by UHID, Name or Email..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                                    className="w-full pl-14 pr-6 py-5 bg-slate-50 border border-slate-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-slate-900"
-                                />
+                            {/* Mode Toggle */}
+                            <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
                                 <button
-                                    onClick={handleSearch}
-                                    disabled={isSearching}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                    onClick={() => { setPatientMode("search"); setRegError(""); }}
+                                    className={cn(
+                                        "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                        patientMode === "search" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                                    )}
                                 >
-                                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
+                                    <Search className="w-3.5 h-3.5" />
+                                    Search Existing
+                                </button>
+                                <button
+                                    onClick={() => { setPatientMode("register"); setRegError(""); }}
+                                    className={cn(
+                                        "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                        patientMode === "register" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                                    )}
+                                >
+                                    <UserPlus className="w-3.5 h-3.5" />
+                                    Walk-In Patient
                                 </button>
                             </div>
 
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                {patients.length === 0 && !isSearching ? (
-                                    <div className="text-center py-12 bg-slate-50/50 rounded-[32px] border border-dashed border-slate-200">
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Search for a patient to begin</p>
-                                    </div>
-                                ) : (
-                                    patients.map((p) => (
+                            {patientMode === "search" ? (
+                                /* ── Search Existing Patient ── */
+                                <div className="space-y-4">
+                                    <div className="relative group">
+                                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search by UHID, Name, Phone or Email..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                                            className="w-full pl-14 pr-6 py-5 bg-slate-50 border border-slate-100 rounded-3xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-slate-900"
+                                        />
                                         <button
-                                            key={p.id}
-                                            onClick={() => handlePatientSelect(p)}
-                                            className="w-full flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[28px] hover:border-primary/30 hover:shadow-md hover:bg-slate-50/50 transition-all group"
+                                            onClick={handleSearch}
+                                            disabled={isSearching}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                                    <User className="w-6 h-6" />
-                                                </div>
-                                                <div className="text-left">
-                                                    <p className="text-sm font-black text-slate-900 uppercase">{p.firstName} {p.lastName}</p>
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{p.uhid} • {p.gender}</p>
-                                                </div>
-                                            </div>
-                                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
+                                            {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
                                         </button>
-                                    ))
-                                )}
-                            </div>
+                                    </div>
+
+                                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {patients.length === 0 && !isSearching ? (
+                                            <div className="text-center py-12 bg-slate-50/50 rounded-[32px] border border-dashed border-slate-200">
+                                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Search for a patient to begin</p>
+                                                <p className="text-[10px] text-slate-400 mt-2">Or switch to <strong>Walk-In Patient</strong> to register a new one</p>
+                                            </div>
+                                        ) : (
+                                            patients.map((p) => (
+                                                <button
+                                                    key={p.id}
+                                                    onClick={() => handlePatientSelect(p)}
+                                                    className="w-full flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[28px] hover:border-primary/30 hover:shadow-md hover:bg-slate-50/50 transition-all group"
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                                            <User className="w-6 h-6" />
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className="text-sm font-black text-slate-900 uppercase">{p.firstName} {p.lastName}</p>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{p.uhid} • {p.gender}{p.phone ? ` • ${p.phone}` : ""}</p>
+                                                        </div>
+                                                    </div>
+                                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                /* ── Register Walk-In Patient ── */
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
+                                        <UserPlus className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                                        <p className="text-[10px] font-black text-amber-700 uppercase tracking-wide leading-relaxed">
+                                            Walk-in patients get an auto-generated <span className="text-amber-900">LAB-YYYYMMDD-XXXX</span> UHID. Only first name is required.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                                                First Name <span className="text-red-400">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={regFirstName}
+                                                onChange={(e) => { setRegFirstName(e.target.value); setRegError(""); }}
+                                                placeholder="e.g. Ramesh"
+                                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm"
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
+                                            <input
+                                                type="text"
+                                                value={regLastName}
+                                                onChange={(e) => setRegLastName(e.target.value)}
+                                                placeholder="e.g. Kumar"
+                                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone</label>
+                                            <input
+                                                type="tel"
+                                                value={regPhone}
+                                                onChange={(e) => setRegPhone(e.target.value)}
+                                                placeholder="e.g. 9876543210"
+                                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Gender</label>
+                                            <select
+                                                value={regGender}
+                                                onChange={(e) => setRegGender(e.target.value)}
+                                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm appearance-none cursor-pointer"
+                                            >
+                                                <option value="">Not specified</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-3 ml-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Age / DOB</label>
+                                            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                                <button
+                                                    onClick={() => setRegAgeOrDob("age")}
+                                                    className={cn("px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all", regAgeOrDob === "age" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
+                                                >Age</button>
+                                                <button
+                                                    onClick={() => setRegAgeOrDob("dob")}
+                                                    className={cn("px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all", regAgeOrDob === "dob" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
+                                                >DOB</button>
+                                            </div>
+                                        </div>
+                                        {regAgeOrDob === "age" ? (
+                                            <input
+                                                type="number" min={0} max={120}
+                                                value={regAge}
+                                                onChange={(e) => setRegAge(e.target.value)}
+                                                placeholder="Age in years"
+                                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm"
+                                            />
+                                        ) : (
+                                            <input
+                                                type="date"
+                                                value={regDob}
+                                                onChange={(e) => setRegDob(e.target.value)}
+                                                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-bold text-sm"
+                                            />
+                                        )}
+                                    </div>
+
+                                    {regError && (
+                                        <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-xs font-bold text-red-600">
+                                            {regError}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={handleRegisterAndContinue}
+                                        disabled={isRegistering || !regFirstName.trim()}
+                                        className="w-full py-4 bg-slate-900 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {isRegistering ? (
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                            <><UserPlus className="w-4 h-4" /> Register &amp; Continue to Tests</>
+                                        )}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-6">
@@ -275,11 +477,16 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                                 <div className="p-3 bg-white/10 rounded-2xl">
                                     <User className="w-5 h-5 text-primary" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Selected Patient</p>
-                                    <p className="text-base font-black uppercase leading-tight">{selectedPatient?.firstName} {selectedPatient?.lastName}</p>
-                                    <p className="text-xs font-bold text-white/70">{selectedPatient?.uhid}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">
+                                        {selectedPatient?.uhid?.startsWith("LAB-") ? "Walk-In Patient" : "Selected Patient"}
+                                    </p>
+                                    <p className="text-base font-black uppercase leading-tight truncate">{selectedPatient?.firstName} {selectedPatient?.lastName}</p>
+                                    <p className="text-xs font-bold text-white/70">{selectedPatient?.uhid}{selectedPatient?.phone ? ` • ${selectedPatient.phone}` : ""}</p>
                                 </div>
+                                {selectedPatient?.uhid?.startsWith("LAB-") && (
+                                    <span className="shrink-0 text-[9px] font-black uppercase tracking-widest bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-1 rounded-lg">Walk-In</span>
+                                )}
                             </div>
 
                             {/* Add Test Section */}
@@ -461,8 +668,9 @@ export default function ManualEntryModal({ isOpen, onClose, onSuccess }: ManualE
                             <div className="flex gap-4 pt-2">
                                 <button
                                     onClick={() => setStep(1)}
-                                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all border border-slate-200"
+                                    className="flex items-center justify-center gap-2 flex-1 py-4 bg-slate-100 text-slate-600 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all border border-slate-200"
                                 >
+                                    <ArrowLeft className="w-4 h-4" />
                                     Back
                                 </button>
                                 <button

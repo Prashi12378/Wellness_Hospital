@@ -40,15 +40,70 @@ export async function searchPatients(query: string) {
                     { firstName: { contains: query } },
                     { lastName: { contains: query } },
                     { uhid: { contains: query } },
-                    { email: { contains: query } }
+                    { email: { contains: query } },
+                    { phone: { contains: query } }
                 ]
             },
-            take: 5
+            take: 10
         });
         console.log(`[LabActions] Search found ${patients.length} patients.`);
         return { success: true, data: patients };
     } catch (error: any) {
         console.error("[LabActions] searchPatients Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function registerWalkInPatient(data: {
+    firstName: string;
+    lastName?: string;
+    phone?: string;
+    gender?: string;
+    dob?: string;
+    age?: string;
+}) {
+    try {
+        console.log("[LabActions] Registering walk-in lab patient...");
+
+        // Generate unique UHID: LAB-YYYYMMDD-XXXX
+        const today = new Date();
+        const datePart = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
+        const randomPart = Math.floor(1000 + Math.random() * 9000).toString();
+        const uhid = `LAB-${datePart}-${randomPart}`;
+
+        // Create a minimal User record (no real credentials – lab walk-in)
+        const fakeEmail = `walkin.${uhid.toLowerCase()}@lab.internal`;
+
+        const result = await prisma.$transaction(async (tx) => {
+            const user = await tx.user.create({
+                data: {
+                    name: `${data.firstName}${data.lastName ? " " + data.lastName : ""}`,
+                    email: fakeEmail,
+                }
+            });
+
+            const profile = await tx.profile.create({
+                data: {
+                    userId: user.id,
+                    email: fakeEmail,
+                    firstName: data.firstName,
+                    lastName: data.lastName || "",
+                    phone: data.phone || null,
+                    gender: data.gender || null,
+                    dob: data.dob || null,
+                    uhid,
+                    role: "patient",
+                }
+            });
+
+            return profile;
+        });
+
+        console.log(`[LabActions] Walk-in patient registered: ${uhid}`);
+        revalidatePath("/dashboard");
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error("[LabActions] registerWalkInPatient Error:", error);
         return { success: false, error: error.message };
     }
 }
